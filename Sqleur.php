@@ -164,7 +164,7 @@ class Sqleur
 	protected function _sors($requete)
 	{
 		if(strlen($requete = trim($requete)))
-			call_user_func($this->_sortie, $requete);
+			call_user_func($this->_sortie, strtr($requete, $this->_defs));
 	}
 	
 	public function sortirContenuIfFalse($contenu)
