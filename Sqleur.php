@@ -89,11 +89,8 @@ class Sqleur
 			{
 				case ';':
 					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
-					if(strlen($requete = trim($requete)))
-					{
-						call_user_func($this->_sortie, $requete);
+					$this->_sors($requete);
 						$requete = '';
-					}
 					$dernierArret = $decoupes[$i][1] + 1;
 					break;
 				case "\n":
@@ -147,8 +144,7 @@ class Sqleur
 		if($laFinEstVraimentLaFin)
 		{
 			$requete .= substr($chaine, $dernierArret, $taille - $dernierArret);
-			if(strlen($requete = trim($requete)))
-				call_user_func($this->_sortie, $requete);
+			$this->_sors($requete);
 		}
 		else
 		{
@@ -163,6 +159,12 @@ class Sqleur
 			$this->_retour = array();
 			return $retour;
 		}
+	}
+	
+	protected function _sors($requete)
+	{
+		if(strlen($requete = trim($requete)))
+			call_user_func($this->_sortie, $requete);
 	}
 	
 	public function sortirContenuIfFalse($contenu)
