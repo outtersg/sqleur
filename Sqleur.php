@@ -135,12 +135,16 @@ class Sqleur
 					while(++$i < $n && $decoupes[$i][0] != "\n") {}
 					if($i < $n)
 						$dernierArret = $decoupes[$i][1] + 1;
+					else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
+						$dernierArret = $taille;
 					break;
 				case '/':
 					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
 					while(++$i < $n && $decoupes[$i][0] != '*/') {}
 					if($i < $n)
 						$dernierArret = $decoupes[$i][1] + 2;
+					else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
+						$dernierArret = $taille;
 					break;
 				case "'":
 				case '$':
