@@ -62,7 +62,7 @@ class Sqleur
 	{
 		$this->_init();
 		$f = fopen($fichier, 'r');
-		while(strlen($bloc = fread($f, 8)))
+		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
 		fclose($f);
 		return $this->_decoupeBloc('', true);
