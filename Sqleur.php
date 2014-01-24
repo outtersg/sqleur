@@ -157,11 +157,7 @@ class Sqleur
 						$requete .= substr($chaine, $dernierArret, $nouvelArret - $dernierArret);
 						$dernierArret = $nouvelArret;
 					}
-					else
-					{
-						$requete .= substr($chaine, $dernierArret, $decoupes[$j][0] - $dernierArret);
-						$dernierArret = $decoupes[$j][0];
-					}
+					/* À FAIRE: pour décharger la mémoire, il nous faudrait pouvoir ici stocker le bout lu dans la requête (et avancer $dernierArret). Le problème est qu'on n'a rien qui passerait le relai à la prochaine itération pour lui dire "on était au beau milieu d'une chaîne" (il faudrait insérer quelque chose en tête de $decoupes). Bien entendu, on ne pourrait pas tout mettre en bloc en cas de délimiteur multioctet. Ex.: chaîne "$DELIM$ coucou $DELIM$"; si la lecture par bloc nous fournit "$DELIM$ couc", très bien, on peut ajouter à $requete la totalité; par contre si elle nous a fourni dans $chaine "$DELIM$ coucou $DEL", on ne doit stocker dans $requete que "$DELIM$ coucou " car le "$DEL" doit rester dans $chaine pour si, au prochain tour de boucle, on recevait "IM$". Cet À FAIRE s'applique aussi aux commentaires. */
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
