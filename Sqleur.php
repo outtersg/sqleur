@@ -78,7 +78,7 @@ class Sqleur
 	{
 		if(isset($this->_resteEnCours))
 			$chaine = $this->_resteEnCours.$chaine;
-		preg_match_all("#\#|;|--|\n|/\*|\*/|'|\\\\'|\\$[a-zA-Z0-9_]\\$#", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
+		preg_match_all("#\#|;|--|\n|/\*|\*/|'|\\\\'|\\$[a-zA-Z0-9_]*\\$#", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
 		$taille = strlen($chaine);
 		$decoupes = $decoupes[0];
