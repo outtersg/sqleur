@@ -125,8 +125,9 @@ class Sqleur
 						while(++$i < $n && $decoupes[$i][0] != "\n") {}
 						if($i < $n)
 						{
-							$dernierArret = $decoupes[$i][1] + 1;
+							$dernierArret = $decoupes[$i][1];
 							$requete = $this->_preprocesse(substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]), $requete);
+							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
 						}
 					}
 					break;
@@ -134,7 +135,10 @@ class Sqleur
 					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
 					while(++$i < $n && $decoupes[$i][0] != "\n") {}
 					if($i < $n)
-						$dernierArret = $decoupes[$i][1] + 1;
+					{
+						$dernierArret = $decoupes[$i][1];
+						--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
+					}
 					else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
 						$dernierArret = $taille;
 					break;
