@@ -198,8 +198,8 @@ class Sqleur
 	
 	protected function _preprocesse($directive, $requeteEnCours)
 	{
-		$bouts = explode(' ', $directive);
-		$motCle = $bouts[0];
+		$posEspace = strpos($directive, ' ');
+		$motCle = $posEspace === false ? $directive : substr($directive, 0, $posEspace);
 		switch($motCle)
 		{
 			case '#else':
@@ -208,24 +208,7 @@ class Sqleur
 				if($motCle == '#else')
 					$vrai = true;
 				else
-				{
-					$vrai = false;
-					if($bouts[2] == '==')
-					{
-						$vals = array();
-						$vals[] = $bouts[1];
-						$vals[] = implode(' ', array_slice($bouts, 3));
-						foreach($vals as & $val)
-							if(preg_match('/^".*"$/', $val))
-								$val = substr($val, 1, -1);
-							else if(preg_match('/^[0-9]*$/', $val))
-								true;
-							else
-								$val = isset($this->_defs[$val]) ? $this->_defs[$val] : '';
-						unset($val);
-						$vrai = $vals[0] == $vals[1];
-					}
-				}
+					$vrai = $this->_calculerPrepro($posEspace === false ? '' : substr($directive, $posEspace));
 				$condition = $motCle == '#if' ? array(false, $this->_sortie, $requeteEnCours, false) : array_pop($this->_conditions); // 0: déjà fait; 1: sauvegarde de la vraie sortie; 2: requête en cours; 3: en cours.
 				if(!$condition[0] && $vrai) // Si pas déjà fait, et que le if est avéré.
 				{
@@ -251,6 +234,188 @@ class Sqleur
 		}
 		
 		return $requeteEnCours;
+	}
+	
+	/*- Expressions du préprocesseur -----------------------------------------*/
+	
+	protected function _decouperPrepro($expr)
+	{
+		$bouts = array();
+		
+		preg_match_all('# +|,|==|"#', $expr, $découpe, PREG_OFFSET_CAPTURE);
+		$pos = 0;
+		foreach($découpe[0] as $découpé)
+		{
+			if($découpé[1] > $pos)
+				$bouts[] = substr($expr, $pos, $découpé[1] - $pos);
+			$bouts[] = $découpé[0];
+			$pos = $découpé[1] + strlen($découpé[0]);
+		}
+		if(strlen($fin = substr($expr, $pos)))
+			$bouts[] = $fin;
+		
+		return $bouts;
+	}
+	
+	protected function _compilerPrepro($expr)
+	{
+		$bouts = $this->_decouperPrepro($expr);
+		$racine = $this->_arborerPrepro($bouts);
+		
+		return $racine;
+	}
+	
+	protected function _arborerPrepro($bouts)
+	{
+		$recherchés = array
+		(
+			array
+			(
+				',' => 'bi',
+				'not' => 'devant',
+				'in' => 'bimulti',
+				'==' => 'bi',
+				'"' => 'chaîne',
+			),
+		);
+		
+		foreach($recherchés as $plan => $recherchésPlan)
+			foreach($bouts as $num => $bout)
+				if(is_string($bout) && isset($recherchésPlan[$bout]))
+				{
+					switch($recherchésPlan[$bout])
+					{
+						case 'bimulti':
+						case 'bi':
+							$racine = new NœudPrepro($bout);
+							$fils = array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1));
+							foreach($fils as $fil)
+							{
+								$fil = $this->_arborerPrepro($fil);
+								if(is_array($fil))
+								{
+									if(count($fil) != 1)
+										throw new Exception('L\'opérateur binaire '.$bout.' attend deux membres de part et d\'autre');
+									$fil = array_shift($fil);
+								}
+								$racine->f[] = $fil;
+							}
+							if($recherchésPlan[$bout] == 'bimulti')
+								$racine->f[1] = $this->_listerVirgulesPrepro($racine->f[1]);
+							return $racine;
+						case 'devant':
+							array_splice($bouts, $num, 1);
+							$racine = new NœudPrepro($bout, $this->_arborerPrepro($bouts));
+							return $racine;
+						case 'chaîne':
+							$chaînes = array();
+							for($fin = $num; ++$fin < count($bouts);)
+								if($bouts[$fin] == '"')
+									break;
+								else if(!is_string($bouts[$fin]))
+									throw new Exception('Erreur interne du préprocesseur, une chaîne contient un bout déjà interprété'); // À FAIRE?: permettre l'inclusion de variables dans la chaîne (f deviendrait alors un tableau d'éléments chaîne ou Nœud, et la constitution finale de la chaîne ne serait faite qu'au calcul.
+								else
+									$chaînes[] = $bouts[$fin];
+							if($fin == count($bouts))
+								throw new Exception('Chaîne non terminée');
+							$nœud = new NœudPrepro('"', $chaînes);
+							array_splice($bouts, $num, $fin - $num + 1, array($nœud));
+							return $this->_arborerPrepro($bouts);
+					}
+				}
+		$trucs = array();
+		foreach($bouts as $truc)
+			if(is_object($truc))
+				$trucs[] = $truc;
+			else if(trim($truc))
+				$trucs[] = new NœudPrepro('mot', $truc);
+		return $trucs;
+	}
+	
+	protected function _listerVirgulesPrepro($expr)
+	{
+		if(!($expr instanceof NœudPrepro))
+			throw new Exception('Truc improbable après une virgule');
+		
+		if($expr->t != ',')
+			return array($expr);
+		
+		$r = array_merge(array($expr->f[0]), $this->_listerVirgulesPrepro($expr->f[1]));
+		
+		return $r;
+	}
+	
+	protected function _calculerPrepro($expr)
+	{
+		$racine = $this->_compilerPrepro($expr);
+	
+		if(!($racine instanceof NœudPrepro))
+			throw new Exception('Expression ininterprétable');
+		
+		return $racine->exécuter($this);
+	}
+}
+
+class NœudPrepro
+{
+	public function __construct($type, $fils = null)
+	{
+		$this->t = $type;
+		$this->f = $fils;
+	}
+	
+	public function exécuter($contexte)
+	{
+		switch($this->t)
+		{
+			case 'not':
+				return !$this->_contenu($this->f, $contexte);
+			case 'mot':
+				if(preg_match('/^[0-9]*$/', $this->f))
+					return 0 + $this->f;
+				else if(!array_key_exists($this->f, $contexte->_defs))
+					throw new Exception("Variable de préproc '".$this->f."' indéfinie");
+				return $contexte->_defs[$this->f];
+			case '"':
+				$r = '';
+				foreach($this->f as $f)
+					if(is_string($f))
+						$r .= $f;
+					else
+						$r .= $this->_contenu($f, $contexte);
+				return $r;
+			case '==':
+				$fils = $this->_contenus($this->f, $contexte, 2);
+				return $fils[0] == $fils[1];
+			case 'in':
+				$gauche = $this->_contenu($this->f[0], $contexte);
+				$droite = $this->_contenus($this->f[1], $contexte);
+				return in_array($gauche, $droite);
+			default:
+				throw new Exception('Je ne sais pas gérer les '.$this->t);
+		}
+	}
+	
+	protected function _contenu($chose, $contexte)
+	{
+		if(!($chose instanceof NœudPrepro))
+			throw new Exception($this->t.': requièrt un nœud fils');
+		return $chose->exécuter($contexte);
+	}
+	
+	protected function _contenus($tableau, $contexte, $n = false)
+	{
+		$fils = array();
+		if(!is_array($tableau))
+			throw new Exception($this->t.': liste attendue');
+		foreach($tableau as $f)
+			if(!($f instanceof NœudPrepro))
+				throw new Exception('Impossible d\'interpréter '.print_r($this, true));
+			else
+				$fils[] = $f->exécuter($contexte);
+		if($n !== false && count($fils) != $n)
+			throw new Exception($this->t.': '.$n.' nœuds fils attendus');
+		return $fils;
 	}
 }
 
