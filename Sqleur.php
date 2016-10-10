@@ -329,7 +329,7 @@ class Sqleur
 		foreach($bouts as $truc)
 			if(is_object($truc))
 				$trucs[] = $truc;
-			else if(trim($truc))
+			else if(strlen(trim($truc)))
 				$trucs[] = new NœudPrepro('mot', $truc);
 		return $trucs;
 	}
