@@ -261,6 +261,8 @@ class Sqleur
 	{
 		$bouts = $this->_decouperPrepro($expr);
 		$racine = $this->_arborerPrepro($bouts);
+		while(is_array($racine) && count($racine) == 1)
+			$racine = array_shift($racine);
 		
 		return $racine;
 	}
