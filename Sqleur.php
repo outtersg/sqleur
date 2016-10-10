@@ -126,7 +126,7 @@ class Sqleur
 						if($i < $n)
 						{
 							$dernierArret = $decoupes[$i][1];
-							$requete = $this->_preprocesse(substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]), $requete);
+							$requete = $this->_preprocesse(rtrim(substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1])), $requete);
 							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
 						}
 					}
