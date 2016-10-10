@@ -60,11 +60,17 @@ class Sqleur
 	
 	public function decoupeFichier($fichier)
 	{
-		$this->_init();
 		$f = fopen($fichier, 'r');
+		$r = $this->decoupeFlux($f);
+		fclose($f);
+		return $r;
+	}
+	
+	public function decoupeFlux($f)
+	{
+		$this->_init();
 		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
-		fclose($f);
 		return $this->_decoupeBloc('', true);
 	}
 	
