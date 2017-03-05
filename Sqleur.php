@@ -245,6 +245,11 @@ class Sqleur
 				$requeteEnCours = $condition[2]; // On restaure.
 				$this->_sortie = $condition[1];
 				break;
+			case '#define':
+				// À FAIRE: gérer le multi-ligne avec des \.
+				$déf = preg_split('/[ 	]+/', $directive, 3);
+				$this->_defs[$déf[1]] = $déf[2];
+				break;
 			case '#encoding':
 				$encodage = trim(substr($directive, $posEspace));
 				if(in_array(preg_replace('/[^a-z0-9]/', '', strtolower($encodage)), array('', 'utf8')))
