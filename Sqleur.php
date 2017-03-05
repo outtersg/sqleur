@@ -241,6 +241,7 @@ class Sqleur
 				break;
 			case '#endif':
 				$condition = array_pop($this->_conditions);
+				if(!$condition[3]) // Si le dernier bloc traité (#if ou #else) était à ignorer,
 				$requeteEnCours = $condition[2]; // On restaure.
 				$this->_sortie = $condition[1];
 				break;
