@@ -60,9 +60,12 @@ class Sqleur
 	
 	public function decoupeFichier($fichier)
 	{
+		$ancienFichier = isset($this->_fichier) ? $this->_fichier : null;
+		$this->_fichier = $fichier;
 		$f = fopen($fichier, 'r');
 		$r = $this->decoupeFlux($f);
 		fclose($f);
+		$this->_fichier = $ancienFichier;
 		return $r;
 	}
 	
