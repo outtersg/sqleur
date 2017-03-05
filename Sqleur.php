@@ -244,6 +244,13 @@ class Sqleur
 				$requeteEnCours = $condition[2]; // On restaure.
 				$this->_sortie = $condition[1];
 				break;
+			case '#encoding':
+				$encodage = trim(substr($directive, $posEspace));
+				if(in_array(preg_replace('/[^a-z0-9]/', '', strtolower($encodage)), array('', 'utf8')))
+					unset($this->_conv);
+				else
+					$this->_conv = function($ligne) use($encodage) { return iconv($encodage, 'utf-8', $ligne); };
+				break;
 		}
 		
 		return $requeteEnCours;
