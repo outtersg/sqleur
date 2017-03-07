@@ -258,7 +258,9 @@ class Sqleur
 				break;
 			case '#define':
 				$déf = preg_split('/[ 	]+/', $directive, 3);
-				$this->_defs[$déf[1]] = isset($déf[2]) ? $déf[2] : '';
+				$contenuDéf = isset($déf[2]) ? $déf[2] : '';
+				$contenuDéf = strtr($contenuDéf, $this->_defs);
+				$this->_defs[$déf[1]] = $contenuDéf;
 				break;
 			case '#encoding':
 				$encodage = trim(substr($directive, $posEspace));
