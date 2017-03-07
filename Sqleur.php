@@ -255,7 +255,7 @@ class Sqleur
 			case '#define':
 				// À FAIRE: gérer le multi-ligne avec des \.
 				$déf = preg_split('/[ 	]+/', $directive, 3);
-				$this->_defs[$déf[1]] = $déf[2];
+				$this->_defs[$déf[1]] = isset($déf[2]) ? $déf[2] : '';
 				break;
 			case '#encoding':
 				$encodage = trim(substr($directive, $posEspace));
