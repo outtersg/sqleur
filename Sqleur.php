@@ -87,7 +87,7 @@ class Sqleur
 	{
 		if(isset($this->_resteEnCours))
 			$chaine = $this->_resteEnCours.$chaine;
-		preg_match_all("#\#|;|--|\n|/\*|\*/|'|\\\\'|\\$[a-zA-Z0-9_]*\\$#", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
+		preg_match_all("#\#|\\\\|;|--|\n|/\*|\*/|'|\\\\'|\\$[a-zA-Z0-9_]*\\$#", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
 		$taille = strlen($chaine);
 		$decoupes = $decoupes[0];
@@ -131,11 +131,15 @@ class Sqleur
 					{
 						$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
 						$j = $i;
-						while(++$i < $n && $decoupes[$i][0] != "\n") {}
+						while(++$i < $n && $decoupes[$i][0] != "\n")
+							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n")
+								++$i;
 						if($i < $n)
 						{
 							$dernierArret = $decoupes[$i][1];
-							$requete = $this->_preprocesse(rtrim(substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1])), $requete);
+							$blocPréprocesse = rtrim(substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]));
+							$blocPréprocesse = preg_replace('#\\\\$#m', '', $blocPréprocesse);
+							$requete = $this->_preprocesse($blocPréprocesse, $requete);
 							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
 						}
 					}
@@ -253,7 +257,6 @@ class Sqleur
 				$this->_sortie = $condition[1];
 				break;
 			case '#define':
-				// À FAIRE: gérer le multi-ligne avec des \.
 				$déf = preg_split('/[ 	]+/', $directive, 3);
 				$this->_defs[$déf[1]] = isset($déf[2]) ? $déf[2] : '';
 				break;
