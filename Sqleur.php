@@ -385,7 +385,7 @@ class Sqleur
 		$racine = $this->_compilerPrepro($expr);
 	
 		if(!($racine instanceof NœudPrepro))
-			throw new Exception('Expression ininterprétable');
+			throw new Exception('Expression ininterprétable: '.$expr);
 		
 		return $racine->exécuter($this);
 	}
