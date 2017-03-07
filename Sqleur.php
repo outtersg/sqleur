@@ -222,11 +222,12 @@ class Sqleur
 					$vrai = true;
 				else
 					$vrai = $this->_calculerPrepro($posEspace === false ? '' : substr($directive, $posEspace));
-				$condition = $motCle == '#if' ? array(false, $this->_sortie, $requeteEnCours, false) : array_pop($this->_conditions); // 0: déjà fait; 1: sauvegarde de la vraie sortie; 2: requête en cours; 3: en cours.
+				$condition = $motCle == '#if' ? array(false, $this->_sortie, $requeteEnCours, false, $this->_defs) : array_pop($this->_conditions); // 0: déjà fait; 1: sauvegarde de la vraie sortie; 2: requête en cours; 3: en cours; 4: définitions.
 				if(!$condition[0] && $vrai) // Si pas déjà fait, et que le if est avéré.
 				{
 					$this->_sortie = $condition[1];
 					$requeteEnCours = $condition[2];
+					$this->_defs = $condition[4];
 					$condition[3] = true; // En cours.
 					$condition[0] = true; // Déjà fait.
 				}
@@ -234,7 +235,10 @@ class Sqleur
 				{
 					$this->_sortie = array($this, 'sortirContenuIfFalse');
 					if($condition[3]) // Si on clôt l'en-cours.
+					{
 						$condition[2] = $requeteEnCours; // On mémorise 
+						$condition[4] = $this->_defs;
+					}
 					$condition[3] = false;
 				}
 				$this->_conditions[] = $condition;
@@ -242,7 +246,10 @@ class Sqleur
 			case '#endif':
 				$condition = array_pop($this->_conditions);
 				if(!$condition[3]) // Si le dernier bloc traité (#if ou #else) était à ignorer,
+				{
 				$requeteEnCours = $condition[2]; // On restaure.
+					$this->_defs = $condition[4];
+				}
 				$this->_sortie = $condition[1];
 				break;
 			case '#define':
