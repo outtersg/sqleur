@@ -159,6 +159,10 @@ class Sql2Csv
 		for($i = 0; ++$i < count($argv);)
 			switch($argv[$i])
 			{
+				case '--newline':
+					++$i;
+					$conversions["\n"] = $argv[$i];
+					break;
 				case '-o':
 					++$i;
 					$sortie = $argv[$i];
