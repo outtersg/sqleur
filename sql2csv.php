@@ -72,6 +72,9 @@ class Flux
 
 class JoueurSql extends Sqleur
 {
+	const CSV = 'csv';
+	const CSVBRUT = 'delim';
+	
 	protected $bdd;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
@@ -142,7 +145,15 @@ class JoueurSql extends Sqleur
 		if(isset($this->conversions))
 			foreach($l as & $ptrChamp)
 				$ptrChamp = strtr($ptrChamp, $this->conversions);
+		switch($this->format)
+		{
+			case JoueurSql::CSV:
 		fputcsv($this->sortie->f, $l, ';');
+				break;
+			case JoueurSql::CSVBRUT:
+				fwrite($this->sortie->f, implode(';', $l)."\n");
+				break;
+		}
 	}
 }
 
@@ -155,10 +166,14 @@ class Sql2Csv
 		$entrées = array();
 		$sortie = Flux::STDOUT;
 		$conversions = array();
+		$formatSortie = JoueurSql::CSV;
 		
 		for($i = 0; ++$i < count($argv);)
 			switch($argv[$i])
 			{
+				case '--raw':
+					$formatSortie = JoueurSql::CSVBRUT;
+					break;
 				case '--newline':
 					++$i;
 					$conversions["\n"] = $argv[$i];
@@ -179,9 +194,19 @@ class Sql2Csv
 		if(!count($entrées))
 			$entrées[] = Flux::STDIN;
 		
+		// Si on est sur du brut de chez brut, quelques conversions seront nécessaires pour que la sortie ne soit pas pourrie. On les ajoute en +=, afin que celles demandées via -t soient prioritaires.
+		
+		if($formatSortie == JoueurSql::CSVBRUT)
+			$conversions += array
+			(
+				"\n" => ' | ',
+			';' => ',',
+			);
+		
 		// On y va!
 		
 		$j->conversions = isset($conversions) && count($conversions) ? $conversions : null;
+		$j->format = $formatSortie;
 		$j->sortie($sortie);
 		foreach($entrées as $entrée)
 			$j->jouer($entrée);
