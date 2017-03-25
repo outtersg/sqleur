@@ -74,6 +74,7 @@ class JoueurSql extends Sqleur
 {
 	protected $bdd;
 	protected $sortiesDéjàUtilisées = array();
+	public $conversions;
 	
 	public function __construct()
 	{
@@ -138,6 +139,9 @@ class JoueurSql extends Sqleur
 	
 	protected function exporterLigne($l)
 	{
+		if(isset($this->conversions))
+			foreach($l as & $ptrChamp)
+				$ptrChamp = strtr($ptrChamp, $this->conversions);
 		fputcsv($this->sortie->f, $l, ';');
 	}
 }
@@ -150,6 +154,7 @@ class Sql2Csv
 		
 		$entrées = array();
 		$sortie = Flux::STDOUT;
+		$conversions = array();
 		
 		for($i = 0; ++$i < count($argv);)
 			switch($argv[$i])
@@ -168,6 +173,7 @@ class Sql2Csv
 		
 		// On y va!
 		
+		$j->conversions = isset($conversions) && count($conversions) ? $conversions : null;
 		$j->sortie($sortie);
 		foreach($entrées as $entrée)
 			$j->jouer($entrée);
