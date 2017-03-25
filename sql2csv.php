@@ -163,6 +163,10 @@ class Sql2Csv
 					++$i;
 					$conversions["\n"] = $argv[$i];
 					break;
+				case '-t':
+					$conversions[$argv[$i + 1]] = $argv[$i + 2];
+					$i += 2;
+					break;
 				case '-o':
 					++$i;
 					$sortie = $argv[$i];
