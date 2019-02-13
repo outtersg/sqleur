@@ -1,0 +1,187 @@
+<?php
+/*
+ * Copyright (c) 2019 Guillaume Outters
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/**
+ * Préprocesseur introduisant du pif.
+ * Exemple d'utilisation: test de robustesse à la saisie en désordre de données (commutativité).
+ * Utilisation:
+   -- Par défaut tout ce qui est hors des sections au pif sortira séquentiellement.
+   -- Introduit une section qui sortira dans un ordre aléatoire.
+   #pif [
+   insert etc.; -- Donc cette instruction…
+   insert etc.; -- … pourra être jouée après *ou avant* la précédente.
+   -- Nommage de l'instruction qui suivra:
+   #pif A
+   insert etc.; -- Cette instruction s'appelle "A" aux yeux de #pif.
+   #pif après A
+   insert etc.; -- Cette instruction ne sera *jamais* jouée avant A (par contre rien ne dit qu'elle interviendra juste après A).
+   #pif après A
+   insert etc.; -- Celle-ci non plus (par contre entre ces deux dernières, l'ordre reste aléatoire).
+   -- Nommage et ordre simultanés:
+   #pif B après A
+   insert etc.; -- Celle-ci sera jouée forcément après A; et s'appelle B, ce qui pourra permettre de chaîner un C plus tard.
+   #pif ]
+ */
+// À FAIRE: introduire les accolades pour déclarer des blocs séquentiels (toujours joués d'affilée).
+class SqleurPreproPif
+{
+	protected $_préfixes = array('#pif', '#rand');
+	protected $_motsAprès = array('après', 'suit', 'after');
+	
+	const TYPE = 0;
+	const VAL = 1;
+	const DÉPS = 2;
+	
+	public function __construct()
+	{
+		$this->_pile = array();
+	}
+	
+	protected function _err($source, $message)
+	{
+		throw new Exception(get_class($this).': '.$message.(isset($source) ? " (dans '".$source."')" : ''));
+	}
+	
+	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
+	{
+		if(!in_array($motClé, $this->_préfixes))
+			return false;
+
+		$mots = preg_split("/[ \t]+/", $directiveComplète);
+		for($i = 0; ++$i < count($mots);)
+			switch($mots[$i])
+			{
+				case '[':
+					$this->_entre();
+					break;
+				case ']':
+					$this->_sors();
+					break;
+				default:
+					if(in_array($mots[$i], $this->_motsAprès))
+					{
+						if(!isset($mots[$i + 1]))
+							$this->_err($directiveComplète, $mots[$i].', '.$mots[$i].' quoi?');
+						$this->_prochainesDépendances[$mots[$i + 1]] = true;
+						++$i;
+					}
+					else
+					{
+						if(isset($this->_prochainNom))
+							$this->_err($directiveComplète, "ah non, alors! Un seul nom à la fois: je ne peux appeler le bloc à la fois '".$this->_prochainNom."' et '".$mots[$i]."'");
+						$this->_prochainNom = $mots[$i];
+					}
+			}
+		
+		return $requêteEnCours;;
+	}
+	
+	protected function _entre()
+	{
+		if(count($this->_pile) <= 1)
+		{
+			$this->_sortieOriginelle = $this->_sqleur->_sortie;
+			$this->_sqleur->_sortie = array($this, 'chope');
+			$this->_pile = array(array());
+			$this->_prochainesDépendances = array();
+			$this->_prochainNom = null;
+		}
+		// On entrepose déjà ce qu'on sait du bloc: ainsi s'il est nommé il aura au moins sauvé de l'écrasement futur son nom.
+		$this->_entrepose('p', array());
+	}
+	
+	public function chope($req)
+	{
+		$this->_entrepose('r', $req);
+	}
+	
+	protected function _sors()
+	{
+		array_pop($this->_pile);
+		if(!count($this->_pile) <= 1)
+		{
+			$this->_sqleur->_sortie = $this->_sortieOriginelle;
+			$this->_déroule($this->_pile[0][0]);
+		}
+	}
+	
+	protected function _entrepose($type, $truc)
+	{
+		$ptrListeCourante = & $this->_pile[count($this->_pile) - 1];
+		$nom = isset($this->_prochainNom) ?  $this->_prochainNom : count($ptrListeCourante);
+		$ptrListeCourante[$nom] = array(self::TYPE => $type, self::VAL => $truc, self::DÉPS => $this->_prochainesDépendances);
+		$this->_prochainesDépendances = null;
+		unset($this->_prochainNom);
+		// Un bloc de type 'p' doit se voir ouvrir son propre sous-bloc indépendant.
+		if($type == 'p')
+			$this->_pile[] = & $ptrListeCourante[$nom][1];
+	}
+	
+	protected function _déroule($quoi)
+	{
+		switch($quoi[self::TYPE])
+		{
+			// Une requête, le plus facile.
+			case 'r':
+				call_user_func($this->_sqleur->_sortie, $quoi[self::VAL]);
+				break;
+			// Une séquence.
+			case 's':
+				foreach($quoi as $val)
+					$this->_déroule($val);
+				break;
+			// Un pif.
+			case 'p':
+				$this->_déroulePif($quoi[self::VAL]);
+				break;
+		}
+	}
+	
+	protected function _déroulePif($àFaire)
+	{
+		$joués = array();
+		$jouables = array();
+		while(count($àFaire) || count($jouables))
+		{
+			// On met de côté ceux dont toutes les dépendances sont résolues.
+			foreach($àFaire as $nom => $val)
+				if(!isset($val[self::DÉPS]) || !count(array_diff_key($val[self::DÉPS], $joués)))
+				{
+					$jouables[$nom] = $val;
+					unset($àFaire[$nom]);
+				}
+			// Boucle infinie d'interdépendances?
+			if(!count($jouables) && count($àFaire))
+				$this->_err(null, 'interdépendance(s) entre '.implode(', ', array_keys($àFaire)));
+			// Jouons (littéralement)!
+			$num = rand(0, count($jouables) - 1);
+			$clés = array_keys($jouables);
+			$clé = $clés[$num];
+			$this->_déroule($jouables[$clé]);
+			$joués[$clé] = true;
+			unset($jouables[$clé]);
+		}
+	}
+}
+
+?>
