@@ -213,6 +213,11 @@ class Sqleur
 		}
 	}
 	
+	public function dansUnSiÀLaTrappe()
+	{
+		return is_array($this->_sortie) && is_string($this->_sortie[1]) && $this->_sortie[1] == 'sortirContenuIfFalse';
+	}
+	
 	public function sortirContenuIfFalse($contenu)
 	{
 	}
