@@ -161,6 +161,10 @@ class SqleurPreproPif
 	{
 		$joués = array();
 		$jouables = array();
+		// Toutes nos dépendances existent-elles?
+		foreach($àFaire as $nom => $val)
+			if(isset($val[self::DÉPS]) && count($inconnues = array_diff_key($val[self::DÉPS], $àFaire)))
+				$this->_err(null, 'requête '.$nom.': dépendance envers '.implode(', ', array_keys($inconnues)).' inexistante'.(count($inconnues) > 1 ? 's' : ''));
 		while(count($àFaire) || count($jouables))
 		{
 			// On met de côté ceux dont toutes les dépendances sont résolues.
