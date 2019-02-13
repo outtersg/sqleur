@@ -28,7 +28,7 @@ class Sqleur
 	 * 
 	 * @param fonction $sortie Méthode prenant en paramètre une requête. Sera appelée pour chaque requête, au fur et à mesure qu'elles seront lues.
 	 */
-	public function __construct($sortie = null)
+	public function __construct($sortie = null, $préprocesseurs = array())
 	{
 		$this->_defs = array();
 		if(($this->_retourDirect = !isset($sortie)))
@@ -38,6 +38,10 @@ class Sqleur
 		}
 		else
 			$this->_sortie = $sortie;
+		
+		foreach($préprocesseurs as $préprocesseur)
+			$préprocesseur->_sqleur = $this;
+		$this->_préprocesseurs = $préprocesseurs;
 	}
 	
 	public function avecDefinitions($definitions)
@@ -217,6 +221,9 @@ class Sqleur
 	{
 		$posEspace = strpos($directive, ' ');
 		$motCle = $posEspace === false ? $directive : substr($directive, 0, $posEspace);
+		foreach($this->_préprocesseurs as $préproc)
+			if(($r = $préproc->préprocesse($motCle, $directive, $requeteEnCours)) !== false)
+				return $r;
 		switch($motCle)
 		{
 			case '#else':
