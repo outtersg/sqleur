@@ -226,9 +226,6 @@ class Sqleur
 	{
 		$posEspace = strpos($directive, ' ');
 		$motCle = $posEspace === false ? $directive : substr($directive, 0, $posEspace);
-		foreach($this->_préprocesseurs as $préproc)
-			if(($r = $préproc->préprocesse($motCle, $directive, $requeteEnCours)) !== false)
-				return $r;
 		switch($motCle)
 		{
 			case '#else':
@@ -268,6 +265,14 @@ class Sqleur
 				}
 				$this->_sortie = $condition[1];
 				break;
+		}
+		if(!$this->dansUnSiÀLaTrappe())
+		{
+			foreach($this->_préprocesseurs as $préproc)
+				if(($r = $préproc->préprocesse($motCle, $directive, $requeteEnCours)) !== false)
+					return $r;
+			switch($motCle)
+			{
 			case '#define':
 				$déf = preg_split('/[ 	]+/', $directive, 3);
 				$contenuDéf = isset($déf[2]) ? $déf[2] : '';
@@ -281,6 +286,7 @@ class Sqleur
 				else
 					$this->_conv = function($ligne) use($encodage) { return iconv($encodage, 'utf-8', $ligne); };
 				break;
+			}
 		}
 		
 		return $requeteEnCours;
