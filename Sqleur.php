@@ -332,6 +332,7 @@ class Sqleur
 				',' => 'bi',
 				'!' => 'devant',
 				'not' => 'devant',
+				'defined' => 'devant',
 				'in' => 'bimulti',
 				'==' => 'bi',
 				'"' => 'chaîne',
@@ -456,6 +457,9 @@ class NœudPrepro
 				$gauche = $this->_contenu($this->f[0], $contexte);
 				$droite = $this->_contenus($this->f[1], $contexte);
 				return in_array($gauche, $droite);
+			case 'defined':
+				$var = is_array($this->f) && count($this->f) == 1 && isset($this->f[0]) && is_object($this->f[0]) && $this->f[0] instanceof NœudPrepro && $this->f[0]->t == 'mot' && is_string($this->f[0]->f) ? $this->f[0]->f : $this->_contenu($this->f[0], $contexte);
+				return array_key_exists($var, $contexte->_defs);
 			default:
 				throw new Exception('Je ne sais pas gérer les '.$this->t);
 		}
