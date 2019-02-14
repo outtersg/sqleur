@@ -427,7 +427,12 @@ class NœudPrepro
 		switch($this->t)
 		{
 			case 'not':
-				return !$this->_contenu($this->f, $contexte);
+				// Si notre 'not' est appelé avant une valeur (not 1) plutôt qu'avant un autre opérateur booléen (not in), on prend la valeur comme booléen à passer au 'not'.
+				// À FAIRE: en vrai de vrai ça ne marche que dans le cas "une seule valeur", car j'ai foiré ma priorité des opérateurs, et 1, not 2, 3 est vu comme 1, not (2, 3) au lieu de A, (not 2), 3.
+				$val = $this->f;
+				while(is_array($val) && count($val) == 1)
+					$val = array_shift($val);
+				return !$this->_contenu($val, $contexte);
 			case 'mot':
 				if(preg_match('/^[0-9]*$/', $this->f))
 					return 0 + $this->f;
