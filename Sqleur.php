@@ -298,7 +298,7 @@ class Sqleur
 	{
 		$bouts = array();
 		
-		preg_match_all('# +|,|==|"#', $expr, $découpe, PREG_OFFSET_CAPTURE);
+		preg_match_all('# +|[,"!]|==#', $expr, $découpe, PREG_OFFSET_CAPTURE);
 		$pos = 0;
 		foreach($découpe[0] as $découpé)
 		{
@@ -330,6 +330,7 @@ class Sqleur
 			array
 			(
 				',' => 'bi',
+				'!' => 'devant',
 				'not' => 'devant',
 				'in' => 'bimulti',
 				'==' => 'bi',
@@ -426,6 +427,7 @@ class NœudPrepro
 	{
 		switch($this->t)
 		{
+			case '!':
 			case 'not':
 				// Si notre 'not' est appelé avant une valeur (not 1) plutôt qu'avant un autre opérateur booléen (not in), on prend la valeur comme booléen à passer au 'not'.
 				// À FAIRE: en vrai de vrai ça ne marche que dans le cas "une seule valeur", car j'ai foiré ma priorité des opérateurs, et 1, not 2, 3 est vu comme 1, not (2, 3) au lieu de A, (not 2), 3.
