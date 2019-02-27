@@ -68,6 +68,7 @@ class SqleurPreproPif
 			return false;
 
 		$mots = preg_split("/[ \t]+/", $directiveComplète);
+		$boutAttendu = 'nom';
 		for($i = 0; ++$i < count($mots);)
 			switch($mots[$i])
 			{
@@ -82,14 +83,21 @@ class SqleurPreproPif
 					{
 						if(!isset($mots[$i + 1]))
 							$this->_err($directiveComplète, $mots[$i].', '.$mots[$i].' quoi?');
-						$this->_prochainesDépendances[$mots[$i + 1]] = true;
-						++$i;
+						$boutAttendu = 'après';
 					}
 					else
 					{
+						switch($boutAttendu)
+						{
+							case 'nom':
 						if(isset($this->_prochainNom))
 							$this->_err($directiveComplète, "ah non, alors! Un seul nom à la fois: je ne peux appeler le bloc à la fois '".$this->_prochainNom."' et '".$mots[$i]."'");
 						$this->_prochainNom = $mots[$i];
+								break;
+							case 'après':
+								$this->_prochainesDépendances[$mots[$i]] = true;
+								break;
+						}
 					}
 			}
 		
