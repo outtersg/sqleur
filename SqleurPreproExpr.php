@@ -100,7 +100,14 @@ class SqleurPreproExpr
 							$chaînes = array();
 							for($fin = $num; ++$fin < count($bouts);)
 								if($bouts[$fin] == $bout)
+								{
+									// Si le caractère qui nous précède est un antislash, on ne sort pas, finalement.
+									if(($dernière = count($chaînes) - 1) >= 0 && is_string($chaînes[$dernière]) && substr($chaînes[$dernière], -1) == '\\')
+										$chaînes[$dernière] = substr($chaînes[$dernière], 0, -1).$bout;
+									// Sinon, ce premier caractère rencontré identique à celui de début marque la fin.
+									else
 									break;
+								}
 								else if(!is_string($bouts[$fin]))
 									throw new Exception('Erreur interne du préprocesseur, une chaîne contient un bout déjà interprété'); // À FAIRE?: permettre l'inclusion de variables dans la chaîne (f deviendrait alors un tableau d'éléments chaîne ou Nœud, et la constitution finale de la chaîne ne serait faite qu'au calcul.
 								else
