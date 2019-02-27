@@ -138,7 +138,7 @@ class Sqleur
 						$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
 						$j = $i;
 						while(++$i < $n && $decoupes[$i][0] != "\n")
-							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n")
+							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n" && $decoupes[$i + 1][1] == $decoupes[$i][1] + 1)
 								++$i;
 						if($i < $n)
 						{
