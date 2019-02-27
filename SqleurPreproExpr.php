@@ -99,7 +99,7 @@ class SqleurPreproExpr
 						case 'chaîne':
 							$chaînes = array();
 							for($fin = $num; ++$fin < count($bouts);)
-								if($bouts[$fin] == '"')
+								if($bouts[$fin] == $bout)
 									break;
 								else if(!is_string($bouts[$fin]))
 									throw new Exception('Erreur interne du préprocesseur, une chaîne contient un bout déjà interprété'); // À FAIRE?: permettre l'inclusion de variables dans la chaîne (f deviendrait alors un tableau d'éléments chaîne ou Nœud, et la constitution finale de la chaîne ne serait faite qu'au calcul.
@@ -107,7 +107,7 @@ class SqleurPreproExpr
 									$chaînes[] = $bouts[$fin];
 							if($fin == count($bouts))
 								throw new Exception('Chaîne non terminée');
-							$nœud = new NœudPrepro('"', $chaînes);
+							$nœud = new NœudPrepro($bout, $chaînes);
 							array_splice($bouts, $num, $fin - $num + 1, array($nœud));
 							return $this->arborer($bouts);
 					}
