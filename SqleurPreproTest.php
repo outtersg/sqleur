@@ -119,7 +119,7 @@ class SqleurPreproTest
 	
 	protected function _normaliseRésAttendu($résAttendu)
 	{
-		$résAttendu = preg_replace('/^([$][^$]*[$])\n*(.+(?:\n+.+))\n*\1\n*$/', '\2', $résAttendu);
+		$résAttendu = preg_replace('/^([$][^$]*[$])\n*((.+(?:\n+.+))*)\n*\1\n*$/', '\2', $résAttendu);
 		
 		$résAttendu = preg_replace_callback('/"([^"]*)"/', function($trouvaille) { return strtr($trouvaille[1], ' ', "\003"); }, $résAttendu);
 		$résAttendu = preg_replace('/ +/', "\t", $résAttendu);
