@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+include_once "SqleurPreproExpr.php";
+
 /**
  * Préprocesseur introduisant du pif.
  * Exemple d'utilisation: test de robustesse à la saisie en désordre de données (commutativité).
