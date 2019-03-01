@@ -85,12 +85,11 @@ class SqleurPreproPif
 		// On vire le mot-clé lui-même.
 		$directiveComplète = preg_replace("/^[^ ]*[ \t]+/", '', $directiveComplète);
 		
-		if(class_exists('SqleurPreproExpr'))
+		if(isset($this->_expr))
 		{
 			try
 			{
-				$e = new SqleurPreproExpr();
-				$mots = $e->compiler($directiveComplète);
+				$mots = $this->_expr->compiler($directiveComplète);
 				if(is_object($mots))
 					$mots = array($mots);
 				foreach($mots as & $ptrMot)
