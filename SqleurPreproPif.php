@@ -40,6 +40,9 @@
    -- Nommage et ordre simultanés:
    #pif B après A
    insert etc.; -- Celle-ci sera jouée forcément après A; et s'appelle B, ce qui pourra permettre de chaîner un C plus tard.
+   -- Pseudo-nommage sur regex (valable pour toutes les requêtes qui *suivront*)
+   -- et ordre sur regex (piochant parmi les requêtes qui *précèdent*):
+   #pif /insert into vals \(id, ref\) values \([^,]*, ([0-9]*)\)/ après /insert into ref values \($1,/
    #pif ]
  */
 // À FAIRE: introduire les accolades pour déclarer des blocs séquentiels (toujours joués d'affilée).
