@@ -224,8 +224,11 @@ class SqleurPreproPif
 		if($type == 'r' && isset($this->_dépsRegex))
 		{
 			foreach($this->_dépsRegex as $regex => $dépsCetteRegex)
-				if(preg_match($regex, $truc))
-					$déps += $dépsCetteRegex;
+				if(preg_match($regex, $truc, $corr))
+				{
+					$moi = $this;
+					$déps += array_map(function($x) use($moi, $corr) { return $moi->_dollarsRemplacés($x, $corr); }, $dépsCetteRegex);
+				}
 		}
 		// Parmi nos dépendances, résolution de celles dynamiques (regex au lieu de nom).
 		/* NOTE: déroulement de la regex à l'entreposage
@@ -338,6 +341,21 @@ class SqleurPreproPif
 			$joués[$clé] = true;
 			unset($jouables[$clé]);
 		}
+	}
+	
+	/**
+	 * Renvoie une chaîne pour regex, dans laquelle les $[0-9]+ ont été remplacés par l'entrée correspondante de $rempl.
+	 * Ce $ est pris de préférence au \: le second est à usage interne, tandis que le premier permet de faire des remplacements entre regex.
+	 */
+	public function _dollarsRemplacés($original, $rempl)
+	{
+		$n = 0;
+		$chaîne = is_object($original) ? substr($original->f, 1, -1) : $original;
+		$modifié = preg_replace_callback('/\$([0-9]+)/', function($t) use($original, $rempl) { return $rempl[$t[1]]; }, $chaîne);
+		// Si aucun remplacement, renvoyons l'objet initial: on économise toute la suite.
+		if($modifié == $chaîne)
+			return $original;
+		return is_object($original) ? new NœudPrepro($original->t, $this->_expr->_regex($modifié)) : $modifié;
 	}
 }
 
