@@ -284,7 +284,7 @@ class SqleurPreproPif
 				break;
 			// Une séquence.
 			case 's':
-				foreach($quoi as $val)
+				foreach($quoi[self::VAL] as $val)
 					$this->_déroule($val);
 				break;
 			// Un pif.
