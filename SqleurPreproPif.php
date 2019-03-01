@@ -70,7 +70,7 @@ class SqleurPreproPif
 	
 	protected function _err($source, $message)
 	{
-		throw new Exception(get_class($this).': '.$message.(isset($source) ? " (dans '".$source."')" : ''));
+		throw new Exception($this->_message($source, $message));
 	}
 	
 	protected function _découpe($directiveComplète)
