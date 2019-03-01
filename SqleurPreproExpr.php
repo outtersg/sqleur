@@ -187,6 +187,8 @@ class NœudPrepro
 					throw new Exception("Variable de préproc '".$this->f."' indéfinie");
 				return $contexte->_defs[$this->f];
 			case '"':
+				if(is_string($this->f))
+					return $this->f;
 				$r = '';
 				foreach($this->f as $f)
 					if(is_string($f))
