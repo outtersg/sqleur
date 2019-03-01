@@ -240,7 +240,12 @@ class SqleurPreproPif
 		$déps = array();
 		foreach($dépsBrutes as $nomDép => $dép)
 			if(is_object($dép))
-				$déps += $this->_requêtesPasséesCorrespondantÀ($dép->f);
+			{
+				$nouvellesDéps = $this->_requêtesPasséesCorrespondantÀ($dép->f);
+				if(!count($nouvellesDéps))
+					$this->_attention($truc, "aucune correspondance trouvée pour la dépendance ".$dép->f);
+				$déps += $nouvellesDéps;
+			}
 			else
 				$déps[$nomDép] = true;
 		
