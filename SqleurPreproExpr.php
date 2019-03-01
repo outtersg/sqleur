@@ -27,7 +27,7 @@ class SqleurPreproExpr
 	{
 		$bouts = array();
 		
-		preg_match_all('# +|[,"!]|==#', $expr, $découpe, PREG_OFFSET_CAPTURE);
+		preg_match_all('# +|[,"!/]|==#', $expr, $découpe, PREG_OFFSET_CAPTURE);
 		$pos = 0;
 		foreach($découpe[0] as $découpé)
 		{
@@ -65,6 +65,7 @@ class SqleurPreproExpr
 				'in' => 'bimulti',
 				'==' => 'bi',
 				'"' => 'chaîne',
+				'/' => 'chaîne',
 			),
 		);
 		
@@ -114,6 +115,9 @@ class SqleurPreproExpr
 									$chaînes[] = $bouts[$fin];
 							if($fin == count($bouts))
 								throw new Exception('Chaîne non terminée');
+							$chaînes = implode('', $chaînes);
+							if($bout == '/')
+								$chaînes = $this->_regex($chaînes);
 							$nœud = new NœudPrepro($bout, $chaînes);
 							array_splice($bouts, $num, $fin - $num + 1, array($nœud));
 							return $this->arborer($bouts);
@@ -126,6 +130,16 @@ class SqleurPreproExpr
 			else if(strlen(trim($truc)))
 				$trucs[] = new NœudPrepro('mot', $truc);
 		return $trucs;
+	}
+	
+	protected function _regex($regex)
+	{
+		foreach(array('/', '#', '!', '$', '"', '&', '@', "\003", null) as $encadreur)
+			if(!isset($encadreur)) // Eh ben, l'expression aura réussi à épuiser toutes nos ressources!
+				$this->_err($regex, 'tous les caractères spéciaux sont pris, impossible de constituer une regex');
+			else if(strpos($regex, $encadreur) === false)
+				break;
+		return $encadreur.$regex.$encadreur;
 	}
 	
 	public function listerVirgules($expr)
@@ -206,6 +220,8 @@ class NœudPrepro
 			case 'defined':
 				$var = is_array($this->f) && count($this->f) == 1 && isset($this->f[0]) && is_object($this->f[0]) && $this->f[0] instanceof NœudPrepro && $this->f[0]->t == 'mot' && is_string($this->f[0]->f) ? $this->f[0]->f : $this->_contenu($this->f[0], $contexte);
 				return array_key_exists($var, $contexte->_defs);
+			case '/':
+				return $this;
 			default:
 				throw new Exception('Je ne sais pas gérer les '.$this->t);
 		}
