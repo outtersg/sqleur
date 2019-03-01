@@ -71,6 +71,8 @@ class SqleurPreproPif
 		$mots = preg_split("/[ \t]+/", $directiveComplète);
 		$boutAttendu = 'nom';
 		for($i = 0; ++$i < count($mots);)
+		{
+			$mot = $mots[$i];
 			switch($mots[$i])
 			{
 				case '[':
@@ -84,23 +86,24 @@ class SqleurPreproPif
 					{
 						if(!isset($mots[$i + 1]))
 							$this->_err($directiveComplète, $mots[$i].', '.$mots[$i].' quoi?');
-						$boutAttendu = 'après';
+						$boutAttendu = 'déps'.$boutAttendu;
 					}
 					else
 					{
 						switch($boutAttendu)
 						{
 							case 'nom':
-						if(isset($this->_prochainNom))
-							$this->_err($directiveComplète, "ah non, alors! Un seul nom à la fois: je ne peux appeler le bloc à la fois '".$this->_prochainNom."' et '".$mots[$i]."'");
-						$this->_prochainNom = $mots[$i];
+								if(isset($this->_prochains[$boutAttendu]))
+									$this->_err($directiveComplète, "ah non, alors! Un seul ".$boutAttendu." à la fois: je ne peux travailler à la fois sur '".$this->_prochains[$boutAttendu]."' et '".$mot."'");
+								$this->_prochains[$boutAttendu] = $mot;
 								break;
-							case 'après':
-								$this->_prochainesDépendances[$mots[$i]] = true;
+							case 'dépsnom':
+								$this->_prochains[$boutAttendu][$mot] = true;
 								break;
 						}
 					}
 			}
+		}
 		
 		return $requêteEnCours;;
 	}
@@ -112,8 +115,7 @@ class SqleurPreproPif
 			$this->_sortieOriginelle = $this->_sqleur->_sortie;
 			$this->_sqleur->_sortie = array($this, 'chope');
 			$this->_pile = array(array());
-			$this->_prochainesDépendances = array();
-			$this->_prochainNom = null;
+			$this->_prochainsLibres();
 		}
 		// On entrepose déjà ce qu'on sait du bloc: ainsi s'il est nommé il aura au moins sauvé de l'écrasement futur son nom.
 		$this->_entrepose('p', array());
@@ -137,13 +139,23 @@ class SqleurPreproPif
 	protected function _entrepose($type, $truc)
 	{
 		$ptrListeCourante = & $this->_pile[count($this->_pile) - 1];
-		$nom = isset($this->_prochainNom) ? $this->_prochainNom : '.'.(++$this->_idUnique).'_'; // Avec une parure disymétrique afin qu'aucun utilisateur n'ait l'idée de prendre la même nomenclature.
-		$ptrListeCourante[$nom] = array(self::TYPE => $type, self::VAL => $truc, self::DÉPS => $this->_prochainesDépendances);
-		$this->_prochainesDépendances = null;
-		unset($this->_prochainNom);
+		$nom = isset($this->_prochains['nom']) ? $this->_prochains['nom'] : '.'.(++$this->_idUnique).'_'; // Avec une parure disymétrique afin qu'aucun utilisateur n'ait l'idée de prendre la même nomenclature.
+		$déps = $this->_prochains['dépsnom'];
+		$ptrListeCourante[$nom] = array(self::TYPE => $type, self::VAL => $truc, self::DÉPS => count($déps) ? $déps : null);
+		
+		$this->_prochainsLibres();
+		
 		// Un bloc de type 'p' doit se voir ouvrir son propre sous-bloc indépendant.
 		if($type == 'p')
 			$this->_pile[] = & $ptrListeCourante[$nom][1];
+	}
+	
+	protected function _prochainsLibres()
+	{
+		$this->_prochains = array
+		(
+			'dépsnom' => array(),
+		);
 	}
 	
 	protected function _déroule($quoi)
