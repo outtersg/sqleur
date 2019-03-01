@@ -152,6 +152,14 @@ class SqleurPreproExpr
 	}
 }
 
+class ErreurExpr extends Exception
+{
+	public function setMessage($m)
+	{
+		$this->message = $m;
+	}
+}
+
 class NœudPrepro
 {
 	public function __construct($type, $fils = null)
