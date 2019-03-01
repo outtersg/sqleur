@@ -63,6 +63,11 @@ class SqleurPreproPif
 		$this->_idUnique = 0;
 	}
 	
+	protected function _message($source, $message)
+	{
+		return get_class($this).': '.$message.(isset($source) ? " (dans '".$source."')" : '');
+	}
+	
 	protected function _err($source, $message)
 	{
 		throw new Exception(get_class($this).': '.$message.(isset($source) ? " (dans '".$source."')" : ''));
