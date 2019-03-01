@@ -73,6 +73,11 @@ class SqleurPreproPif
 		throw new Exception($this->_message($source, $message));
 	}
 	
+	protected function _attention($source, $message)
+	{
+		fprintf(STDERR, "[33m# ".$this->_message($source, $message)."[0m\n");
+	}
+	
 	protected function _découpe($directiveComplète)
 	{
 		// On vire le mot-clé lui-même.
