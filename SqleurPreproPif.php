@@ -249,14 +249,25 @@ class SqleurPreproPif
 		);
 	}
 	
-	protected function _requêtesPasséesCorrespondantÀ($regex)
+	protected function _requêtesPasséesCorrespondantÀ($regex, $listeCourante = null)
 	{
 		$r = array();
 		
-		$listeCourante = $this->_pile[count($this->_pile) - 1];
+		if(!$listeCourante)
+			$listeCourante = $this->_pile[0];
 		foreach($listeCourante as $nom => $req)
-			if($req[self::TYPE] == 'r' && preg_match($regex, $req[self::VAL]))
+			if($req) // On évite de prendre ce qui est en cours de constitution.
+				switch($req[self::TYPE])
+				{
+					case 'r':
+						if(preg_match($regex, $req[self::VAL]))
 				$r[$nom] = true;
+						break;
+					case 'p':
+					case 's':
+						$r += $this->_requêtesPasséesCorrespondantÀ($regex, $req[self::VAL]);
+						break;
+				}
 		
 		return $r;
 	}
