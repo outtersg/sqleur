@@ -150,6 +150,10 @@ class SqleurPreproPif
 			}
 		}
 		
+		// La directive s'appliquera-t-elle à la prochaine requête, ou bien est-elle de type auto-contenue (se terminant maintenant)?
+		
+		$this->_termineDirective();
+		
 		return $requêteEnCours;;
 	}
 	
@@ -181,11 +185,33 @@ class SqleurPreproPif
 		}
 	}
 	
+	protected function _termineDirective()
+	{
+		if(isset($this->_prochains['regex']))
+		{
+			if(!count($this->_prochains['dépsregex']))
+				$this->_err($directiveComplète, "une règle regex est faite pour se voir déclarer immédiatement des dépendances");
+			$this->_dépsRegex[$this->_prochains['regex']->f] = $this->_prochains['dépsregex'];
+			$this->_prochains['dépsregex'] = array();
+			unset($this->_prochains['regex']);
+		}
+	}
+	
 	protected function _entrepose($type, $truc)
 	{
 		$ptrListeCourante = & $this->_pile[count($this->_pile) - 1];
 		$nom = isset($this->_prochains['nom']) ? $this->_prochains['nom'] : '.'.(++$this->_idUnique).'_'; // Avec une parure disymétrique afin qu'aucun utilisateur n'ait l'idée de prendre la même nomenclature.
+		// Ce dont nous dépendons:
+		// 1. Explicitement.
 		$déps = $this->_prochains['dépsnom'];
+		// 2. Parce qu'une regex dit que tout ce qui a notre tête a telles dépendances.
+		if($type == 'r' && isset($this->_dépsRegex))
+		{
+			foreach($this->_dépsRegex as $regex => $dépsCetteRegex)
+				if(preg_match($regex, $truc))
+					$déps += $dépsCetteRegex;
+		}
+		
 		$ptrListeCourante[$nom] = array(self::TYPE => $type, self::VAL => $truc, self::DÉPS => count($déps) ? $déps : null);
 		
 		$this->_prochainsLibres();
