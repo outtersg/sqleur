@@ -61,6 +61,8 @@ class SqleurPreproPif
 	{
 		$this->_pile = array();
 		$this->_idUnique = 0;
+		if(class_exists('SqleurPreproExpr'))
+			$this->_expr = new SqleurPreproExpr();
 	}
 	
 	protected function _message($source, $message)
