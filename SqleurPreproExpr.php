@@ -132,7 +132,7 @@ class SqleurPreproExpr
 		return $trucs;
 	}
 	
-	protected function _regex($regex)
+	public function _regex($regex)
 	{
 		foreach(array('/', '#', '!', '$', '"', '&', '@', "\003", null) as $encadreur)
 			if(!isset($encadreur)) // Eh ben, l'expression aura réussi à épuiser toutes nos ressources!
