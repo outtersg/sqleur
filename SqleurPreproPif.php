@@ -126,7 +126,7 @@ class SqleurPreproPif
 	protected function _sors()
 	{
 		array_pop($this->_pile);
-		if(!count($this->_pile) <= 1)
+		if(count($this->_pile) <= 1)
 		{
 			$this->_sqleur->_sortie = $this->_sortieOriginelle;
 			$this->_déroule($this->_pile[0][0]);
