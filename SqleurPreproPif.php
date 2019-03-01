@@ -63,14 +63,49 @@ class SqleurPreproPif
 		throw new Exception(get_class($this).': '.$message.(isset($source) ? " (dans '".$source."')" : ''));
 	}
 	
+	protected function _découpe($directiveComplète)
+	{
+		// On vire le mot-clé lui-même.
+		$directiveComplète = preg_replace("/^[^ ]*[ \t]+/", '', $directiveComplète);
+		
+		if(class_exists('SqleurPreproExpr'))
+		{
+			try
+			{
+				$e = new SqleurPreproExpr();
+				$mots = $e->compiler($directiveComplète);
+				if(is_object($mots))
+					$mots = array($mots);
+				foreach($mots as & $ptrMot)
+					if(is_object($ptrMot) && $ptrMot->t == 'mot')
+						$ptrMot = $ptrMot->f;
+			}
+			catch(Exception $ex)
+			{
+				$messageEnrichi = $ex->getMessage().' (sur compilation de: '.$directiveComplète.')';
+				if(method_exists($ex, 'setMessage'))
+				{
+					$ex->setMessage($messageEnrichi);
+					throw $ex;
+				}
+				else
+					throw new Exception($ex->getFile().':'.$ex->getLine().': '.$messageEnrichi);
+			}
+		}
+		else
+			$mots = preg_split("/[ \t]+/", $directiveComplète);
+		
+		return $mots;
+	}
+	
 	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
 	{
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
 
-		$mots = preg_split("/[ \t]+/", $directiveComplète);
+		$mots = $this->_découpe($directiveComplète);
 		$boutAttendu = 'nom';
-		for($i = 0; ++$i < count($mots);)
+		for($i = -1; ++$i < count($mots);)
 		{
 			$mot = $mots[$i];
 			switch($mots[$i])
@@ -82,6 +117,12 @@ class SqleurPreproPif
 					$this->_sors();
 					break;
 				default:
+					// Les seuls nœuds préprocesseur autorisés sont les expressions régulières.
+					if(is_object($mot))
+					{
+						if(!($mot instanceof NœudPrepro && $mot->t == '/'))
+							$this->_err($directiveComplète, 'nœud inconnu: '.print_r($mot, true));
+					}
 					if(in_array($mots[$i], $this->_motsAprès))
 					{
 						if(!isset($mots[$i + 1]))
@@ -92,13 +133,17 @@ class SqleurPreproPif
 					{
 						switch($boutAttendu)
 						{
+							// Nom et regex interviennent au même endroit.
+							case 'regex':
 							case 'nom':
+								$boutAttendu = is_object($mot) ? 'regex' : 'nom';
 								if(isset($this->_prochains[$boutAttendu]))
 									$this->_err($directiveComplète, "ah non, alors! Un seul ".$boutAttendu." à la fois: je ne peux travailler à la fois sur '".$this->_prochains[$boutAttendu]."' et '".$mot."'");
 								$this->_prochains[$boutAttendu] = $mot;
 								break;
+							case 'dépsregex':
 							case 'dépsnom':
-								$this->_prochains[$boutAttendu][$mot] = true;
+								$this->_prochains[$boutAttendu][is_object($mot) ? $mot->f : $mot] = is_object($mot) ? $mot : true;
 								break;
 						}
 					}
@@ -155,6 +200,7 @@ class SqleurPreproPif
 		$this->_prochains = array
 		(
 			'dépsnom' => array(),
+			'dépsregex' => array(),
 		);
 	}
 	
