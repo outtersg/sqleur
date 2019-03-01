@@ -211,6 +211,22 @@ class SqleurPreproPif
 				if(preg_match($regex, $truc))
 					$déps += $dépsCetteRegex;
 		}
+		// Parmi nos dépendances, résolution de celles dynamiques (regex au lieu de nom).
+		/* NOTE: déroulement de la regex à l'entreposage
+		 * On déroule dès maintenant la regex, qui ne prendra donc comme prérequis que les requêtes déjà rencontrées.
+		 * Cela interdit de dépendre d'une requête non encore rencontrée, ce qui est une bonne chose pour éviter les boucles de dépendances.
+		 * Exemple:
+		 *   #pif /update t .* where id = ([0-9]*)/ après /update t .* where id = $1/
+		 * veut dire que tout update sur une entrée doit être joué après les update sur la même entrée *qui ont été déclarés avant*.
+		 * Si la regex est interprétée à l'exécution, l'update ne pourra être joué qu'après lui-même!
+		 */
+		$dépsBrutes = $déps;
+		$déps = array();
+		foreach($dépsBrutes as $nomDép => $dép)
+			if(is_object($dép))
+				$déps += $this->_requêtesPasséesCorrespondantÀ($dép->f);
+			else
+				$déps[$nomDép] = true;
 		
 		$ptrListeCourante[$nom] = array(self::TYPE => $type, self::VAL => $truc, self::DÉPS => count($déps) ? $déps : null);
 		
@@ -228,6 +244,18 @@ class SqleurPreproPif
 			'dépsnom' => array(),
 			'dépsregex' => array(),
 		);
+	}
+	
+	protected function _requêtesPasséesCorrespondantÀ($regex)
+	{
+		$r = array();
+		
+		$listeCourante = $this->_pile[count($this->_pile) - 1];
+		foreach($listeCourante as $nom => $req)
+			if($req[self::TYPE] == 'r' && preg_match($regex, $req[self::VAL]))
+				$r[$nom] = true;
+		
+		return $r;
 	}
 	
 	protected function _déroule($quoi)
