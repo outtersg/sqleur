@@ -55,6 +55,7 @@ class SqleurPreproPif
 	public function __construct()
 	{
 		$this->_pile = array();
+		$this->_idUnique = 0;
 	}
 	
 	protected function _err($source, $message)
@@ -129,14 +130,14 @@ class SqleurPreproPif
 		if(count($this->_pile) <= 1)
 		{
 			$this->_sqleur->_sortie = $this->_sortieOriginelle;
-			$this->_déroule($this->_pile[0][0]);
+			$this->_déroule(array_shift($this->_pile[0]));
 		}
 	}
 	
 	protected function _entrepose($type, $truc)
 	{
 		$ptrListeCourante = & $this->_pile[count($this->_pile) - 1];
-		$nom = isset($this->_prochainNom) ?  $this->_prochainNom : count($ptrListeCourante);
+		$nom = isset($this->_prochainNom) ? $this->_prochainNom : '.'.(++$this->_idUnique).'_'; // Avec une parure disymétrique afin qu'aucun utilisateur n'ait l'idée de prendre la même nomenclature.
 		$ptrListeCourante[$nom] = array(self::TYPE => $type, self::VAL => $truc, self::DÉPS => $this->_prochainesDépendances);
 		$this->_prochainesDépendances = null;
 		unset($this->_prochainNom);
