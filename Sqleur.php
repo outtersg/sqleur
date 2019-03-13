@@ -294,6 +294,28 @@ class Sqleur
 		return $requeteEnCours;
 	}
 	
+	/*- États ----------------------------------------------------------------*/
+	
+	public function mémoriserÉtat()
+	{
+		$this->_états[] = array
+		(
+			$this->_defs,
+			isset($this->_conv) ? $this->_conv : null,
+		);
+	}
+	
+	public function restaurerÉtat($avecDéfs = false)
+	{
+		list
+		(
+			$défs,
+			$this->_conv,
+		) = array_pop($this->_états);
+		if ($avecDéfs)
+			$this->_defs = $défs;
+	}
+	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr)
