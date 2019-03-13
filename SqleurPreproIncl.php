@@ -51,7 +51,17 @@ class SqleurPreproIncl
 	{
 		if(substr($chemin, 0, 1) != '/' && isset($this->_sqleur->_fichier))
 			$chemin = dirname($this->_sqleur->_fichier).'/'.$chemin;
+		try
+		{
+			$this->_sqleur->mémoriserÉtat();
 		$this->_sqleur->decoupeFichier($chemin);
+			$this->_sqleur->restaurerÉtat();
+		}
+		catch(Exception $e)
+		{
+			$this->_sqleur->restaurerÉtat();
+			throw $e;
+		}
 	}
 }
 
