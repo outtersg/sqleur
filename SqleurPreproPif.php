@@ -357,6 +357,45 @@ class SqleurPreproPif
 			return $original;
 		return is_object($original) ? new NœudPrepro($original->t, $this->_expr->_regex($modifié)) : $modifié;
 	}
+	
+	/*- Magnétophone ---------------------------------------------------------*/
+	/* Trace de toutes les requêtes que l'on joue dans le cadre d'un #pif. */
+	
+	public function initMagnétophone($id)
+	{
+		if(empty($id))
+			$id = null;
+		else if($id == '-' || $id == 1)
+			$id = true;
+		$this->_magnéto = $id;
+		$this->_magnétoId = is_bool($id) ? rand(10, 99) : $id;
+	}
+	
+	protected function _allumeMagnétophone()
+	{
+		if(isset($this->_magnéto))
+		{
+			$pour = $this->_sqleur->_fichier;
+			if(!isset($this->_magnétoBlocs[$pour]))
+				$this->_magnétoBlocs[$pour] = -1;
+			$this->_magnétoSortie = fopen(strtr($pour, array('.sql' => '')).'.pif.'.$this->_magnétoId.'.'.(++$this->_magnétoBlocs[$pour]).'.sql', 'w');
+		}
+	}
+	
+	protected function _enregistre($req)
+	{
+		if(isset($this->_magnétoSortie))
+			fwrite($this->_magnétoSortie, $req.";\n");
+	}
+	
+	protected function _eteinsMagnétophone()
+	{
+		if(isset($this->_magnétoSortie))
+		{
+			fclose($this->_magnétoSortie);
+			$this->_magnétoSortie = null;
+		}
+	}
 }
 
 ?>
