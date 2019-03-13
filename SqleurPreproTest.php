@@ -143,7 +143,7 @@ class SqleurPreproTest
 		switch($this->_mode)
 		{
 			case SqleurPreproTest::PHPUNIT:
-				PHPUnit\Framework\Assert::assertEquals($résAttendu, $rés, $req);
+				PHPUnit\Framework\Assert::assertEquals("\n".$résAttendu."\n", "\n".$rés."\n", $req);
 				break;
 			default:
 				if($résAttendu != $rés)
