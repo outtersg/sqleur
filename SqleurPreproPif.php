@@ -63,6 +63,7 @@ class SqleurPreproPif
 		$this->_idUnique = 0;
 		if(class_exists('SqleurPreproExpr'))
 			$this->_expr = new SqleurPreproExpr();
+		$this->initMagnétophone(getenv('SQLEUR_PIF'));
 	}
 	
 	protected function _message($source, $message)
