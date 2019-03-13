@@ -196,8 +196,17 @@ class SqleurPreproPif
 		array_pop($this->_pile);
 		if(count($this->_pile) <= 1)
 		{
+			$this->_allumeMagnétophone();
 			$this->_sqleur->_sortie = $this->_sortieOriginelle;
+			try {
 			$this->_déroule(array_shift($this->_pile[0]));
+			}
+			catch(Exception $e)
+			{
+				$this->_eteinsMagnétophone();
+				throw $e;
+			}
+			$this->_eteinsMagnétophone();
 		}
 	}
 	
@@ -299,6 +308,7 @@ class SqleurPreproPif
 		{
 			// Une requête, le plus facile.
 			case 'r':
+				$this->_enregistre($quoi[self::VAL]);
 				call_user_func($this->_sqleur->_sortie, $quoi[self::VAL]);
 				break;
 			// Une séquence.
