@@ -197,8 +197,9 @@ class SqleurPreproPif
 		array_pop($this->_pile);
 		if(count($this->_pile) <= 1)
 		{
-			$this->_allumeMagnétophone();
 			$this->_sqleur->_sortie = $this->_sortieOriginelle;
+			if($this->_allumeMagnétophone()) // Si le magnétophone sort un scénario pré-enregistré…
+				return; // … on n'a plus besoin de poursuivre.
 			try {
 			$this->_déroule(array_shift($this->_pile[0]));
 			}
@@ -390,6 +391,12 @@ class SqleurPreproPif
 			if(!isset($this->_magnétoBlocs[$pour]))
 				$this->_magnétoBlocs[$pour] = -1;
 			$cheminMagnéto = strtr($pour, array('.sql' => '')).'.pif.'.$this->_magnétoId.'.'.(++$this->_magnétoBlocs[$pour]).'.sql';
+			// Si on est en mode lecture (on nous a indiqué un "numéro de session" à relire:
+			if(is_numeric($this->_magnéto))
+			{
+				$this->_sqleur->decoupeFichier($cheminMagnéto);
+				return true;
+			}
 			$this->_magnétoSortie = fopen($cheminMagnéto, 'w');
 		}
 	}
