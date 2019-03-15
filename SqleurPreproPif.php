@@ -389,7 +389,8 @@ class SqleurPreproPif
 			$pour = $this->_sqleur->_fichier;
 			if(!isset($this->_magnétoBlocs[$pour]))
 				$this->_magnétoBlocs[$pour] = -1;
-			$this->_magnétoSortie = fopen(strtr($pour, array('.sql' => '')).'.pif.'.$this->_magnétoId.'.'.(++$this->_magnétoBlocs[$pour]).'.sql', 'w');
+			$cheminMagnéto = strtr($pour, array('.sql' => '')).'.pif.'.$this->_magnétoId.'.'.(++$this->_magnétoBlocs[$pour]).'.sql';
+			$this->_magnétoSortie = fopen($cheminMagnéto, 'w');
 		}
 	}
 	
