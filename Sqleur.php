@@ -78,6 +78,7 @@ class Sqleur
 	public function decoupeFlux($f)
 	{
 		$this->_init();
+		$this->_ligne = 1;
 		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
 		return $this->_decoupeBloc('', true);
@@ -131,6 +132,7 @@ class Sqleur
 					break;
 				case "\n":
 					$dernierRetour = $decoupes[$i][1] + 1;
+					++$this->_ligne;
 					break;
 				case '#':
 					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
@@ -139,7 +141,10 @@ class Sqleur
 						$j = $i;
 						while(++$i < $n && $decoupes[$i][0] != "\n")
 							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n" && $decoupes[$i + 1][1] == $decoupes[$i][1] + 1)
+							{
 								++$i;
+								++$this->_ligne;
+							}
 						if($i < $n)
 						{
 							$dernierArret = $decoupes[$i][1];
@@ -163,7 +168,9 @@ class Sqleur
 					break;
 				case '/':
 					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
-					while(++$i < $n && $decoupes[$i][0] != '*/') {}
+					while(++$i < $n && $decoupes[$i][0] != '*/')
+						if($decoupes[$i][0] == "\n")
+							++$this->_ligne;
 					if($i < $n)
 						$dernierArret = $decoupes[$i][1] + 2;
 					else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
@@ -173,7 +180,9 @@ class Sqleur
 				case '$':
 					$j = $i;
 					$fin = $decoupes[$j][0];
-					while(++$i < $n && $decoupes[$i][0] != $fin) {}
+					while(++$i < $n && $decoupes[$i][0] != $fin)
+						if($decoupes[$i][0] == "\n")
+							++$this->_ligne;
 					if($i < $n)
 					{
 						$nouvelArret = $decoupes[$i][1] + strlen($decoupes[$i][0]);
@@ -302,6 +311,7 @@ class Sqleur
 		(
 			$this->_defs,
 			isset($this->_conv) ? $this->_conv : null,
+			$this->_ligne,
 		);
 	}
 	
@@ -311,6 +321,7 @@ class Sqleur
 		(
 			$défs,
 			$this->_conv,
+			$this->_ligne,
 		) = array_pop($this->_états);
 		if ($avecDéfs)
 			$this->_defs = $défs;
