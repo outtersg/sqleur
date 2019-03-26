@@ -346,6 +346,37 @@ class Sqleur
 		return $r;
 	}
 	
+	public function exception($truc)
+	{
+		if(is_object($truc))
+		{
+			$classe = get_class($truc);
+			$message = $truc->getMessage();
+			$code = $truc->getCode();
+			$ex = $truc;
+		}
+		else
+		{
+			$classe = null;
+			$message = $truc;
+			$ex = null;
+		}
+		
+		// PHP empêchant de définir sa propre trace sur les exceptions, on la glisse dans le message.
+		$messagePile = '';
+		$pile = $this->pileDAppels();
+		foreach($pile as $endroit)
+			$messagePile .= "\n\t".$endroit['file'].':'.$endroit['line'];
+		$message .= $messagePile;
+		
+		switch($classe)
+		{
+			case 'PHPUnit_Framework_ExpectationFailedException':
+				return new $classe($message, $ex->getComparisonFailure(), $ex->getPrevious());
+		}
+		return new Exception($message, isset($ex) ? $ex->getCode() : 0, $ex);
+	}
+	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr)
