@@ -311,6 +311,7 @@ class Sqleur
 		(
 			$this->_defs,
 			isset($this->_conv) ? $this->_conv : null,
+			isset($this->_fichier) ? $this->_fichier : null,
 			$this->_ligne,
 		);
 	}
@@ -321,6 +322,7 @@ class Sqleur
 		(
 			$défs,
 			$this->_conv,
+			$this->_fichier,
 			$this->_ligne,
 		) = array_pop($this->_états);
 		if ($avecDéfs)
