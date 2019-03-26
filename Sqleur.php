@@ -318,7 +318,7 @@ class Sqleur
 		(
 			$this->_defs,
 			isset($this->_conv) ? $this->_conv : null,
-			isset($this->_fichier) ? $this->_fichier : null,
+			$this->_fichier,
 			$this->_ligne,
 			$this->_dernièreLigne,
 		);
