@@ -149,8 +149,9 @@ class Sqleur
 						if($i < $n)
 						{
 							$dernierArret = $decoupes[$i][1];
-							$blocPréprocesse = rtrim(substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]));
-							$blocPréprocesse = preg_replace('#\\\\$#m', '', $blocPréprocesse);
+							$blocPréprocesse = substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]);
+							$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($blocPréprocesse), "\n");
+							$blocPréprocesse = preg_replace('#\\\\$#m', '', rtrim($blocPréprocesse));
 							$requete = $this->_preprocesse($blocPréprocesse, $requete);
 							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
 						}
