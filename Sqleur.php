@@ -33,6 +33,10 @@ class Sqleur
 	public function __construct($sortie = null, $préprocesseurs = array())
 	{
 		$this->_defs = array();
+		$this->_fichier = null;
+		$this->_ligne = null;
+		$this->_dernièreLigne = null;
+		
 		if(($this->_retourDirect = !isset($sortie)))
 		{
 			$this->_sortie = array($this, '_accumule');
