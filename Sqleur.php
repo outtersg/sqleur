@@ -67,6 +67,7 @@ class Sqleur
 	public function decoupeFichier($fichier)
 	{
 		$ancienFichier = isset($this->_fichier) ? $this->_fichier : null;
+		// À FAIRE: redondant avec mémoriserÉtat. Celui-ci devrait être invoqué ici.
 		$this->_fichier = $fichier;
 		$f = fopen($fichier, 'r');
 		$r = $this->decoupeFlux($f);
