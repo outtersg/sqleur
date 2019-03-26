@@ -70,14 +70,24 @@ class Sqleur
 	
 	public function decoupeFichier($fichier)
 	{
-		$ancienFichier = isset($this->_fichier) ? $this->_fichier : null;
-		// À FAIRE: redondant avec mémoriserÉtat. Celui-ci devrait être invoqué ici.
+		if(!file_exists($fichier))
+			throw $this->exception($fichier.' inexistant');
+		
+		$this->mémoriserÉtat();
+		try
+		{
 		$this->_fichier = $fichier;
 		$f = fopen($fichier, 'r');
 		$r = $this->decoupeFlux($f);
 		fclose($f);
-		$this->_fichier = $ancienFichier;
+			$this->restaurerÉtat();
 		return $r;
+		}
+		catch(Exception $e)
+		{
+			$this->restaurerÉtat();
+			throw $e;
+		}
 	}
 	
 	public function decoupeFlux($f)
