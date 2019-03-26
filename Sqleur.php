@@ -334,6 +334,18 @@ class Sqleur
 			$this->_defs = $défs;
 	}
 	
+	public function pileDAppels()
+	{
+		$r = array();
+		
+		$this->mémoriserÉtat();
+		foreach($this->_états as $état)
+			array_unshift($r, array('file' => $état[2], 'line' => $état[4]));
+		$this->restaurerÉtat();
+		
+		return $r;
+	}
+	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr)
