@@ -138,37 +138,6 @@ class SqleurPreproTest
 		return isset($colonne) ? (preg_match('/^".*"$/', $colonne) ? substr($colonne, 1, -1) : ''.$colonne) : '-';
 	}
 	
-	protected function _exception($truc)
-	{
-		if(is_object($truc))
-		{
-			$classe = get_class($truc);
-			$message = $truc->getMessage();
-			$code = $truc->getCode();
-			$ex = $truc;
-		}
-		else
-		{
-			$classe = null;
-			$message = $truc;
-			$ex = null;
-		}
-		
-		// PHP empêchant de définir sa propre trace sur les exceptions, on la glisse dans le message.
-		$messagePile = '';
-		$pile = $this->_sqleur->pileDAppels();
-		foreach($pile as $endroit)
-			$messagePile .= "\n\t".$endroit['file'].':'.$endroit['line'];
-		$message .= $messagePile;
-		
-		switch($classe)
-		{
-			case 'PHPUnit_Framework_ExpectationFailedException':
-				return new $classe($message, $ex->getComparisonFailure(), $ex->getPrevious());
-		}
-		return new Exception($message, isset($ex) ? $ex->getCode() : 0, $ex);
-	}
-	
 	protected function _valide($résAttendu, $rés, $req)
 	{
 		switch($this->_mode)
@@ -181,13 +150,13 @@ class SqleurPreproTest
 				catch(Exception $ex)
 				{
 					// Le moyen le plus simple d'avoir, en cas d'exception, un message enrichi de la pile d'appels, est de rejouer l'assertion avec le nouveau message.
-					$ex = $this->_exception($req);
+					$ex = $this->_sqleur->exception($req);
 					PHPUnit\Framework\Assert::assertEquals("\n".$résAttendu."\n", "\n".$rés."\n", $ex->getMessage());
 				}
 				break;
 			default:
 				if($résAttendu != $rés)
-					throw $this->_exception($req.': résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>");
+					throw $this->_sqleur->exception($req.': résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>");
 				break;
 		}
 	}
