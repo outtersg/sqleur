@@ -140,14 +140,15 @@ class SqleurPreproTest
 	
 	protected function _valide($résAttendu, $rés, $req)
 	{
+		$où = $this->_sqleur->_fichier.':'.$this->_sqleur->_ligne;
 		switch($this->_mode)
 		{
 			case SqleurPreproTest::PHPUNIT:
-				PHPUnit\Framework\Assert::assertEquals("\n".$résAttendu."\n", "\n".$rés."\n", $req);
+				PHPUnit\Framework\Assert::assertEquals("\n".$résAttendu."\n", "\n".$rés."\n", $où.': '.$req);
 				break;
 			default:
 				if($résAttendu != $rés)
-					throw new Exception('Résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>");
+					throw new Exception($où.': '.$req.': résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>");
 				break;
 		}
 	}
