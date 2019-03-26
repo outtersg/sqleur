@@ -217,6 +217,7 @@ class Sqleur
 	
 	protected function _sors($requete)
 	{
+		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
 		if(strlen($requete = trim($requete)))
 		{
 			if(isset($this->_conv))
@@ -314,6 +315,7 @@ class Sqleur
 			isset($this->_conv) ? $this->_conv : null,
 			isset($this->_fichier) ? $this->_fichier : null,
 			$this->_ligne,
+			$this->_dernièreLigne,
 		);
 	}
 	
@@ -325,6 +327,7 @@ class Sqleur
 			$this->_conv,
 			$this->_fichier,
 			$this->_ligne,
+			$this->_dernièreLigne,
 		) = array_pop($this->_états);
 		if ($avecDéfs)
 			$this->_defs = $défs;
