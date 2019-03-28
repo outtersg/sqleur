@@ -164,6 +164,41 @@ class SqleurPreproExpr
 		
 		return $racine->exécuter($contexte);
 	}
+	
+	public function aff($truc)
+	{
+		if(is_object($truc) && $truc instanceof NœudPrepro)
+			switch($truc->t)
+			{
+				case '"':
+				case 'mot':
+					return $this->affChaîne($truc->f);
+				case 'f':
+					$r = $this->affChaîne($truc->f[0]);
+					$r .= '('.(isset($truc->t[1]) ? $this->aff($truc->t[1]) : '').')';
+					return $r;
+				case 'op':
+					return implode(' '.$t->op.' ', $t->f);
+					return $r;
+				default:
+					$r = $this->affChaîne($truc->t);
+					if(is_array($truc->f))
+						$r .= '('.implode(',', array_map(array($this, 'aff'), $truc->f)).')';
+					else
+						$r .= '{'.serialize($truc->f).'}';
+					return $r;
+			}
+		else if(is_array($truc))
+			return '['.implode(',', array_map(array($this, 'aff'), $truc)).']';
+		return serialize($truc);
+	}
+	
+	public function affChaîne($chaîne)
+	{
+		if(strlen($chaîne) > strlen(strtr($chaîne, ";,()\n", '')))
+			return '"'.$chaîne.'"';
+		return $chaîne;
+	}
 }
 
 class ErreurExpr extends Exception
