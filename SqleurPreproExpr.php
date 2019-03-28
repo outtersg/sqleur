@@ -52,7 +52,64 @@ class SqleurPreproExpr
 		return $racine;
 	}
 	
-	public function arborer($bouts)
+	public function arborer($bouts, $positions = null, $exprComplète = null)
+	{
+		if(!isset($positions))
+		{
+			$exprComplète = '';
+			$pos = 0;
+			$positions = array();
+			foreach($bouts as $num => $bout)
+			{
+				$positions[$num] = $pos;
+				if(is_string($bout))
+					$exprBout = $bout;
+				else if(is_object($bout) && $bout instanceof NœudPrepro && isset($bout->expr))
+					$exprBout = $bout->expr;
+				else
+					return $this->_arborer($bouts, null, null);
+				$pos += strlen($exprBout);
+				$exprComplète .= $exprBout;
+			}
+		}
+		else if(count($bouts) > 0)
+		{
+			$numBout = count($bouts) - 1;
+			$bout = $bouts[$numBout];
+			if(is_string($bout))
+				$exprBout = $bout;
+			else if(is_object($bout) && $bout instanceof NœudPrepro && isset($bout->expr))
+				$exprBout = $bout->expr;
+			if(isset($exprBout))
+				$exprComplète = substr($exprComplète, 0, $positions[$numBout] + strlen($exprBout));
+			else
+				$exprComplète = null;
+		}
+		else
+			$exprComplète = '';
+			
+		try
+		{
+			$r = $this->_arborer($bouts, $positions, $exprComplète);
+			if(is_object($r) && $r instanceof NœudPrepro && !isset($r->expr) && !isset($r->pos))
+				$r->infosPosition($bouts, $positions, 0, count($bouts) - 1, $exprComplète);
+			return $r;
+		}
+		catch(ErreurExpr $ex)
+		{
+			if(isset($ex->pos))
+			{
+				if(!isset($ex->_dernierPassage))
+					$ex->setMessage($ex->getMessage()."\n".$this->_diag('  expr('.$ex->pos.') ', $exprComplète, $ex->pos));
+				else if($ex->_dernierPassage != $exprComplète)
+					$ex->setMessage($ex->getMessage()."\n  dans ".$exprComplète);
+				$ex->_dernierPassage = $exprComplète;
+			}
+			throw $ex;
+		}
+	}
+	
+	public function _arborer($bouts, $positions, $exprComplète)
 	{
 		$recherchés = array
 		(
@@ -79,9 +136,11 @@ class SqleurPreproExpr
 						case 'bi':
 							$racine = new NœudPrepro($bout);
 							$fils = array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1));
-							foreach($fils as $fil)
+							if(isset($positions))
+								$positionsFils = array(array_slice($positions, 0, $num), array_slice($positions, $num + 1));
+							foreach($fils as $numFil => $fil)
 							{
-								$fil = $this->arborer($fil);
+								$fil = $this->arborer($fil, isset($positionsFils) ? $positionsFils[$numFil] : null, $exprComplète);
 								if(is_array($fil))
 								{
 									if(count($fil) != 1)
@@ -94,8 +153,8 @@ class SqleurPreproExpr
 								$racine->f[1] = $this->listerVirgules($racine->f[1]);
 							return $racine;
 						case 'devant':
-							array_splice($bouts, $num, 1);
-							$racine = new NœudPrepro($bout, $this->arborer($bouts));
+							$this->_splice($bouts, $positions, $num, 1);
+							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions, $exprComplète));
 							return $racine;
 						case 'chaîne':
 							$chaînes = array();
@@ -119,8 +178,8 @@ class SqleurPreproExpr
 							if($bout == '/')
 								$chaînes = $this->_regex($chaînes);
 							$nœud = new NœudPrepro($bout, $chaînes);
-							array_splice($bouts, $num, $fin - $num + 1, array($nœud));
-							return $this->arborer($bouts);
+							$this->_splice($bouts, $positions, $num, $fin - $num + 1, array($nœud));
+							return $this->arborer($bouts, $positions, $exprComplète);
 					}
 				}
 		$trucs = array();
@@ -130,6 +189,37 @@ class SqleurPreproExpr
 			else if(strlen(trim($truc)))
 				$trucs[] = new NœudPrepro('mot', $truc);
 		return $trucs;
+	}
+	
+	protected function _diag($prologue, $expr, $posErr, $tailleMaxExtrait = 80)
+	{
+		if(($tExpr = strlen($expr)) > $tailleMaxExtrait)
+		{
+			$ellipse = '…';
+			$tEllipse = 1;
+			$posErrExtrait = $posErr - $tailleMaxExtrait / 2;
+			if($posErrExtrait <= 0)
+			{
+				$posErrExtrait = 0;
+				$expr = substr($expr, 0, $tailleMaxExtrait).$ellipse;
+			}
+			else
+			{
+				$expr = $ellipse.substr($expr, $posErrExtrait, $tailleMaxExtrait);
+				if($posErrExtrait + $tailleMaxExtrait < $tExpr)
+					$expr .= $ellipse;
+				$posErrExtrait += $tEllipse;
+			}
+		}
+		else
+			$posErrExtrait = $posErr;
+		return $prologue.$expr."\n".str_repeat(' ', strlen($prologue) + $posErrExtrait).'^';
+	}
+	
+	protected function _splice(& $bouts, & $positions, $depuis, $combien, $rempl = null)
+	{
+		array_splice($bouts, $depuis, $combien, $rempl);
+		array_splice($positions, $depuis, $combien, $rempl ? array_fill(0, count($rempl), null) : null);
 	}
 	
 	public function _regex($regex)
@@ -203,6 +293,12 @@ class SqleurPreproExpr
 
 class ErreurExpr extends Exception
 {
+	public function __construct($message, $posOuCorrPos = null, $num = null)
+	{
+		parent::__construct($message);
+		$this->pos = isset($posOuCorrPos) ? (is_array($posOuCorrPos) ? $posOuCorrPos[$num] : $posOuCorrPos) : $num;
+	}
+	
 	public function setMessage($m)
 	{
 		$this->message = $m;
@@ -282,6 +378,22 @@ class NœudPrepro
 		if($n !== false && count($fils) != $n)
 			throw new Exception($this->t.': '.$n.' nœuds fils attendus');
 		return $fils;
+	}
+	
+	public function infosPosition($bouts, $positions, $numDébut, $numFin, $exprComplète)
+	{
+		// Position.
+		if(!isset($positions[$numDébut]))
+			return;
+		$this->pos = $positions[$numDébut];
+		
+		// Représentation textuelle.
+		$boutFin = $bouts[$numFin];
+		if(is_object($boutFin) && $boutFin instanceof NœudPrepro && $boutFin->expr)
+			$boutFin = $boutFin->expr;
+		else if(!is_string($boutFin))
+			return;
+		$this->expr = substr($exprComplète, $this->pos, $positions[$numFin] + strlen($boutFin) - $this->pos);
 	}
 }
 
