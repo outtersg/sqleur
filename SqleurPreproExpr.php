@@ -285,7 +285,7 @@ class SqleurPreproExpr
 	
 	public function affChaîne($chaîne)
 	{
-		if(strlen($chaîne) > strlen(strtr($chaîne, ";,()\n", '')))
+		if(strlen($chaîne) > strlen(preg_replace("/[;,()\n]/", '', $chaîne)))
 			return '"'.$chaîne.'"';
 		return $chaîne;
 	}
