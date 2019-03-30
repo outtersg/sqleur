@@ -255,7 +255,7 @@ class SqleurPreproExpr
 		return $racine->exécuter($contexte);
 	}
 	
-	public function aff($truc)
+	public function aff($truc, $délimiteurs = '[]')
 	{
 		if(is_object($truc) && $truc instanceof NœudPrepro)
 			switch($truc->t)
@@ -265,7 +265,7 @@ class SqleurPreproExpr
 					return $this->affChaîne($truc->f);
 				case 'f':
 					$r = $this->affChaîne($truc->f[0]);
-					$r .= '('.(isset($truc->t[1]) ? $this->aff($truc->t[1]) : '').')';
+					$r .= isset($truc->f[1]) ? $this->aff($truc->f[1], '()') : '()';
 					return $r;
 				case 'op':
 					return implode(' '.$t->op.' ', $t->f);
@@ -273,13 +273,13 @@ class SqleurPreproExpr
 				default:
 					$r = $this->affChaîne($truc->t);
 					if(is_array($truc->f))
-						$r .= '('.implode(',', array_map(array($this, 'aff'), $truc->f)).')';
+						$r .= $this->aff($truc->f, '()');
 					else
 						$r .= '{'.serialize($truc->f).'}';
 					return $r;
 			}
 		else if(is_array($truc))
-			return '['.implode(',', array_map(array($this, 'aff'), $truc)).']';
+			return $délimiteurs{0}.implode(',', array_map(array($this, 'aff'), $truc)).$délimiteurs{1};
 		return serialize($truc);
 	}
 	
