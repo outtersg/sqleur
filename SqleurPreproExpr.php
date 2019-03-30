@@ -389,7 +389,7 @@ class NœudPrepro
 		
 		// Représentation textuelle.
 		$boutFin = $bouts[$numFin];
-		if(is_object($boutFin) && $boutFin instanceof NœudPrepro && $boutFin->expr)
+		if(is_object($boutFin) && $boutFin instanceof NœudPrepro && isset($boutFin->expr))
 			$boutFin = $boutFin->expr;
 		else if(!is_string($boutFin))
 			return;
