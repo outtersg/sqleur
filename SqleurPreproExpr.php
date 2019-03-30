@@ -220,7 +220,20 @@ class SqleurPreproExpr
 	{
 		array_splice($bouts, $depuis, $combien, $rempl);
 		if($positions)
+		{
 		array_splice($positions, $depuis, $combien, $rempl ? array_fill(0, count($rempl), null) : null);
+			// Si l'on trouve des infos de positions dans $rempl, on les reporte dans $positions, ce qui sera bien plus propre que les null de ci-dessus.
+			if(is_array($rempl))
+			{
+				$i = $depuis;
+				foreach($rempl as $bidule)
+				{
+					if(is_object($bidule) && $bidule instanceof NœudPrepro && isset($bidule->pos))
+						$positions[$i] = $bidule->pos;
+					++$i;
+				}
+			}
+		}
 	}
 	
 	public function _regex($regex)
