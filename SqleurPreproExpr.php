@@ -219,6 +219,7 @@ class SqleurPreproExpr
 	protected function _splice(& $bouts, & $positions, $depuis, $combien, $rempl = null)
 	{
 		array_splice($bouts, $depuis, $combien, $rempl);
+		if($positions)
 		array_splice($positions, $depuis, $combien, $rempl ? array_fill(0, count($rempl), null) : null);
 	}
 	
