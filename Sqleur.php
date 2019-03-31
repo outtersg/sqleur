@@ -102,7 +102,10 @@ class Sqleur
 		$this->_ligne = 1;
 		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
-		return $this->_decoupeBloc('', true);
+		$r = $this->_decoupeBloc('', true);
+		if(count($this->_conditions))
+			throw $this->exception(count($this->_conditions).' #if sans #endif');
+		return $r;
 	}
 	
 	public function decoupe($chaineRequetes)
@@ -292,6 +295,8 @@ class Sqleur
 				break;
 			case '#endif':
 				$condition = array_pop($this->_conditions);
+				if(!$condition)
+					throw $this->exception('#endif sans #if');
 				if(!$condition[3]) // Si le dernier bloc traité (#if ou #else) était à ignorer,
 				{
 				$requeteEnCours = $condition[2]; // On restaure.
