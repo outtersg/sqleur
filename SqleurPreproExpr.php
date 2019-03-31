@@ -53,6 +53,7 @@ class SqleurPreproExpr
 	public function compiler($expr)
 	{
 		$bouts = $this->decouper($expr);
+		$this->_parenthèses = array();
 		$racine = $this->arborer($bouts);
 		while(is_array($racine) && count($racine) == 1)
 			$racine = array_shift($racine);
@@ -230,10 +231,16 @@ class SqleurPreproExpr
 							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions, $exprComplète));
 							return $racine;
 						case ')':
+							// On vérifie qu'on est appelés au bon endroit.
+							if(!($ouvrante = array_pop($this->_parenthèses)))
+								throw new ErreurExpr($bout.' sans son ouverture', $positions, $num);
+							if($bout != static::$Fermantes[$ouvrante])
+								throw new ErreurExpr($bout.' trouvé, '.static::$Fermantes[$ouvrante].' attendu', $positions, $num);
 							// On ne s'embête pas: l'arboraison sera faite par la parenthèse ouvrante correspondante.
 							$racine = new NœudPrepro($bout, array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1)));
 							return $racine;
 						case '(':
+							$this->_parenthèses[] = $bout;
 							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), $positions ? array_slice($positions, $num + 1) : null, $exprComplète);
 							if(!is_object($dedansEtAprès) || ! $dedansEtAprès instanceof NœudPrepro || $dedansEtAprès->t != static::$Fermantes[$bout])
 								throw new ErreurExpr($bout.' sans son '.static::$Fermantes[$bout], $positions, $num);
