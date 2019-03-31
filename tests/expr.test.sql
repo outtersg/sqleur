@@ -41,10 +41,10 @@ and
 );
 
 #testexpr ( rien ( nada )
-! ( sans );
+! \( sans;
 #testexpr rien ( nada ) )
-! ) sans (;
+! \) sans;
 #testexpr rien nada )
-! ) sans (;
+! \) sans;
 #testexpr rien ( nada
-! ( sans );
+! \( sans;
