@@ -36,6 +36,12 @@ class Sqleur
 		$this->_fichier = null;
 		$this->_ligne = null;
 		$this->_dernièreLigne = null;
+		$this->_fonctions = array();
+		foreach(static::$FonctionsPréproc as $f)
+		{
+			$this->_fonctions[$f] = array($this, '_'.$f);
+			$this->_fonctionsInternes[$f] = true;
+		}
 		
 		if(($this->_retourDirect = !isset($sortie)))
 		{
@@ -398,6 +404,16 @@ class Sqleur
 	{
 		$e = new SqleurPreproExpr();
 		return $e->calculer($expr, $this);
+	}
+	
+	public static $FonctionsPréproc = array
+	(
+		'defined',
+	);
+	
+	public function _defined($nomVar)
+	{
+		return array_key_exists($nomVar, $this->_defs);
 	}
 }
 

@@ -558,13 +558,39 @@ class NœudPrepro
 					case 'and': return $gauche || $droite;
 				}
 			case 'defined':
-				$var = is_array($this->f) && count($this->f) == 1 && isset($this->f[0]) && is_object($this->f[0]) && $this->f[0] instanceof NœudPrepro && $this->f[0]->t == 'mot' && is_string($this->f[0]->f) ? $this->f[0]->f : $this->_contenu($this->f[0], $contexte);
-				return array_key_exists($var, $contexte->_defs);
+			case 'f':
+				return $this->_exécuterF($contexte);
 			case '/':
 				return $this;
 			default:
 				throw new Exception('Je ne sais pas gérer les '.$this->t);
 		}
+	}
+	
+	protected function _exécuterF($contexte)
+	{
+		switch($this->t)
+		{
+			case 'f':
+				$nomFonction = $this->f[0];
+				$params = $this->f[1];
+				break;
+			default: // Toutes les fonctions-opérateurs internes (les "devant") apparaissent de cette façon.
+				$nomFonction = $this->t;
+				$params = $this->f;
+				break;
+		}
+		if(!isset($contexte->_fonctions[$nomFonction]) || !is_callable($contexte->_fonctions[$nomFonction]))
+			throw new ErreurExpr(print_r($nomFonction, true).": fonction inconnue", $this);
+		// Cas particulier des fonctions devant *ne pas* remplacer les variables préproc par leur contenu.
+		if($nomFonction == 'defined')
+		{
+			foreach($params as $param)
+				if(is_object($param) && $param instanceof NœudPrepro && $param->t == 'mot')
+					$param->t = '"';
+		}
+		$params = $this->_contenus($params, $contexte, false, isset($contexte->_fonctionsInternes[$nomFonction]));
+		return call_user_func_array($contexte->_fonctions[$nomFonction], $params);
 	}
 	
 	protected function _contenu($chose, $contexte)
