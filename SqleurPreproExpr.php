@@ -26,7 +26,7 @@ class SqleurPreproExpr
 	public static $Ops = array
 	(
 		'and', '&&', 'or', '||',
-		'==', '!=',
+		'==', '=', '!=',
 		'+', '-', '*', '/',
 		'in',
 	);
@@ -107,6 +107,7 @@ class SqleurPreproExpr
 			'in' => 'bimulti',
 			',,' => ',', // La , du in, créée par celle de niveau plus haut.
 			'==' => 'bi',
+			'=' => 'bi',
 			'!=' => 'bi',
 		),
 		array
@@ -532,6 +533,7 @@ class NœudPrepro
 						$r .= $this->_contenu($f, $contexte);
 				return $r;
 			case '==':
+			case '=':
 				$fils = $this->_contenus($this->f, $contexte, 2);
 				return $fils[0] == $fils[1];
 			case 'in':
