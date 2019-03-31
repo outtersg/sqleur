@@ -487,7 +487,15 @@ class ErreurExpr extends Exception
 	public function __construct($message, $posOuCorrPos = null, $num = null)
 	{
 		parent::__construct($message);
-		$this->pos = isset($posOuCorrPos) ? (is_array($posOuCorrPos) ? $posOuCorrPos[$num] : $posOuCorrPos) : $num;
+		if(isset($posOuCorrPos))
+			if(is_object($posOuCorrPos) && $posOuCorrPos instanceof NœudPrepro && isset($posOuCorrPos->pos))
+				$this->pos = $posOuCorrPos->pos;
+			else if(is_array($posOuCorrPos) && isset($num) && isset($posOuCorrPos[$num]))
+				$this->pos = $posOuCorrPos[$num];
+			else if(is_int($posOuCorrPos))
+				$this->pos = $posOuCorrPos;
+		else
+			$this->pos = $num;
 	}
 	
 	public function setMessage($m)
