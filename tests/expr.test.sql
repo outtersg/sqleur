@@ -4,7 +4,7 @@
 in(TOTO,[a,b]);
 
 #testexpr TOTO in "a", "b",
-! L'opérateur binaire , attend deux membres de part et d'autre;
+! attend deux membres de part et d.autre;
 
 #testexpr fonction("a", "b" or "c", "d" or "e" in "f", "g", "h" or "i", "j")
 fonction(a,or(b,c),or(d,or(in(e,(f,g,h)),i)),j);
