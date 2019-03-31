@@ -26,7 +26,7 @@ class SqleurPreproExpr
 	public static $Ops = array
 	(
 		'and', '&&', 'or', '||',
-		'==', '=', '!=',
+		'==', '=', '!=', '~',
 		'+', '-', '*', '/',
 		'in',
 	);
@@ -109,6 +109,7 @@ class SqleurPreproExpr
 			'==' => 'bi',
 			'=' => 'bi',
 			'!=' => 'bi',
+			'~' => 'bi',
 		),
 		array
 		(
@@ -544,6 +545,19 @@ class NœudPrepro
 			case '=':
 				$fils = $this->_contenus($this->f, $contexte, 2);
 				return $fils[0] == $fils[1];
+			case '~':
+				$fils = $this->_contenus($this->f, $contexte, 2);
+				$regex = $fils[1];
+				if(is_string($regex))
+				{
+					$e = new SqleurPreproExpr();
+					$regex = $e->_regex($regex);
+				}
+				else if(is_object($regex) && $regex->t == '/')
+					$regex = $regex->f;
+				else
+					throw new ErreurExpr("Bidule inattendu comme regex:\n".print_r($regex, true), $regex);
+				return preg_match($regex, $fils[0]);
 			case 'in':
 				$gauche = $this->_contenu($this->f[0], $contexte);
 				$droite = $this->_contenus($this->f[1], $contexte);
