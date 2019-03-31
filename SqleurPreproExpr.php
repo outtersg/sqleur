@@ -35,7 +35,7 @@ class SqleurPreproExpr
 	{
 		$bouts = array();
 		
-		preg_match_all('# +|[,"!/()]|==#', $expr, $découpe, PREG_OFFSET_CAPTURE);
+		preg_match_all('# +|[,"\'!/()]|==#', $expr, $découpe, PREG_OFFSET_CAPTURE);
 		$pos = 0;
 		foreach($découpe[0] as $découpé)
 		{
@@ -82,6 +82,7 @@ class SqleurPreproExpr
 	(
 		array
 		(
+			"'" => 'chaîne',
 			'"' => 'chaîne',
 			'/' => 'chaîne',
 		),
@@ -272,7 +273,7 @@ class SqleurPreproExpr
 							$chaînes = implode('', $chaînes);
 							if($bout == '/')
 								$chaînes = $this->_regex($chaînes);
-							$nœud = new NœudPrepro($bout, $chaînes);
+							$nœud = new NœudPrepro($bout == "'" ? '"' : $bout, $chaînes);
 							$this->_splice($bouts, $positions, $num, $fin - $num + 1, array($nœud));
 							return $this->arborer($bouts, $positions, $exprComplète);
 					}
