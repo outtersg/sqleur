@@ -71,11 +71,13 @@ class SqleurPreproTestExpr extends SqleurPreproTest
 		}
 		catch(Exception $ex)
 		{
-			$lignesEx = explode("\n", $ex->getMessage());
-			$rés = '! '.$lignesEx[0];
-			// Si un plantage se présage, autant afficher toute l'erreur.
-			if($rés != $résAttendu)
-				$rés = '! '.$ex->getMessage();
+			$rés = '! '.$ex->getMessage();
+			if($résAttendu{0} == '!')
+			{
+				$résAttendu = preg_replace('/^! */', '', $résAttendu);
+				if(preg_match("\003$résAttendu\003", $ex->getMessage()))
+					$rés = $résAttendu; // Pour éviter au _valide de planter.
+			}
 		}
 		
 		$this->_valide($résAttendu, $rés, $req);
