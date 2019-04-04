@@ -339,6 +339,8 @@ class Sqleur
 				else
 					$vrai = $this->_calculerPrepro($posEspace === false ? '' : substr($directive, $posEspace));
 				$condition = $motCle == '#if' ? array(false, $this->_sortie, $requeteEnCours, false, $this->_defs) : array_pop($this->_conditions); // 0: déjà fait; 1: sauvegarde de la vraie sortie; 2: requête en cours; 3: en cours; 4: définitions.
+				if(!$condition)
+					throw $this->exception('#else sans #if');
 				if(!$condition[0] && $vrai) // Si pas déjà fait, et que le if est avéré.
 				{
 					$this->_sortie = $condition[1];
