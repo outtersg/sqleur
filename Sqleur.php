@@ -72,6 +72,7 @@ class Sqleur
 		unset($this->_chaineDerniereDecoupe);
 		unset($this->_requeteEnCours);
 		unset($this->_resteEnCours);
+		$this->_dansChaîne = null;
 	}
 	
 	public function decoupeFichier($fichier)
@@ -114,6 +115,14 @@ class Sqleur
 		return $this->_decoupeBloc($chaineRequetes);
 	}
 	
+	const DANS_CHAÎNE_DÉBUT = 0;
+	const DANS_CHAÎNE_FIN = 1;
+	const DANS_CHAÎNE_CAUSE = 2;
+	
+	const CHAÎNE_COUPÉE = -1;
+	const CHAÎNE_PASSE_LA_MAIN = 1; // Indique que la chaîne donne au prochain élément une chance de se jouer. La chaîne ayant pour critère de délivrance du jeton les mêmes que _decoupeBloc pour entrer dans l'élément, il y a de fortes chances pour qu'il soit consommé immédiatement; le seul cas de non-consommation étant si la découpe qui a sa chance, manque de bol, tombe sur un fragment incomplet (le bloc lu se termine avant que lui ait sa fin de découpe): dans ce cas, le jeton est préservé, et la découpe "hôte" pourra être retentée une fois le tampon regarni.
+	const CHAÎNE_JETON_CONSOMMÉ = 2;
+	
 	protected function _decoupeBloc($chaine, $laFinEstVraimentLaFin = true)
 	{
 		if(isset($this->_resteEnCours))
@@ -146,7 +155,16 @@ class Sqleur
 		
 		for($i = 0; $i < $n; ++$i)
 		{
-			switch($chaineNouvelleDecoupe = $decoupes[$i][0]{0})
+			$chaineNouvelleDecoupe = $decoupes[$i][0]{0};
+			// Si on est dans une chaîne, même interrompue, on y retourne. Elle est seule à pouvoir décider de s'interrompre (soit pour fin de tampon, soit pour passage de relais temporaire au préprocesseur).
+			if($this->_dansChaîne && $this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] != static::CHAÎNE_PASSE_LA_MAIN)
+			{
+				$chaineNouvelleDecoupe = $this->_dansChaîne[static::DANS_CHAÎNE_DÉBUT];
+				if($this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] == static::CHAÎNE_COUPÉE)
+					--$i; // Et notre curseur fictif est en-deça du curseur réel.
+			}
+			
+			switch($chaineNouvelleDecoupe)
 			{
 				case ';':
 					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
@@ -171,6 +189,8 @@ class Sqleur
 							}
 						if($i < $n)
 						{
+							if($this->_dansChaîne)
+								$this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] = static::CHAÎNE_JETON_CONSOMMÉ;
 							$dernierArret = $decoupes[$i][1];
 							$blocPréprocesse = substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]);
 							$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($blocPréprocesse), "\n");
@@ -192,6 +212,7 @@ class Sqleur
 						$dernierArret = $taille;
 					break;
 				case '/':
+					/* À FAIRE: pour décharger la mémoire, voir si on ne peut pas passer par le traitement des chaînes capable de calculer un _resteEnCours minimal. */
 					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
 					while(++$i < $n && $decoupes[$i][0] != '*/')
 						if($decoupes[$i][0] == "\n")
@@ -203,18 +224,7 @@ class Sqleur
 					break;
 				case "'":
 				case '$':
-					$j = $i;
-					$fin = $decoupes[$j][0];
-					while(++$i < $n && $decoupes[$i][0] != $fin)
-						if($decoupes[$i][0] == "\n")
-							++$this->_ligne;
-					if($i < $n)
-					{
-						$nouvelArret = $decoupes[$i][1] + strlen($decoupes[$i][0]);
-						$requete .= substr($chaine, $dernierArret, $nouvelArret - $dernierArret);
-						$dernierArret = $nouvelArret;
-					}
-					/* À FAIRE: pour décharger la mémoire, il nous faudrait pouvoir ici stocker le bout lu dans la requête (et avancer $dernierArret). Le problème est qu'on n'a rien qui passerait le relai à la prochaine itération pour lui dire "on était au beau milieu d'une chaîne" (il faudrait insérer quelque chose en tête de $decoupes). Bien entendu, on ne pourrait pas tout mettre en bloc en cas de délimiteur multioctet. Ex.: chaîne "$DELIM$ coucou $DELIM$"; si la lecture par bloc nous fournit "$DELIM$ couc", très bien, on peut ajouter à $requete la totalité; par contre si elle nous a fourni dans $chaine "$DELIM$ coucou $DEL", on ne doit stocker dans $requete que "$DELIM$ coucou " car le "$DEL" doit rester dans $chaine pour si, au prochain tour de boucle, on recevait "IM$". Cet À FAIRE s'applique aussi aux commentaires. */
+					$this->_mangerChaîne($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierRetour, /*&*/ $chaineNouvelleDecoupe, /*&*/ $dernierArret, /*&*/ $nouvelArret, /*&*/ $requete);
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
@@ -237,6 +247,62 @@ class Sqleur
 			$this->_retour = array();
 			return $retour;
 		}
+	}
+	
+	protected function _mangerChaîne($chaine, $decoupes, $n, & $i, & $dernierRetour, & $chaineNouvelleDecoupe, & $dernierArret, & $nouvelArret, & $requete)
+	{
+		$chaîneType = $chaineNouvelleDecoupe;
+		if($this->_dansChaîne) // On ne fait que reprendre une chaîne interrompue.
+		{
+			$fin = $this->_dansChaîne[static::DANS_CHAÎNE_FIN];
+			$this->_dansChaîne = null;
+			$débutIntérieur = 0; // Le marqueur qui nous fait entrer dans la chaîne étant déjà passé, nous sommes dès le départ à l'intérieur de la chaîne.
+			--$i; // Pour contrebalancer le ++$i, qui sert en principe si l'on entre dans la chaîne.
+		}
+		else // C'est la découpe courante qui nous fait entrer dans la chaîne
+		{
+			$fin = $decoupes[$i][0];
+			$débutIntérieur = strlen($fin);
+		}
+		while(++$i < $n && $decoupes[$i][0] != $fin)
+		{
+			if($decoupes[$i][0] == "\n")
+			{
+				$dernierRetour = $decoupes[$i][1] + 1;
+				++$this->_ligne;
+			}
+			// Les chaînes à dollars sont parsemables d'instructions préproc. Cela permet de définir des fonctions SQL avec des fragments dépendants du préproc.
+			else if($decoupes[$i][0] == '#'&& $chaineNouvelleDecoupe == '$' && $dernierRetour == $decoupes[$i][1])
+			{
+				$chaineNouvelleDecoupe = "\n"; // Notre tunnel a masqué tout ce qu'il s'est passé dans notre mangeage; exposons au moins la découpe de juste avant la sortie.
+				--$i; // Le # lui-même ne rentre pas dans la chaîne.
+				$this->_dansChaîne = array($chaîneType, $fin, static::CHAÎNE_PASSE_LA_MAIN); // Le prochain élément gagne une chance d'être joué pour lui-même. À lui de consommer (unset) le jeton dès qu'il a pris sa chance.
+				break;
+			}
+		}
+		if($i >= $n)
+			$this->_dansChaîne = array($chaîneType, $fin, static::CHAÎNE_COUPÉE);
+		// Ce qui a été parcouru ci-dessus est mis de côté.
+		/* NOTE: interruption prématurée
+		 * Dans le cas d'un marqueur de fin multi-caractères, si $i >= $n (autrement dit si l'on a atteint la fin du bloc lu avant d'avoir trouvé notre fin de chaîne), il est possible que la fin du bloc, manque de bol, tombât pile au milieu du marqueur de fin. Si c'est le cas, autrement dit si dans les derniers octets du bloc lu on trouve le premier caractère du marqueur de fin, on laisse ces derniers octets pour que le prochain bloc lu vienne s'y agréger et reconstituer le marqueur de fin complet.
+		 * On s'assure aussi qu'il ne chevauche pas le marqueur de début: il serait malvenu que dans la chaîne $marqueur$marqueur$marqueur$ (équivalente en SQL à 'marqueur'), la fin de bloc tombant au milieu (donc |$marqueur$mar|queur$marqueur$|), prenant le $ fermant du premier $marqueur$ initial pour l'ouvrant potentiel du $marqueur$ final, on le garde de côté, ce qui serait équivalent à avoir lu |$marqueur$| puis |($mar)queur$marqueur$|, autrement dit $marqueur$$marqueur$marqueur$.
+		 */
+		$j = $i < $n ? $i : $i - 1;
+		$nouvelArret = $decoupes[$j][1] + strlen($decoupes[$j][0]);
+		$fragment = substr($chaine, $dernierArret, $nouvelArret - $dernierArret);
+		if
+		(
+			$i >= $n && strlen($fin) > 1
+			&& ($fragmentSaufMarqueurEntrée = substr($fragment, $débutIntérieur))
+			&& ($posDébutMarqueurFin = strpos($fragmentSaufMarqueurEntrée, $fin{0}, -(strlen($fin) - 1)) !== false) // On cherche les (strlen($fin) - 1) caractères, car si on cherchait dans les strlen($fin) derniers (et qu'on le trouvait), cela voudrait dire qu'on aurait le marqueur de fin en entier, qui aurait été détecté à la découpe.
+		)
+		{
+			$nCarsÀRéserver = strlen($fragmentSaufMarqueurEntrée) - $posDébutMarqueurFin;
+			$nouvelArret -= $nCarsÀRéserver;
+			$fragment = substr($fragment, 0, -$nCarsÀRéserver);
+		}
+		$requete .= $fragment;
+		$dernierArret = $nouvelArret;
 	}
 	
 	protected function _sors($requete)
