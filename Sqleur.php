@@ -196,7 +196,7 @@ class Sqleur
 							$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($blocPréprocesse), "\n");
 							$blocPréprocesse = preg_replace('#\\\\$#m', '', rtrim($blocPréprocesse));
 							$requete = $this->_preprocesse($blocPréprocesse, $requete);
-							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
+							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour; ne serait-ce que pour que si notre #if est suivi d'un #endif, celui-ci voie le \n qui le précède).
 						}
 					}
 					break;
