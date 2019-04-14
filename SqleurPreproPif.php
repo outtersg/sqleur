@@ -394,7 +394,7 @@ class SqleurPreproPif
 			// Si on est en mode lecture (on nous a indiqué un "numéro de session" à relire:
 			if(is_numeric($this->_magnéto))
 			{
-				$this->_sqleur->decoupeFichier($cheminMagnéto);
+				$this->_sqleur->_découpeFichier($cheminMagnéto);
 				return true;
 			}
 			$this->_magnétoSortie = fopen($cheminMagnéto, 'w');
