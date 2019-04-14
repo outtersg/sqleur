@@ -111,12 +111,13 @@ class Sqleur
 	
 	public function _découpeFlux($f)
 	{
+		$nConditionsImbriquées = count($this->_conditions);
 		$this->_ligne = 1;
 		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
 		$r = $this->_decoupeBloc('', true);
-		if(count($this->_conditions))
-			throw $this->exception(count($this->_conditions).' #if sans #endif');
+		if(($nConditionsImbriquées -= count($this->_conditions)))
+			throw $this->exception($nConditionsImbriquées > 0 ? $nConditionsImbriquées.' #endif sans #if' : (-$nConditionsImbriquées).' #if sans #endif');
 		return $r;
 	}
 	
