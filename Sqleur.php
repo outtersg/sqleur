@@ -77,6 +77,12 @@ class Sqleur
 	
 	public function decoupeFichier($fichier)
 	{
+		$this->_init();
+		return $this->_découpeFichier($fichier);
+	}
+	
+	public function _découpeFichier($fichier)
+	{
 		if(!file_exists($fichier))
 			throw $this->exception($fichier.' inexistant');
 		
@@ -85,7 +91,7 @@ class Sqleur
 		{
 		$this->_fichier = $fichier;
 		$f = fopen($fichier, 'r');
-		$r = $this->decoupeFlux($f);
+		$r = $this->_découpeFlux($f);
 		fclose($f);
 			$this->restaurerÉtat();
 		return $r;
@@ -100,6 +106,11 @@ class Sqleur
 	public function decoupeFlux($f)
 	{
 		$this->_init();
+		return $this->_découpeFlux($f);
+	}
+	
+	public function _découpeFlux($f)
+	{
 		$this->_ligne = 1;
 		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
