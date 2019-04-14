@@ -1,1 +1,1 @@
-Là on devrait avoir un accent UTF-8.
+Là on devrait avoir un accent UTF-8;
