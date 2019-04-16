@@ -234,23 +234,22 @@ class Sqleur
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
 		}
-		if($laFinEstVraimentLaFin)
-		{
-			$requete .= substr($chaine, $dernierArret, $taille - $dernierArret);
-			$this->_sors($requete);
-		}
-		else
-		{
+		
 			$this->_requeteEnCours = $requete;
 			$this->_resteEnCours = substr($chaine, $dernierArret);
 			$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
-		}
-		
-		if($laFinEstVraimentLaFin && $this->_retourDirect)
+		if($laFinEstVraimentLaFin)
+		{
+			$this->_sors($this->_requeteEnCours.$this->_resteEnCours);
+			unset($this->_chaineDerniereDecoupe);
+			unset($this->_requeteEnCours);
+			unset($this->_resteEnCours);
+			if($this->_retourDirect)
 		{
 			$retour = $this->_retour;
 			$this->_retour = array();
 			return $retour;
+			}
 		}
 	}
 	
