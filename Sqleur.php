@@ -377,9 +377,17 @@ class Sqleur
 		}
 		if(!$this->dansUnSiÀLaTrappe())
 		{
+			$this->_requeteEnCours = $requeteEnCours;
 			foreach($this->_préprocesseurs as $préproc)
-				if(($r = $préproc->préprocesse($motCle, $directive, $requeteEnCours)) !== false)
-					return $r;
+				// N.B.: $requeteEnCours NE DOIT PLUS être passée à préprocesse().
+				// Les préprocesseurs désirant modifier la requête en cours de constitution doivent désormais exploiter $this->_requeteEnCours.
+				// Ce dernier paramètre désormais inutile pourra être supprimé une fois tous les préprocesseurs existants purgés.
+				if($préproc->préprocesse($motCle, $directive, $requeteEnCours) !== false)
+				{
+					$requeteEnCours = $this->_requeteEnCours;
+					return $requeteEnCours;
+				}
+			$requeteEnCours = $this->_requeteEnCours;
 			switch($motCle)
 			{
 			case '#define':
