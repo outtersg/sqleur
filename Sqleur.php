@@ -163,11 +163,7 @@ class Sqleur
 			$chaineNouvelleDecoupe = $decoupes[$i][0]{0};
 			// Si on est dans une chaîne, même interrompue, on y retourne. Elle est seule à pouvoir décider de s'interrompre (soit pour fin de tampon, soit pour passage de relais temporaire au préprocesseur).
 			if($this->_dansChaîne && $this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] != static::CHAÎNE_PASSE_LA_MAIN)
-			{
 				$chaineNouvelleDecoupe = $this->_dansChaîne[static::DANS_CHAÎNE_DÉBUT];
-				if($this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] == static::CHAÎNE_COUPÉE)
-					--$i; // Et notre curseur fictif est en-deça du curseur réel.
-			}
 			
 			switch($chaineNouvelleDecoupe)
 			{
