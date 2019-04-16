@@ -78,10 +78,10 @@ class Sqleur
 	public function decoupeFichier($fichier)
 	{
 		$this->_init();
-		return $this->_découpeFichier($fichier);
+		return $this->_découpeFichier($fichier, true);
 	}
 	
-	public function _découpeFichier($fichier)
+	public function _découpeFichier($fichier, $laFinEstVraimentLaFin = false)
 	{
 		if(!file_exists($fichier))
 			throw $this->exception($fichier.' inexistant');
@@ -91,7 +91,7 @@ class Sqleur
 		{
 		$this->_fichier = $fichier;
 		$f = fopen($fichier, 'r');
-		$r = $this->_découpeFlux($f);
+			$r = $this->_découpeFlux($f, $laFinEstVraimentLaFin);
 		fclose($f);
 			$this->restaurerÉtat();
 		return $r;
@@ -106,16 +106,16 @@ class Sqleur
 	public function decoupeFlux($f)
 	{
 		$this->_init();
-		return $this->_découpeFlux($f);
+		return $this->_découpeFlux($f, true);
 	}
 	
-	public function _découpeFlux($f)
+	public function _découpeFlux($f, $laFinEstVraimentLaFin = false)
 	{
 		$nConditionsImbriquées = count($this->_conditions);
 		$this->_ligne = 1;
 		while(strlen($bloc = fread($f, 0x20000)))
 			$this->_decoupeBloc($bloc, false);
-		$r = $this->_decoupeBloc('', true);
+		$r = $laFinEstVraimentLaFin ? $this->_decoupeBloc('', true) : null;
 		if(($nConditionsImbriquées -= count($this->_conditions)))
 			throw $this->exception($nConditionsImbriquées > 0 ? $nConditionsImbriquées.' #endif sans #if' : (-$nConditionsImbriquées).' #if sans #endif');
 		return $r;
