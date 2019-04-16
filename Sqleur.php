@@ -145,13 +145,6 @@ class Sqleur
 		$decoupes = $decoupes[0];
 		$n = count($decoupes);
 		
-		// On peut déjà supprimer tout ce qui ne nous permettra pas de constituer une requête complète: pas la peine d'interpréter AAA si on attend d'avoir AAABB pour tout relire en partant d'AAA.
-		if(!$laFinEstVraimentLaFin)
-		{
-			while(--$n >= 0 && $decoupes[$n][0] != ';') {}
-			++$n;
-		}
-		
 		$dernierArret = 0;
 		if(!isset($this->_chaineDerniereDecoupe))
 		{
