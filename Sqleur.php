@@ -261,7 +261,9 @@ class Sqleur
 			$fin = $this->_dansChaîne[static::DANS_CHAÎNE_FIN];
 			$this->_dansChaîne = null;
 			$débutIntérieur = 0; // Le marqueur qui nous fait entrer dans la chaîne étant déjà passé, nous sommes dès le départ à l'intérieur de la chaîne.
-			--$i; // Pour contrebalancer le ++$i, qui sert en principe si l'on entre dans la chaîne.
+			// La boucle while qui suit, appelée en principe lors que le $i est le caractère d'entrée dans la chaîne, voudra passer outre ce caractère.
+			// Si l'on est appelés déjà dans la chaîne (donc qu'$i n'est pas le guillemet), on place notre $i sur le guillemet (virtuel) précédant notre départ.
+			--$i;
 		}
 		else // C'est la découpe courante qui nous fait entrer dans la chaîne
 		{
