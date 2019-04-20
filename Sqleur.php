@@ -135,6 +135,11 @@ class Sqleur
 	const CHAÎNE_PASSE_LA_MAIN = 1; // Indique que la chaîne donne au prochain élément une chance de se jouer. La chaîne ayant pour critère de délivrance du jeton les mêmes que _decoupeBloc pour entrer dans l'élément, il y a de fortes chances pour qu'il soit consommé immédiatement; le seul cas de non-consommation étant si la découpe qui a sa chance, manque de bol, tombe sur un fragment incomplet (le bloc lu se termine avant que lui ait sa fin de découpe): dans ce cas, le jeton est préservé, et la découpe "hôte" pourra être retentée une fois le tampon regarni.
 	const CHAÎNE_JETON_CONSOMMÉ = 2;
 	
+	protected function _ajouterBoutRequête($bout)
+	{
+		$this->_requeteEnCours .= strtr($bout, $this->_defs);
+	}
+	
 	protected function _decoupeBloc($chaine, $laFinEstVraimentLaFin = true)
 	{
 		if(isset($this->_resteEnCours))
@@ -168,8 +173,9 @@ class Sqleur
 			switch($chaineNouvelleDecoupe)
 			{
 				case ';':
-					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
-					$this->_sors($requete);
+					$this->_requeteEnCours = $requete; // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
+					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
+					$this->_sors($this->_requeteEnCours);
 						$requete = '';
 					$dernierArret = $decoupes[$i][1] + 1;
 					break;
@@ -180,7 +186,9 @@ class Sqleur
 				case '#':
 					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
 					{
-						$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
+						$this->_requeteEnCours = $requete; // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
+						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
+						$requete = $this->_requeteEnCours;  // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 						$j = $i;
 						while(++$i < $n && $decoupes[$i][0] != "\n")
 							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n" && $decoupes[$i + 1][1] == $decoupes[$i][1] + 1)
@@ -306,18 +314,21 @@ class Sqleur
 			$nouvelArret -= $nCarsÀRéserver;
 			$fragment = substr($fragment, 0, -$nCarsÀRéserver);
 		}
-		$requete .= $fragment;
+		$this->_requeteEnCours = $requete; // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
+		$this->_ajouterBoutRequête($fragment);
+		$requete = $this->_requeteEnCours;  // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 		$dernierArret = $nouvelArret;
 	}
 	
 	protected function _sors($requete)
 	{
+		/* À FAIRE: le calcul qui suit est faux si $requete a subi un remplacement de _defs où le remplacement faisait plus d'une ligne. */
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
 		if(strlen($requete = trim($requete)))
 		{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
-			call_user_func($this->_sortie, strtr($requete, $this->_defs));
+			call_user_func($this->_sortie, $requete);
 		}
 	}
 	
