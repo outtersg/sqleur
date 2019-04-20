@@ -162,7 +162,7 @@ class Sqleur
 		{
 			$chaineNouvelleDecoupe = $decoupes[$i][0]{0};
 			// Si on est dans une chaîne, même interrompue, on y retourne. Elle est seule à pouvoir décider de s'interrompre (soit pour fin de tampon, soit pour passage de relais temporaire au préprocesseur).
-			if($this->_dansChaîne && $this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] != static::CHAÎNE_PASSE_LA_MAIN)
+			if($this->_dansChaîne && $this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] != static::CHAÎNE_PASSE_LA_MAIN && !$this->dansUnSiÀLaTrappe())
 				$chaineNouvelleDecoupe = $this->_dansChaîne[static::DANS_CHAÎNE_DÉBUT];
 			
 			switch($chaineNouvelleDecoupe)
@@ -227,6 +227,7 @@ class Sqleur
 					break;
 				case "'":
 				case '$':
+					if(!$this->dansUnSiÀLaTrappe())
 					$this->_mangerChaîne($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierRetour, /*&*/ $chaineNouvelleDecoupe, /*&*/ $dernierArret, /*&*/ $nouvelArret, /*&*/ $requete);
 					break;
 			}
