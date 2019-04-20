@@ -298,7 +298,7 @@ class Sqleur
 		(
 			$i >= $n && strlen($fin) > 1
 			&& ($fragmentSaufMarqueurEntrée = substr($fragment, $débutIntérieur))
-			&& ($posDébutMarqueurFin = strpos($fragmentSaufMarqueurEntrée, $fin{0}, -(strlen($fin) - 1)) !== false) // On cherche les (strlen($fin) - 1) caractères, car si on cherchait dans les strlen($fin) derniers (et qu'on le trouvait), cela voudrait dire qu'on aurait le marqueur de fin en entier, qui aurait été détecté à la découpe.
+			&& ($posDébutMarqueurFin = strpos($fragmentSaufMarqueurEntrée, $fin{0}, max(0, strlen($fragmentSaufMarqueurEntrée) - (strlen($fin) - 1)))) !== false // On cherche les (strlen($fin) - 1) caractères, car si on cherchait dans les strlen($fin) derniers (et qu'on le trouvait), cela voudrait dire qu'on aurait le marqueur de fin en entier, qui aurait été détecté à la découpe.
 		)
 		{
 			$nCarsÀRéserver = strlen($fragmentSaufMarqueurEntrée) - $posDébutMarqueurFin;
