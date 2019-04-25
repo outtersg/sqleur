@@ -161,7 +161,8 @@ class Sqleur
 			$chaineDerniereDecoupe = $this->_chaineDerniereDecoupe;
 			$dernierRetour = $chaineDerniereDecoupe == "\n" ? 0 : -1;
 		}
-		$requete = isset($this->_requeteEnCours) ? $this->_requeteEnCours : '';
+		if(!isset($this->_requeteEnCours))
+			$this->_requeteEnCours = '';
 		
 		for($i = 0; $i < $n; ++$i)
 		{
@@ -173,10 +174,9 @@ class Sqleur
 			switch($chaineNouvelleDecoupe)
 			{
 				case ';':
-					$this->_requeteEnCours = $requete; // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
 					$this->_sors($this->_requeteEnCours);
-						$requete = '';
+					$this->_requeteEnCours = '';
 					$dernierArret = $decoupes[$i][1] + 1;
 					break;
 				case "\n":
@@ -186,9 +186,7 @@ class Sqleur
 				case '#':
 					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
 					{
-						$this->_requeteEnCours = $requete; // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
-						$requete = $this->_requeteEnCours;  // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 						$j = $i;
 						while(++$i < $n && $decoupes[$i][0] != "\n")
 							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n" && $decoupes[$i + 1][1] == $decoupes[$i][1] + 1)
@@ -205,14 +203,14 @@ class Sqleur
 							$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($blocPréprocesse), "\n");
 							$blocPréprocesse = preg_replace('#\\\\$#m', '', rtrim($blocPréprocesse));
 							$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
-							$requete = $this->_preprocesse($blocPréprocesse, $requete);
+							$this->_préprocesse($blocPréprocesse);
 							$chaineDerniereDecoupe = $this->_chaineDerniereDecoupe;
 							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour; ne serait-ce que pour que si notre #if est suivi d'un #endif, celui-ci voie le \n qui le précède).
 						}
 					}
 					break;
 				case '-':
-					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
+					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
 					while(++$i < $n && $decoupes[$i][0] != "\n") {}
 					if($i < $n)
 					{
@@ -224,7 +222,7 @@ class Sqleur
 					break;
 				case '/':
 					/* À FAIRE: pour décharger la mémoire, voir si on ne peut pas passer par le traitement des chaînes capable de calculer un _resteEnCours minimal. */
-					$requete .= substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret);
+					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
 					while(++$i < $n && $decoupes[$i][0] != '*/')
 						if($decoupes[$i][0] == "\n")
 							++$this->_ligne;
@@ -236,18 +234,18 @@ class Sqleur
 				case "'":
 				case '$':
 					if(!$this->dansUnSiÀLaTrappe())
-					$this->_mangerChaîne($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierRetour, /*&*/ $chaineNouvelleDecoupe, /*&*/ $dernierArret, /*&*/ $nouvelArret, /*&*/ $requete);
+					$this->_mangerChaîne($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierRetour, /*&*/ $chaineNouvelleDecoupe, /*&*/ $dernierArret, /*&*/ $nouvelArret);
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
 		}
 		
-			$this->_requeteEnCours = $requete;
 			$this->_resteEnCours = substr($chaine, $dernierArret);
 			$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
 		if($laFinEstVraimentLaFin)
 		{
-			$this->_sors($this->_requeteEnCours.$this->_resteEnCours);
+			$this->_ajouterBoutRequête($this->_resteEnCours);
+			$this->_sors($this->_requeteEnCours);
 			unset($this->_chaineDerniereDecoupe);
 			unset($this->_requeteEnCours);
 			unset($this->_resteEnCours);
@@ -260,7 +258,7 @@ class Sqleur
 		}
 	}
 	
-	protected function _mangerChaîne($chaine, $decoupes, $n, & $i, & $dernierRetour, & $chaineNouvelleDecoupe, & $dernierArret, & $nouvelArret, & $requete)
+	protected function _mangerChaîne($chaine, $decoupes, $n, & $i, & $dernierRetour, & $chaineNouvelleDecoupe, & $dernierArret, & $nouvelArret)
 	{
 		$chaîneType = $chaineNouvelleDecoupe;
 		if($this->_dansChaîne) // On ne fait que reprendre une chaîne interrompue.
@@ -314,9 +312,7 @@ class Sqleur
 			$nouvelArret -= $nCarsÀRéserver;
 			$fragment = substr($fragment, 0, -$nCarsÀRéserver);
 		}
-		$this->_requeteEnCours = $requete; // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 		$this->_ajouterBoutRequête($fragment);
-		$requete = $this->_requeteEnCours;  // En attendant qu'on ne bosse plus que sur $this->_requeteEnCours.
 		$dernierArret = $nouvelArret;
 	}
 	
@@ -341,8 +337,10 @@ class Sqleur
 	{
 	}
 	
-	protected function _preprocesse($directive, $requeteEnCours)
+	protected function _préprocesse($directive)
 	{
+		$requeteEnCours = $this->_requeteEnCours;
+		
 		$posEspace = strpos($directive, ' ');
 		$motCle = $posEspace === false ? $directive : substr($directive, 0, $posEspace);
 		switch($motCle)
@@ -420,7 +418,7 @@ class Sqleur
 			}
 		}
 		
-		return $requeteEnCours;
+		$this->_requeteEnCours = $requeteEnCours;
 	}
 	
 	/*- États ----------------------------------------------------------------*/
