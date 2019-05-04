@@ -194,7 +194,7 @@ class SqleurPreproExpr
 						case 'bi':
 							// Détection du cas particulier de la , du in.
 							if($this->_virguleRétrogradée($bouts, $num))
-								continue;
+								break;
 							// Autres cas.
 							$racine = new NœudPrepro($bout);
 							$fils = array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1));
