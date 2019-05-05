@@ -5,6 +5,14 @@ function aff($req)
 	echo "[90m$req[0m\n";
 }
 
+class Rempl
+{
+	public function r($corr)
+	{
+		return eval($corr[1].';');
+	}
+}
+
 function faire($chemin)
 {
 	$prépros = array();
@@ -23,6 +31,8 @@ function faire($chemin)
 		$prépros[$i] = new $prépro();
 	}
 	$s = new Sqleur('aff', $prépros);
+	$rempl = new Rempl();
+	$s->avecDéfs(array('#{{([^}]+|}[^}]+)+}}#' => array($rempl, 'r')));
 	$s->decoupeFichier($chemin);
 }
 
