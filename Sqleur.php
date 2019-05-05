@@ -137,7 +137,7 @@ class Sqleur
 	
 	protected function _ajouterBoutRequête($bout)
 	{
-		$this->_requeteEnCours .= strtr($bout, $this->_defs);
+		$this->_requeteEnCours .= $this->_appliquerDéfs($bout);
 	}
 	
 	protected function _decoupeBloc($chaine, $laFinEstVraimentLaFin = true)
@@ -405,7 +405,7 @@ class Sqleur
 			case '#define':
 				$déf = preg_split('/[ 	]+/', $directive, 3);
 				$contenuDéf = isset($déf[2]) ? $déf[2] : '';
-				$contenuDéf = strtr($contenuDéf, $this->_defs);
+					$contenuDéf = $this->_appliquerDéfs($contenuDéf);
 				$this->_defs[$déf[1]] = $contenuDéf;
 				break;
 			case '#encoding':
@@ -491,6 +491,13 @@ class Sqleur
 				return new $classe($message, $ex->getComparisonFailure(), $ex->getPrevious());
 		}
 		return new Exception($message, isset($ex) ? $ex->getCode() : 0, $ex);
+	}
+	
+	/*- Remplacements --------------------------------------------------------*/
+	
+	protected function _appliquerDéfs($chaîne)
+	{
+		return strtr($chaîne, $this->_defs);
 	}
 	
 	/*- Expressions du préprocesseur -----------------------------------------*/
