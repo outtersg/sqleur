@@ -32,7 +32,7 @@ class Sqleur
 	 */
 	public function __construct($sortie = null, $préprocesseurs = array())
 	{
-		$this->_defs = array();
+		$this->avecDéfs(array());
 		$this->_fichier = null;
 		$this->_ligne = null;
 		$this->_dernièreLigne = null;
@@ -54,11 +54,6 @@ class Sqleur
 		foreach($préprocesseurs as $préprocesseur)
 			$préprocesseur->_sqleur = $this;
 		$this->_préprocesseurs = $préprocesseurs;
-	}
-	
-	public function avecDefinitions($definitions)
-	{
-		$this->_defs = $definitions;
 	}
 	
 	protected function _accumule($requete)
@@ -405,8 +400,7 @@ class Sqleur
 			case '#define':
 				$déf = preg_split('/[ 	]+/', $directive, 3);
 				$contenuDéf = isset($déf[2]) ? $déf[2] : '';
-					$contenuDéf = $this->_appliquerDéfs($contenuDéf);
-				$this->_defs[$déf[1]] = $contenuDéf;
+					$this->ajouterDéfs(array($déf[1] => $this->_appliquerDéfs($contenuDéf)));
 				break;
 			case '#encoding':
 				$encodage = trim(substr($directive, $posEspace));
@@ -495,9 +489,33 @@ class Sqleur
 	
 	/*- Remplacements --------------------------------------------------------*/
 	
+	public function avecDefinitions($défs) { return $this->avecDéfs($défs); }
+	public function avecDéfs($défs)
+	{
+		$this->_defs = array('stat' => array(), 'dyn' => array());
+		return $this->ajouterDéfs($défs);
+	}
+	
+	public function ajouterDéfs($défs)
+	{
+		foreach($this->_defs as & $ptrEnsembleDéfs)
+			$ptrEnsembleDéfs = array_diff_key($ptrEnsembleDéfs, $défs);
+		foreach($défs as $id => $contenu)
+			$this->_defs[is_string($contenu) ? 'stat' : 'dyn'][$id] = $contenu;
+	}
+	
 	protected function _appliquerDéfs($chaîne)
 	{
-		return strtr($chaîne, $this->_defs);
+		// Les remplacements statiques en premier (même si on ne respecte plus l'ordre mêlés des statiques et des dynamiques).
+		$chaîne = strtr($chaîne, $this->_defs['stat']);
+		foreach($this->_defs['dyn'] as $expr => $rempl)
+			$chaîne = preg_replace_callback($expr, $rempl, $chaîne);
+		return $chaîne;
+	}
+	
+	public function _defined($nomVar)
+	{
+		return array_key_exists($nomVar, $this->_defs['stat']);
 	}
 	
 	/*- Expressions du préprocesseur -----------------------------------------*/
@@ -512,11 +530,6 @@ class Sqleur
 	(
 		'defined',
 	);
-	
-	public function _defined($nomVar)
-	{
-		return array_key_exists($nomVar, $this->_defs);
-	}
 }
 
 ?>
