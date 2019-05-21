@@ -427,6 +427,11 @@ class SqleurPreproExpr
 			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, array($bout));
 			$num = $numPréc;
 		}
+		else if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_MOT_SIMPLE)) === false)
+		{
+			// En début d'expression, une parenthèse ne devrait servir qu'à constituer un groupement: "(2 + 3) * 2".
+			$bouts[$num] = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
+		}
 		else if(count($bout->f) == 1)
 			$this->_splice($bouts, $positions, $num, 1, array($bout->f));
 		else
