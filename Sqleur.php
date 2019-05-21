@@ -409,6 +409,9 @@ class Sqleur
 				else
 					$this->_conv = function($ligne) use($encodage) { return iconv($encodage, 'utf-8', $ligne); };
 				break;
+				default:
+					fprintf(STDERR, "[33m# Expression préprocesseur non traitée: $directive[0m\n");
+					break;
 			}
 		}
 		
