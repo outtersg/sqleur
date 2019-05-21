@@ -442,6 +442,7 @@ class SqleurPreproExpr
 	
 	protected function _estBimulti($bout)
 	{
+		if(($bout = $this->_estOp($bout)))
 		foreach(static::$Prios as $symbolesNiveau)
 			foreach($symbolesNiveau as $symbole => $cat)
 				if($symbole === $bout)
