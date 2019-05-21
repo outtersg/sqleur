@@ -429,6 +429,17 @@ class SqleurPreproExpr
 		return false;
 	}
 	
+	protected function _estOp($bout)
+	{
+		if(is_string($bout) && in_array($bout, self::$Ops))
+			return $bout;
+		if(is_object($bout) && $bout instanceof NœudPrepro)
+			if($bouts[$num]->t == 'op')
+				return $bout->op;
+			else if(in_array($bout->t, self::$Ops))
+				return $bout->t;
+	}
+	
 	protected function _estBimulti($bout)
 	{
 		foreach(static::$Prios as $symbolesNiveau)
