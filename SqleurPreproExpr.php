@@ -374,6 +374,15 @@ class SqleurPreproExpr
 		return true;
 	}
 	
+	protected function _simplifierParenthèseGroupement($bout, $positions, $num)
+	{
+		if(is_object($bout->f) && $bout->f instanceof NœudPrepro)
+			return $bout->f;
+		else if(is_array($bout->f) && count($bout->f) == 1)
+			return $bout->f[0];
+		throw new ErreurExpr("le contenu de la parenthèse groupante doit être atomique", $positions, $num);
+	}
+	
 	/**
 	 * S'assure qu'une parenthèse a un usage parmi ceux identifiés (soit pour ouvrir la liste de paramètres d'une fonction, avec des virgules dedans, soit pour constituer un groupe, sans virgule (ex.: "truc or (machin and bidule)")).
 	 */
@@ -382,13 +391,39 @@ class SqleurPreproExpr
 		$bout = $bouts[$num];
 		if(!is_object($bout) || ! $bout instanceof NœudPrepro || $bout->t != '(')
 			throw new Exception("_usageParenthèse() appelée sur un nœud non parenthèse");
-		if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP)) !== false)
+		if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP | static::PREC_BI | static::PREC_BIMULTI)) !== false)
 		{
+			if($this->_estBimulti($bouts[$numPréc]))
+			{
+				// Les opérateurs bimulti (<machin> <bimulti> <liste>) fonctionnent selon deux modes:
+				// - <machin> <bimulti> <valeur> , <valeur> , <valeur>
+				// - <machin> <bimulti> ( <valeur , <valeur> , <valeur> )
+				// Nous sommes dans le second cas.
+				// Nous travaillons maintenant sur la liste de valeurs: nous la transformons en quelque chose qui ressemble au premier cas.
+				// À la différence de la fonction, où nous avons tout sous la main ("f(x)" ne dépend pas de ce qui précède), pour un bimulti "… in (x, y)" le in dépend des …, potentiellement complexes; nous la parenthèse n'essaierons donc pas de nous immiscer dans le calcul de l'arbre du bimulti, et nous contenterons donc de nous réécrire (le nœud parenthèse) de manière à ce que plus tard, lorsque le bimulti calculera son arbre, il nous trouve sous une forme qu'il lui soit aisé de traiter.
+				++$numPréc;
+				if(is_object($bout->f) && $bout->f instanceof NœudPrepro && $bout->f->t == ',')
+					$bout = $bout->f;
+				else if(!is_array($bout->f))
+					throw new ErreurExpr("Erreur interne: opérateur à parenthèse de contenu incompilable", $positions, $num);
+				$bout->t = ',,';
+			}
+			else if($this->_estOp($bouts[$numPréc]))
+			{
+				// Parenthèse de regroupement: "2 * (3 + 4). On est
+				// À FAIRE
+				++$numPréc;
+				$bout = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
+			}
+			else
+			{
 				$bout = new NœudPrepro('f', array($bouts[$numPréc], $bout));
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == '(')
 					$bout->f[1] = $bout->f[1]->f;
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == ',')
 					$bout->f[1] = $bout->f[1]->f;
+			}
+			// On _splice de toute manière, pour écrabouiller les éventuels espaces entre l'élément significatif et sa parenthèse.
 			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, array($bout));
 			$num = $numPréc;
 		}
