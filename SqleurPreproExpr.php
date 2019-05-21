@@ -384,12 +384,12 @@ class SqleurPreproExpr
 			throw new Exception("_usageParenthèse() appelée sur un nœud non parenthèse");
 		if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP)) !== false)
 		{
-			$nœudFonction = new NœudPrepro('f', array($bouts[$numPréc], $bout));
-			if(is_object($nœudFonction->f[1]) && $nœudFonction->f[1] instanceof NœudPrepro && $nœudFonction->f[1]->t == '(')
-				$nœudFonction->f[1] = $nœudFonction->f[1]->f;
-			if(is_object($nœudFonction->f[1]) && $nœudFonction->f[1] instanceof NœudPrepro && $nœudFonction->f[1]->t == ',')
-				$nœudFonction->f[1] = $nœudFonction->f[1]->f;
-			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, array($nœudFonction));
+				$bout = new NœudPrepro('f', array($bouts[$numPréc], $bout));
+				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == '(')
+					$bout->f[1] = $bout->f[1]->f;
+				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == ',')
+					$bout->f[1] = $bout->f[1]->f;
+			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, array($bout));
 			$num = $numPréc;
 		}
 		else if(count($bout->f) == 1)
