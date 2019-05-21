@@ -399,6 +399,7 @@ class SqleurPreproExpr
 	}
 	
 	const PREC_MOT_SIMPLE = 0x01;
+	const PREC_BI         = 0x08;
 	const PREC_BIMULTI    = 0x02;
 	const PREC_SAUF_OP    = 0x04;
 	
@@ -413,6 +414,9 @@ class SqleurPreproExpr
 				continue;
 			
 			// Un des critères suffit.
+			if($mode & static::PREC_BI)
+				if($this->_estOp($bouts[$num]) && !$this->_estBimulti($bouts[$num]))
+					return $num;
 			if($mode & static::PREC_SAUF_OP) // Le bimulti (mot-clé "in" par exemple) est considéré comme un opérateur.
 				if((is_string($bouts[$num]) && !$this->_estBimulti($bouts[$num]) && !in_array($bouts[$num], self::$Ops)) || (is_object($bouts[$num]) && $bouts[$num] instanceof NœudPrepro && $bouts[$num]->t != 'op'))
 					return $num;
