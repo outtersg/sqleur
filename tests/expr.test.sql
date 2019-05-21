@@ -1,7 +1,28 @@
 -- prepro SqleurPreproTestExpr
 
+--- Parenthèses et listes sans parenthèses ---
+-- On distingue les cas à 1 élément de ceux à plusieurs éléments.
+
+#testexpr TOTO in "a"
+in(TOTO,[a]);
+
+#testexpr TOTO in ("a")
+in(TOTO,[a]);
+
 #testexpr TOTO in "a", "b"
 in(TOTO,[a,b]);
+
+-- Un in avec des parenthèses…
+#testexpr TOTO in ("a", "b")
+in(TOTO,[a,b]);
+-- … s'interprète comme un defined ou une fonction…
+#testexpr defined(TOTO)
+defined(TOTO);
+-- … plutôt que comme un opérateur.
+#testexpr TOTO and (2 or 3)
+and(TOTO, or(2, 3));
+
+--- Liste sans parenthèses ---
 
 #testexpr TOTO in "a", "b",
 ! attend deux membres de part et d.autre;
