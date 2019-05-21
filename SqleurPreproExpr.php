@@ -528,9 +528,9 @@ class NœudPrepro
 			case 'mot':
 				if(preg_match('/^[0-9]*$/', $this->f))
 					return 0 + $this->f;
-				else if(!array_key_exists($this->f, $contexte->_defs))
+				else if(!$contexte->_defined($this->f))
 					throw new Exception("Variable de préproc '".$this->f."' indéfinie");
-				return $contexte->_defs[$this->f];
+				return $contexte->_defs['stat'][$this->f];
 			case '"':
 				if(is_string($this->f))
 					return $this->f;
