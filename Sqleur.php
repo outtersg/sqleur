@@ -353,7 +353,7 @@ class Sqleur
 				if(!$condition[0] && $vrai) // Si pas déjà fait, et que le if est avéré.
 				{
 					$this->_sortie = $condition[1];
-					$requeteEnCours = $condition[2];
+					$this->_requeteEnCours = $condition[2];
 					$this->_defs = $condition[4];
 					$condition[3] = true; // En cours.
 					$condition[0] = true; // Déjà fait.
@@ -369,18 +369,18 @@ class Sqleur
 					$condition[3] = false;
 				}
 				$this->_conditions[] = $condition;
-				break;
+				return;
 			case '#endif':
 				$condition = array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#endif sans #if');
 				if(!$condition[3]) // Si le dernier bloc traité (#if ou #else) était à ignorer,
 				{
-				$requeteEnCours = $condition[2]; // On restaure.
+					$this->_requeteEnCours = $condition[2]; // On restaure.
 					$this->_defs = $condition[4];
 				}
 				$this->_sortie = $condition[1];
-				break;
+				return;
 		}
 		if(!$this->dansUnSiÀLaTrappe())
 		{
