@@ -35,7 +35,7 @@ class SqleurPreproExpr
 	{
 		$bouts = array();
 		
-		preg_match_all('# +|[<=>]=|[,"\'!/()<=>]#', $expr, $découpe, PREG_OFFSET_CAPTURE); # Bien penser à mettre les expressions les plus longues (<=) avant ses sous-ensembles (<), sans quoi c'est la seconde qui est prise à la place de la première.
+		preg_match_all('# +|[<=>]=|[,"\'`!/()<=>]#', $expr, $découpe, PREG_OFFSET_CAPTURE); # Bien penser à mettre les expressions les plus longues (<=) avant ses sous-ensembles (<), sans quoi c'est la seconde qui est prise à la place de la première.
 		$pos = 0;
 		foreach($découpe[0] as $découpé)
 		{
@@ -84,6 +84,7 @@ class SqleurPreproExpr
 		(
 			"'" => 'chaîne',
 			'"' => 'chaîne',
+			'`' => 'chaîne',
 			'/' => 'chaîne',
 		),
 		array
@@ -601,6 +602,21 @@ class NœudPrepro
 					else
 						$r .= $this->_contenu($f, $contexte);
 				return $r;
+			case '`':
+				$rés = $contexte->exécuter($this->f, true);
+				if(is_object($rés) && $rés instanceof PDOStatement)
+				{
+					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1)
+						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($ls).' résultats');
+					$l = $ls[0];
+					if(count($l) != 1)
+						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($l).' colonnes'); // À FAIRE?: renvoyer un résultat tableau?
+					return array_shift($l);
+				}
+				else
+					throw new ErreurExpr("Résultat inattendu à l'exécution de `{$this->f}`");
+				return $rés;
+				return 1;
 			case '==':
 			case '=':
 			case '<':
