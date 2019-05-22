@@ -26,7 +26,7 @@ class SqleurPreproExpr
 	public static $Ops = array
 	(
 		'and', '&&', 'or', '||',
-		'==', '=', '!=', '~',
+		'==', '=', '!=', '~', '<', '<=', '>=', '>',
 		'+', '-', '*', '/',
 		'in',
 	);
@@ -35,7 +35,7 @@ class SqleurPreproExpr
 	{
 		$bouts = array();
 		
-		preg_match_all('# +|[,"\'!/()]|==#', $expr, $découpe, PREG_OFFSET_CAPTURE);
+		preg_match_all('# +|[<=>]=|[,"\'!/()<=>]#', $expr, $découpe, PREG_OFFSET_CAPTURE); # Bien penser à mettre les expressions les plus longues (<=) avant ses sous-ensembles (<), sans quoi c'est la seconde qui est prise à la place de la première.
 		$pos = 0;
 		foreach($découpe[0] as $découpé)
 		{
@@ -110,6 +110,10 @@ class SqleurPreproExpr
 			'=' => 'bi',
 			'!=' => 'bi',
 			'~' => 'bi',
+			'<' => 'bi',
+			'<=' => 'bi',
+			'>=' => 'bi',
+			'>' => 'bi',
 		),
 		array
 		(
@@ -599,8 +603,21 @@ class NœudPrepro
 				return $r;
 			case '==':
 			case '=':
+			case '<':
+			case '<=':
+			case '>=':
+			case '>':
 				$fils = $this->_contenus($this->f, $contexte, 2);
+				switch($this->t)
+				{
+					case '==':
+					case '=':
 				return $fils[0] == $fils[1];
+					case '<': return $fils[0] < $fils[1];
+					case '<=': return $fils[0] <= $fils[1];
+					case '>=': return $fils[0] >= $fils[1];
+					case '>': return $fils[0] > $fils[1];
+				}
 			case '~':
 				$fils = $this->_contenus($this->f, $contexte, 2);
 				$regex = $fils[1];
