@@ -311,16 +311,24 @@ class Sqleur
 		$dernierArret = $nouvelArret;
 	}
 	
-	protected function _sors($requete)
+	protected function _sors($requete, $brut = false, $appliquerDéfs = false)
 	{
 		/* À FAIRE: le calcul qui suit est faux si $requete a subi un remplacement de _defs où le remplacement faisait plus d'une ligne. */
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
+		if($appliquerDéfs)
+			$requete = $this->_appliquerDéfs($requete);
 		if(strlen($requete = trim($requete)))
 		{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
-			call_user_func($this->_sortie, $requete);
+			return call_user_func($this->_sortie, $requete);
 		}
+	}
+	
+	// À FAIRE: possibilité de demander la "vraie" sortie. Mais pas facile, car un certain nombre de préprocesseurs peuvent la court-circuiter.
+	public function exécuter($req, $appliquerDéfs = false)
+	{
+		return $this->_sors($req, true, $appliquerDéfs);
 	}
 	
 	public function dansUnSiÀLaTrappe()
