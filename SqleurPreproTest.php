@@ -102,7 +102,7 @@ class SqleurPreproTest
 		{
 			if(is_object($rés) && $rés instanceof PDOStatement)
 			{
-				$t = $rés->fetchAll();
+				$t = $rés->fetchAll(PDO::FETCH_NUM);
 				$l = array();
 				foreach($t as $ligne)
 					$l[] = $this->_normalise($ligne);
