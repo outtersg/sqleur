@@ -61,12 +61,12 @@ class SqleurPreproTest
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
 		
-		$this->_entre($motClé);
+		$this->_entre($motClé, $directiveComplète);
 		
 		return $requêteEnCours;
 	}
 	
-	protected function _entre($motClé)
+	protected function _entre($motClé, $directiveComplète)
 	{
 		if(isset($this->_sortieOriginelle))
 			throw new Exception($motClé.': impossible de commencer un test alors que je n\'ai pas terminé le précédent');
