@@ -75,6 +75,8 @@ class SqleurPreproTest
 		$this->_sqleur->_sortie = array($this, '_chope');
 		$this->_boulot = array();
 		$this->_prochainFatal = $this->_mode & SqleurPreproTest::FATAL;
+		if(preg_match("/^$motClé\\sfatal/", $directiveComplète))
+			$this->_prochainFatal = true;
 	}
 	
 	public function _chope($req)
