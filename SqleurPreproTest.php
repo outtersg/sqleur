@@ -45,8 +45,9 @@ class SqleurPreproTest
 {
 	protected $_préfixes = array('#test');
 	
-	const BRUT = null;
-	const PHPUNIT = 'phpunit';
+	const APPELANT = 0x01; // Masque des bits d'appelant.
+	const BRUT =     0x00;
+	const PHPUNIT =  0x01;
 	
 	public function __construct($mode = SqleurPreproTest::BRUT)
 	{
@@ -140,7 +141,7 @@ class SqleurPreproTest
 	
 	protected function _valide($résAttendu, $rés, $req)
 	{
-		switch($this->_mode)
+		switch($this->_mode & SqleurPreproTest::APPELANT)
 		{
 			case SqleurPreproTest::PHPUNIT:
 				try
