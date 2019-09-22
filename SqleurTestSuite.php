@@ -72,7 +72,7 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 	
 	public function err($e)
 	{
-		$this->_result->addError($this, $e, 0);
+		$this->_result->addFailure($this, $e, 0);
 	}
 }
 
