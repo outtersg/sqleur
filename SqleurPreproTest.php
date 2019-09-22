@@ -49,6 +49,8 @@ class SqleurPreproTest
 	const BRUT =     0x00;
 	const PHPUNIT =  0x01;
 	
+	const FATAL =    0x04;
+	
 	public function __construct($mode = SqleurPreproTest::BRUT)
 	{
 		$this->_mode = $mode;
@@ -72,6 +74,7 @@ class SqleurPreproTest
 		$this->_sortieOriginelle = $this->_sqleur->_sortie;
 		$this->_sqleur->_sortie = array($this, '_chope');
 		$this->_boulot = array();
+		$this->_prochainFatal = $this->_mode & SqleurPreproTest::FATAL;
 	}
 	
 	public function _chope($req)
@@ -152,14 +155,29 @@ class SqleurPreproTest
 				{
 					// Le moyen le plus simple d'avoir, en cas d'exception, un message enrichi de la pile d'appels, est de rejouer l'assertion avec le nouveau message.
 					$ex = $this->_sqleur->exception($req);
+					try
+					{
 					PHPUnit\Framework\Assert::assertEquals("\n".$résAttendu."\n", "\n".$rés."\n", $ex->getMessage());
+					}
+					catch(PHPUnit\Framework\AssertionFailedError $e)
+					{
+						$this->_err($e);
+					}
 				}
 				break;
 			default:
 				if($résAttendu != $rés)
-					throw $this->_sqleur->exception($req.': résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>");
+					$this->_err($this->_sqleur->exception($req.': résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>"));
 				break;
 		}
+	}
+	
+	protected function _err($e)
+	{
+		if(!$this->_prochainFatal)
+			$this->_accuErr->err($e);
+		else
+			throw $e;
 	}
 }
 
