@@ -41,6 +41,7 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 			't' => new SqleurPreproTest(SqleurPreproTest::PHPUNIT),
 			'p' => new SqleurPreproPif(),
 		);
+		$prépros['t']->_accuErr = $this;
 		$this->sqleur = new Sqleur(array($this, 'sortir'), $prépros);
 	}
 	
@@ -60,6 +61,18 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 		$r = $this->bdd()->prepare($req);
 		$r->execute();
 		return $r;
+	}
+	
+	public function run(\PHPUnit\Framework\TestResult $result = null)
+	{
+		$result || $result = $this->createResult();
+		$this->_result = $result;
+		return parent::run($result);
+	}
+	
+	public function err($e)
+	{
+		$this->_result->addError($this, $e, 0);
 	}
 }
 
