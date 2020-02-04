@@ -168,6 +168,7 @@ class Sql2Csv
 		$entrées = array();
 		$sortie = Flux::STDOUT;
 		$conversions = array();
+		$défs = array();
 		$formatSortie = JoueurSql::CSV;
 		
 		for($i = 0; ++$i < count($argv);)
@@ -189,6 +190,9 @@ class Sql2Csv
 					$sortie = $argv[$i];
 					break;
 				default:
+					if(preg_match('/^(:?[_a-zA-Z0-9]*)=(.*)$/', $argv[$i], $allumettes))
+						$défs[$allumettes[1]] = $allumettes[2];
+					else
 					$entrées[] = $argv[$i] === '-' ? Flux::STDIN : $argv[$i];
 					break;
 			}
@@ -209,6 +213,7 @@ class Sql2Csv
 		
 		$j->conversions = isset($conversions) && count($conversions) ? $conversions : null;
 		$j->format = $formatSortie;
+		$j->ajouterDéfs($défs);
 		$j->sortie($sortie);
 		foreach($entrées as $entrée)
 			$j->jouer($entrée);
