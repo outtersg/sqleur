@@ -97,8 +97,10 @@ class JoueurSql extends Sqleur
 		$fluxEntrée->fermer();
 	}
 	
-	public function exécuter($sql)
+	public function exécuter($sql, $appliquerDéfs = false)
 	{
+		if($appliquerDéfs)
+			$sql = $this->_appliquerDéfs($sql);
 		fprintf(STDERR, "    ".strtr($sql, array("\n" => "\n    ")).";\n");
 		$rés = $this->bdd->query($sql);
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
