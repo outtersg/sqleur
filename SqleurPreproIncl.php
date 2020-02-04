@@ -30,6 +30,7 @@ class SqleurPreproIncl
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
 		
+		$directiveComplète = $this->_sqleur->appliquerDéfs($directiveComplète);
 		$bouts = preg_split("/[ \t,;]+/", $directiveComplète);
 		array_shift($bouts);
 		$auMoinsUn = false;
