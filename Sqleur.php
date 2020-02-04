@@ -515,7 +515,8 @@ class Sqleur
 			$this->_defs[is_string($contenu) ? 'stat' : 'dyn'][$id] = $contenu;
 	}
 	
-	protected function _appliquerDéfs($chaîne)
+	protected function _appliquerDéfs($chaîne) { return $this->appliquerDéfs($chaîne); }
+	public function appliquerDéfs($chaîne)
 	{
 		// Les remplacements statiques en premier (même si on ne respecte plus l'ordre mêlés des statiques et des dynamiques).
 		$chaîne = strtr($chaîne, $this->_defs['stat']);
