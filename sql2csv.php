@@ -2,6 +2,7 @@
 <?php
 
 require_once dirname(__FILE__).'/Sqleur.php';
+require_once dirname(__FILE__).'/SqleurPreproIncl.php';
 
 class Flux
 {
@@ -82,7 +83,11 @@ class JoueurSql extends Sqleur
 	public function __construct()
 	{
 		// À FAIRE: permettre des directives #output dans le SQL pour changer de fichier de sortie; cela permettrait de caser plusieurs exports dans le même .sql, en séparant chaque export par cette directive.
-		parent::__construct(array($this, 'exécuter'));
+		$prépros = array
+		(
+			new SqleurPreproIncl(),
+		);
+		parent::__construct(array($this, 'exécuter'), $prépros);
 	}
 	
 	public function sortie($sortie)
