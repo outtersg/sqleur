@@ -76,6 +76,8 @@ class JoueurSql extends Sqleur
 	const CSV = 'csv';
 	const CSVBRUT = 'delim';
 	
+	public $sépChamps = ';';
+	
 	protected $bdd;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
@@ -139,7 +141,7 @@ class JoueurSql extends Sqleur
 		$this->sortie->ouvrir($re);
 		
 		if(isset($colonnes))
-			$this->exporterLigne($colonnes, ';', '');
+			$this->exporterLigne($colonnes);
 		
 		while(($l = $résultat->fetch()) !== false)
 			$this->exporterLigne($l);
@@ -155,10 +157,10 @@ class JoueurSql extends Sqleur
 		switch($this->format)
 		{
 			case JoueurSql::CSV:
-		fputcsv($this->sortie->f, $l, ';');
+				fputcsv($this->sortie->f, $l, $this->sépChamps);
 				break;
 			case JoueurSql::CSVBRUT:
-				fwrite($this->sortie->f, implode(';', $l)."\n");
+				fwrite($this->sortie->f, implode($this->sépChamps, $l)."\n");
 				break;
 		}
 	}
@@ -175,12 +177,17 @@ class Sql2Csv
 		$conversions = array();
 		$défs = array();
 		$formatSortie = JoueurSql::CSV;
+		$sépChamps = ';';
 		
 		for($i = 0; ++$i < count($argv);)
 			switch($argv[$i])
 			{
 				case '--raw':
 					$formatSortie = JoueurSql::CSVBRUT;
+					break;
+				case '-d':
+					++$i;
+					$sépChamps = $argv[$i];
 					break;
 				case '--newline':
 					++$i;
@@ -211,13 +218,14 @@ class Sql2Csv
 			$conversions += array
 			(
 				"\n" => ' | ',
-			';' => ',',
+				$sépChamps => ',',
 			);
 		
 		// On y va!
 		
 		$j->conversions = isset($conversions) && count($conversions) ? $conversions : null;
 		$j->format = $formatSortie;
+		$j->sépChamps = $sépChamps;
 		$j->ajouterDéfs($défs);
 		$j->sortie($sortie);
 		foreach($entrées as $entrée)
