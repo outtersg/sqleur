@@ -128,6 +128,7 @@ class JoueurSql extends Sqleur
 			}
 			$this->exporter($rés, $colonnes);
 		}
+		return $rés;
 	}
 	
 	protected function exporter($résultat, $colonnes = null)
