@@ -111,14 +111,14 @@ class JoueurSql extends Sqleur
 		$fluxEntrée->fermer();
 	}
 	
-	public function exécuter($sql, $appliquerDéfs = false)
+	public function exécuter($sql, $appliquerDéfs = false, $interne = false)
 	{
 		if($appliquerDéfs)
 			$sql = $this->_appliquerDéfs($sql);
 		fprintf(STDERR, "    ".strtr($sql, array("\n" => "\n    ")).";\n");
 		$rés = $this->bdd->query($sql);
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
-		if(($nCols = $rés->columnCount()) > 0)
+		if(!$interne && ($nCols = $rés->columnCount()) > 0)
 		{
 			$colonnes = array();
 			for($numCol = -1; ++$numCol < $nCols;)
