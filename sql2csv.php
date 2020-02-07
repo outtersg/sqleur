@@ -3,6 +3,7 @@
 
 require_once dirname(__FILE__).'/Sqleur.php';
 require_once dirname(__FILE__).'/SqleurPreproIncl.php';
+require_once dirname(__FILE__).'/SqleurPreproDef.php';
 
 class Flux
 {
@@ -88,6 +89,7 @@ class JoueurSql extends Sqleur
 		$prépros = array
 		(
 			new SqleurPreproIncl(),
+			new SqleurPreproDef(),
 		);
 		parent::__construct(array($this, 'exécuter'), $prépros);
 		if(method_exists($this->bdd, 'pgsqlSetNoticeCallback'))
