@@ -603,7 +603,7 @@ class NœudPrepro
 						$r .= $this->_contenu($f, $contexte);
 				return $r;
 			case '`':
-				$rés = $contexte->exécuter($this->f, true);
+				$rés = $contexte->exécuter($this->f, true, true);
 				if(is_object($rés) && $rés instanceof PDOStatement)
 				{
 					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1)
