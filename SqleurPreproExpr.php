@@ -673,7 +673,7 @@ class NœudPrepro
 				switch($this->t)
 				{
 					case 'or': return $gauche || $droite;
-					case 'and': return $gauche || $droite;
+					case 'and': return $gauche && $droite;
 				}
 			case 'defined':
 			case 'f':
