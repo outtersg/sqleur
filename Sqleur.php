@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+include_once 'SqleurCond.php';
 include_once 'SqleurPreproExpr.php';
 
 class Sqleur
@@ -351,30 +352,34 @@ class Sqleur
 			case '#else':
 			case '#elif':
 			case '#if':
+				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace);
 				if($motCle == '#else')
 					$vrai = true;
 				else
-					$vrai = $this->_calculerPrepro($posEspace === false ? '' : substr($directive, $posEspace));
-				$condition = $motCle == '#if' ? array(false, $this->_sortie, $requeteEnCours, false, $this->_defs) : array_pop($this->_conditions); // 0: déjà fait; 1: sauvegarde de la vraie sortie; 2: requête en cours; 3: en cours; 4: définitions.
+					$vrai = $this->_calculerPrepro($texteCondition);
+				$condition =
+					in_array($motCle, array('#if'))
+					? new SqleurCond(false, $this->_sortie, $requeteEnCours, false, $this->_defs)
+					: array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
-				if(!$condition[0] && $vrai) // Si pas déjà fait, et que le if est avéré.
+				if(!$condition->déjàFaite && $vrai) // Si pas déjà fait, et que le if est avéré.
 				{
-					$this->_sortie = $condition[1];
-					$this->_requeteEnCours = $condition[2];
-					$this->_defs = $condition[4];
-					$condition[3] = true; // En cours.
-					$condition[0] = true; // Déjà fait.
+					$this->_sortie = $condition->sortie;
+					$this->_requeteEnCours = $condition->requêteEnCours;
+					$this->_defs = $condition->défs;
+					$condition->enCours = true; // En cours.
+					$condition->déjàFaite = true;
 				}
 				else
 				{
 					$this->_sortie = array($this, 'sortirContenuIfFalse');
-					if($condition[3]) // Si on clôt l'en-cours.
+					if($condition->enCours) // Si on clôt l'en-cours.
 					{
-						$condition[2] = $requeteEnCours; // On mémorise 
-						$condition[4] = $this->_defs;
+						$condition->requêteEnCours = $requeteEnCours; // On mémorise.
+						$condition->défs = $this->_defs;
+						$condition->enCours = false;
 					}
-					$condition[3] = false;
 				}
 				$this->_conditions[] = $condition;
 				return;
@@ -382,12 +387,12 @@ class Sqleur
 				$condition = array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#endif sans #if');
-				if(!$condition[3]) // Si le dernier bloc traité (#if ou #else) était à ignorer,
+				if(!$condition->enCours) // Si le dernier bloc traité (#if ou #else) était à ignorer,
 				{
-					$this->_requeteEnCours = $condition[2]; // On restaure.
-					$this->_defs = $condition[4];
+					$this->_requeteEnCours = $condition->requêteEnCours; // On restaure.
+					$this->_defs = $condition->défs;
 				}
-				$this->_sortie = $condition[1];
+				$this->_sortie = $condition->sortie;
 				return;
 		}
 		if(!$this->dansUnSiÀLaTrappe())
