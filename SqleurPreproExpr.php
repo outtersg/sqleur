@@ -105,6 +105,15 @@ class SqleurPreproExpr
 		),
 		array
 		(
+			'+' => 'bi',
+			'-' => 'bi',
+		),
+		array
+		(
+			'*' => 'bi',
+		),
+		array
+		(
 			'in' => 'bimulti',
 			',,' => ',', // La , du in, créée par celle de niveau plus haut.
 			'==' => 'bi',
@@ -623,6 +632,9 @@ class NœudPrepro
 			case '<=':
 			case '>=':
 			case '>':
+			case '+':
+			case '-':
+			case '*': // Mais pas le /, qui sert pour le moment de début de regex. Il faudrait savoir distinguer.
 				$fils = $this->_contenus($this->f, $contexte, 2);
 				switch($this->t)
 				{
@@ -633,6 +645,9 @@ class NœudPrepro
 					case '<=': return $fils[0] <= $fils[1];
 					case '>=': return $fils[0] >= $fils[1];
 					case '>': return $fils[0] > $fils[1];
+					case '+': return $fils[0] + $fils[1];
+					case '-': return $fils[0] - $fils[1];
+					case '*': return $fils[0] * $fils[1];
 				}
 			case '~':
 				$fils = $this->_contenus($this->f, $contexte, 2);
