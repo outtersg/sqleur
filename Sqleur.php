@@ -512,7 +512,7 @@ class Sqleur
 		foreach($this->_defs as & $ptrEnsembleDéfs)
 			$ptrEnsembleDéfs = array_diff_key($ptrEnsembleDéfs, $défs);
 		foreach($défs as $id => $contenu)
-			$this->_defs[is_string($contenu) ? 'stat' : 'dyn'][$id] = $contenu;
+			$this->_defs[is_string($contenu) || is_numeric($contenu) ? 'stat' : 'dyn'][$id] = $contenu;
 	}
 	
 	protected function _appliquerDéfs($chaîne) { return $this->appliquerDéfs($chaîne); }
