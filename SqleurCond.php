@@ -23,13 +23,15 @@
 
 class SqleurCond
 {
-	public function __construct($déjàFaite, $sortie, $requêteEnCours, $enCours = true, $défs = array())
+	public function __construct($sqleur)
 	{
-		$this->déjàFaite = $déjàFaite;
-		$this->sortie = $sortie;
-		$this->requêteEnCours = $requêteEnCours;
-		$this->enCours = $enCours;
-		$this->défs = $défs;
+		$this->_sqleur = $sqleur;
+		$this->sortie = $this->_sqleur->_sortie;
+		$this->défs = $this->_sqleur->_defs;
+		$this->requêteEnCours = $this->_sqleur->_requeteEnCours;
+		
+		$this->déjàFaite = false;
+		$this->enCours = false;
 	}
 }
 

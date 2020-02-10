@@ -359,7 +359,7 @@ class Sqleur
 					$vrai = $this->_calculerPrepro($texteCondition);
 				$condition =
 					in_array($motCle, array('#if'))
-					? new SqleurCond(false, $this->_sortie, $requeteEnCours, false, $this->_defs)
+					? new SqleurCond($this)
 					: array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
