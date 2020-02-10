@@ -54,6 +54,7 @@ class SqleurPreproTest
 	public function __construct($mode = SqleurPreproTest::BRUT)
 	{
 		$this->_mode = $mode;
+		$this->_accuErr = $this;
 	}
 	
 	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
@@ -180,6 +181,16 @@ class SqleurPreproTest
 			$this->_accuErr->err($e);
 		else
 			throw $e;
+	}
+	
+	public function err($e)
+	{
+		$message = '# '.(is_object($e) ? $e->__toString() : $e);
+		$message = strtr($message, array("\n" => "\n  "));
+		$message .= "\n";
+		$finPremièreLigne = strpos($message, "\n");
+		$message = '[31m'.substr($message, 0, $finPremièreLigne).'[0m'.substr($message, $finPremièreLigne);
+		fprintf(STDERR, $message);
 	}
 }
 
