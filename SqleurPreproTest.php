@@ -176,7 +176,7 @@ class SqleurPreproTest
 	
 	protected function _err($e)
 	{
-		if(!$this->_prochainFatal)
+		if(!isset($this->_prochainFatal) || !$this->_prochainFatal)
 			$this->_accuErr->err($e);
 		else
 			throw $e;
