@@ -136,7 +136,8 @@ class Sqleur
 		$this->_requeteEnCours .= $this->_appliquerDéfs($bout);
 	}
 	
-	protected function _decoupeBloc($chaine, $laFinEstVraimentLaFin = true)
+	protected function _decoupeBloc($chaîne, $laFinEstVraimentLaFin = true) { return $this->découperBloc($chaîne, $laFinEstVraimentLaFin); }
+	public function découperBloc($chaine, $laFinEstVraimentLaFin = true)
 	{
 		if(isset($this->_resteEnCours))
 			$chaine = $this->_resteEnCours.$chaine;
