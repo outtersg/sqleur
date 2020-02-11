@@ -434,7 +434,9 @@ class Sqleur
 	
 	/*- États ----------------------------------------------------------------*/
 	
-	public function mémoriserÉtat()
+	const ÉTAT_TECHNIQUE = 5;
+	
+	public function mémoriserÉtat($technique = false)
 	{
 		$this->_états[] = array
 		(
@@ -443,6 +445,7 @@ class Sqleur
 			$this->_fichier,
 			$this->_ligne,
 			$this->_dernièreLigne,
+			$technique,
 		);
 	}
 	
@@ -455,6 +458,7 @@ class Sqleur
 			$this->_fichier,
 			$this->_ligne,
 			$this->_dernièreLigne,
+			$technique,
 		) = array_pop($this->_états);
 		if ($avecDéfs)
 			$this->_defs = $défs;
