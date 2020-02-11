@@ -470,7 +470,7 @@ class Sqleur
 		
 		$this->mémoriserÉtat();
 		foreach($this->_états as $état)
-			if(isset($état[4])) // Si on n'a pas de ligne, c'est qu'on est à l'initialisation, avant même l'entrée dans du SQL. Inutile d'en parler.
+			if(isset($état[4]) && !$état[Sqleur::ÉTAT_TECHNIQUE]) // Si on n'a pas de ligne, c'est qu'on est à l'initialisation, avant même l'entrée dans du SQL. Inutile d'en parler.
 			array_unshift($r, array('file' => $état[2], 'line' => $état[4]));
 		$this->restaurerÉtat();
 		
