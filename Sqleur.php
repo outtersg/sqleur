@@ -558,6 +558,12 @@ class Sqleur
 		return array_key_exists($nomVar, $this->_defs['stat']);
 	}
 	
+	public function _concat($params)
+	{
+		$args = func_get_args();
+		return implode('', $args);
+	}
+	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr) { return $this->calculerExpr($expr); }
@@ -570,6 +576,7 @@ class Sqleur
 	public static $FonctionsPréproc = array
 	(
 		'defined',
+		'concat',
 	);
 }
 
