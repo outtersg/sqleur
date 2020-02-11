@@ -538,7 +538,8 @@ class Sqleur
 	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
-	protected function _calculerPrepro($expr)
+	protected function _calculerPrepro($expr) { return $this->calculerExpr($expr); }
+	public function calculerExpr($expr)
 	{
 		$e = new SqleurPreproExpr();
 		return $e->calculer($expr, $this);
