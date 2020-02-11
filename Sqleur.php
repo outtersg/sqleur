@@ -373,7 +373,7 @@ class Sqleur
 					$this->_sortie = $condition->sortie;
 					$this->_requeteEnCours = $condition->requêteEnCours;
 					$this->_defs = $condition->défs;
-					$condition->enCours = true; // En cours.
+					$condition->enCours(true);
 					$condition->déjàFaite = true;
 				}
 				else
@@ -383,7 +383,7 @@ class Sqleur
 					{
 						$condition->requêteEnCours = $requeteEnCours; // On mémorise.
 						$condition->défs = $this->_defs;
-						$condition->enCours = false;
+						$condition->enCours(false);
 					}
 				}
 				$this->_conditions[] = $condition;
@@ -397,6 +397,7 @@ class Sqleur
 					$this->_requeteEnCours = $condition->requêteEnCours; // On restaure.
 					$this->_defs = $condition->défs;
 				}
+				$condition->enCours(false);
 				$this->_sortie = $condition->sortie;
 				return;
 		}
