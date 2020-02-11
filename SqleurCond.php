@@ -33,6 +33,11 @@ class SqleurCond
 		$this->déjàFaite = false;
 		$this->enCours = false;
 	}
+	
+	public function enCours($ouiOuNon)
+	{
+		$this->enCours = $ouiOuNon;
+	}
 }
 
 ?>
