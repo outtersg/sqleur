@@ -37,6 +37,7 @@ class Sqleur
 		$this->_fichier = null;
 		$this->_ligne = null;
 		$this->_dernièreLigne = null;
+		$this->_boucles = array();
 		$this->_fonctions = array();
 		foreach(static::$FonctionsPréproc as $f)
 		{
@@ -241,6 +242,12 @@ class Sqleur
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
 		}
 		
+			if(count($this->_boucles))
+			{
+				$ajoutCorpsDeBoucle = $laFinEstVraimentLaFin ? $chaine : substr($chaine, 0, $dernierArret);
+				foreach($this->_boucles as $boucle)
+					$boucle->corps .= $ajoutCorpsDeBoucle;
+			}
 			$this->_resteEnCours = substr($chaine, $dernierArret);
 			$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
 		if($laFinEstVraimentLaFin)
@@ -356,6 +363,7 @@ class Sqleur
 		{
 			case '#else':
 			case '#elif':
+			case '#while':
 			case '#if':
 				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace);
 				if($motCle == '#else')
@@ -363,8 +371,8 @@ class Sqleur
 				else
 					$vrai = $this->_calculerPrepro($texteCondition);
 				$condition =
-					in_array($motCle, array('#if'))
-					? new SqleurCond($this)
+					in_array($motCle, array('#if', '#while'))
+					? new SqleurCond($this, in_array($motCle, array('#while')) ? $texteCondition : null)
 					: array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
@@ -388,6 +396,7 @@ class Sqleur
 				}
 				$this->_conditions[] = $condition;
 				return;
+			case '#done':
 			case '#endif':
 				$condition = array_pop($this->_conditions);
 				if(!$condition)
@@ -451,7 +460,10 @@ class Sqleur
 			$this->_ligne,
 			$this->_dernièreLigne,
 			$technique,
+			$this->_boucles,
 		);
+		// Les boucles sont locales à un niveau d'inclusion.
+		$this->_boucles = array();
 	}
 	
 	public function restaurerÉtat($avecDéfs = false)
@@ -464,6 +476,7 @@ class Sqleur
 			$this->_ligne,
 			$this->_dernièreLigne,
 			$technique,
+			$this->_boucles,
 		) = array_pop($this->_états);
 		if ($avecDéfs)
 			$this->_defs = $défs;
