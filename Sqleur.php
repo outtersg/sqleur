@@ -141,6 +141,8 @@ class Sqleur
 	{
 		if(isset($this->_resteEnCours))
 			$chaine = $this->_resteEnCours.$chaine;
+		$this->_chaîneEnCours = $chaine;
+		
 		preg_match_all("#\#|\\\\|;|--|\n|/\*|\*/|'|\\\\'|\\$[a-zA-Z0-9_]*\\$#", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
 		$taille = strlen($chaine);
@@ -198,6 +200,8 @@ class Sqleur
 							$dernierArret = $decoupes[$i][1];
 							$blocPréprocesse = substr($chaine, $decoupes[$j][1], $decoupes[$i][1] - $decoupes[$j][1]);
 							$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($blocPréprocesse), "\n");
+							$this->_posAvant = $decoupes[$j][1];
+							$this->_posAprès = $decoupes[$i][1] + 1;
 							$blocPréprocesse = preg_replace('#\\\\$#m', '', rtrim($blocPréprocesse));
 							$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
 							$this->_préprocesse($blocPréprocesse);
