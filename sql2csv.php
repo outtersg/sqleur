@@ -105,13 +105,16 @@ class JoueurSql extends Sqleur
 			case '#format':
 				$ligne = preg_split('/[ \t]+/', $ligne);
 				for($i = 0; ++$i < count($ligne);)
+					switch($ligne[$i])
 					{
+						default:
 							if(!isset($format))
 								$format = $ligne[$i];
 							else if(!isset($sép))
 								$sép = $ligne[$i];
 							else
 								throw new Exception('#format: \''.$ligne[$i].'\' non reconnu');
+							break;
 					}
 				if(!isset($format))
 					throw new Exception('#format: veuillez préciser un format');
