@@ -83,6 +83,7 @@ class JoueurSql extends Sqleur
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
 	protected $bavard = 1;
+	protected $avecEnTêtes = true;
 	
 	public function __construct()
 	{
@@ -107,6 +108,7 @@ class JoueurSql extends Sqleur
 				for($i = 0; ++$i < count($ligne);)
 					switch($ligne[$i])
 					{
+						case 'sans-en-tete': $this->avecEnTêtes = false; break;
 						default:
 							if(!isset($format))
 								$format = $ligne[$i];
@@ -184,7 +186,7 @@ class JoueurSql extends Sqleur
 		
 		$this->sortie->ouvrir($re);
 		
-		if(isset($colonnes))
+		if(isset($colonnes) && $this->avecEnTêtes)
 			$this->exporterLigne($colonnes);
 		
 		while(($l = $résultat->fetch()) !== false)
