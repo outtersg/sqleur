@@ -82,6 +82,7 @@ class JoueurSql extends Sqleur
 	protected $bdd;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
+	protected $bavard = 1;
 	
 	public function __construct()
 	{
@@ -101,6 +102,9 @@ class JoueurSql extends Sqleur
 	{
 		switch($instr)
 		{
+			case '#silence':
+				$this->bavard = 0;
+				break;
 			default: return false;
 		}
 	}
@@ -126,6 +130,7 @@ class JoueurSql extends Sqleur
 	{
 		if($appliquerDéfs)
 			$sql = $this->_appliquerDéfs($sql);
+		if($this->bavard)
 		fprintf(STDERR, "    ".strtr($sql, array("\n" => "\n    ")).";\n");
 		$rés = $this->bdd->query($sql);
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
