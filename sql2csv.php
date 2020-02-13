@@ -90,10 +90,19 @@ class JoueurSql extends Sqleur
 		(
 			new SqleurPreproIncl(),
 			new SqleurPreproDef(),
+			$this,
 		);
 		parent::__construct(array($this, 'exécuter'), $prépros);
 		if(method_exists($this->bdd, 'pgsqlSetNoticeCallback'))
 			$this->bdd->pgsqlSetNoticeCallback(array($this, 'notifDiag'));
+	}
+	
+	public function préprocesse($instr, $ligne)
+	{
+		switch($instr)
+		{
+			default: return false;
+		}
 	}
 	
 	public function notifDiag($message)
