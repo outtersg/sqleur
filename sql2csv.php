@@ -177,6 +177,7 @@ class JoueurSql extends Sqleur
 		foreach($this->sortiesDéjàUtilisées as $sortieAncienne)
 			if($sortieAncienne->descr === $this->sortie->descr)
 			{
+				if($this->sortie->descr !== Flux::STDOUT)
 				fprintf(STDERR, '# La sortie "'.$sortieAncienne->descr.'" est réutilisée en ayant déjà servi pour l\'export d\'une autre requête. Nous ne garantissons pas que le fichier résultant sera cohérent entre les deux exports qui y sont combinés.'."\n");
 				$re = true;
 				break;
