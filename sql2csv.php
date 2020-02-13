@@ -102,6 +102,23 @@ class JoueurSql extends Sqleur
 	{
 		switch($instr)
 		{
+			case '#format':
+				$ligne = preg_split('/[ \t]+/', $ligne);
+				for($i = 0; ++$i < count($ligne);)
+					{
+							if(!isset($format))
+								$format = $ligne[$i];
+							else if(!isset($sép))
+								$sép = $ligne[$i];
+							else
+								throw new Exception('#format: \''.$ligne[$i].'\' non reconnu');
+					}
+				if(!isset($format))
+					throw new Exception('#format: veuillez préciser un format');
+				$this->format = $format;
+				if(isset($sép))
+					$this->sépChamps = sprintf($sép); // Pour les \t etc.
+				break;
 			case '#silence':
 				$this->bavard = 0;
 				break;
