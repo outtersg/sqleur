@@ -36,6 +36,13 @@ function faire($chemin)
 	$s->decoupeFichier($chemin);
 }
 
+function _const($nom)
+{
+	$miroir = new ReflectionClass('Sqleur');
+	$consts = $miroir->getConstants();
+	return $consts[$nom];
+}
+
 error_reporting(-1);
 ini_set('display_errors', 1);
 
