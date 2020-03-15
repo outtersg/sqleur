@@ -28,14 +28,12 @@ class SqleurPreproTestExpr extends SqleurPreproTest
 {
 	protected $_préfixes = array('#testexpr');
 	
-	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
+	public function préprocesse($motClé, $directiveComplète)
 	{
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
 		
 		$this->_entreExpr($motClé, preg_replace('/^ *[^ ]* */', '', $directiveComplète));
-		
-		return $requêteEnCours;
 	}
 	
 	protected function _entreExpr($motClé, $expr)

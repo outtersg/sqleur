@@ -57,14 +57,12 @@ class SqleurPreproTest
 		$this->_accuErr = $this;
 	}
 	
-	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
+	public function préprocesse($motClé, $directiveComplète)
 	{
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
 		
 		$this->_entre($motClé, $directiveComplète);
-		
-		return $requêteEnCours;
 	}
 	
 	protected function _entre($motClé, $directiveComplète)
