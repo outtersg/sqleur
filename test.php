@@ -16,13 +16,18 @@ class Rempl
 function faire($chemin)
 {
 	$prépros = array();
+	$mode = 0;
 	require_once "Sqleur.php";
 	foreach(file($chemin) as $l)
 	{
 		$l = explode(' ', $l);
-		if($l[0] == '--' && $l[1] == 'prepro')
-			$prépros = array_slice($l, 2);;
-		break;
+		if($l[0] != '--')
+			break;
+		if($l[1] == 'prepro')
+			$prépros = array_slice($l, 2);
+		else if($l[1] == 'sqleur._mode')
+			foreach(explode('|', $l[2]) as $mode)
+				$mode |= _const(trim($mode));
 	}
 	foreach($prépros as $i => $prépro)
 	{
@@ -31,6 +36,7 @@ function faire($chemin)
 		$prépros[$i] = new $prépro();
 	}
 	$s = new Sqleur('aff', $prépros);
+	$s->_mode = $mode;
 	$rempl = new Rempl();
 	$s->avecDéfs(array('#{{([^}]+|}[^}]+)+}}#' => array($rempl, 'r')));
 	$s->decoupeFichier($chemin);
