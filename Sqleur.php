@@ -26,6 +26,8 @@ include_once 'SqleurPreproExpr.php';
 
 class Sqleur
 {
+	const MODE_BEGIN_END = 0x01;
+	
 	/**
 	 * Constructeur.
 	 * 
@@ -34,6 +36,7 @@ class Sqleur
 	public function __construct($sortie = null, $préprocesseurs = array())
 	{
 		$this->avecDéfs(array());
+		$this->_mode = 0;
 		$this->_fichier = null;
 		$this->_ligne = null;
 		$this->_dernièreLigne = null;
@@ -132,9 +135,16 @@ class Sqleur
 	const CHAÎNE_PASSE_LA_MAIN = 1; // Indique que la chaîne donne au prochain élément une chance de se jouer. La chaîne ayant pour critère de délivrance du jeton les mêmes que _decoupeBloc pour entrer dans l'élément, il y a de fortes chances pour qu'il soit consommé immédiatement; le seul cas de non-consommation étant si la découpe qui a sa chance, manque de bol, tombe sur un fragment incomplet (le bloc lu se termine avant que lui ait sa fin de découpe): dans ce cas, le jeton est préservé, et la découpe "hôte" pourra être retentée une fois le tampon regarni.
 	const CHAÎNE_JETON_CONSOMMÉ = 2;
 	
+	static $FINS = array
+	(
+		'begin' => 'end',
+		'case' => 'end',
+	);
+	
 	protected function _ajouterBoutRequête($bout)
 	{
 		$this->_requeteEnCours .= $this->_appliquerDéfs($bout);
+		$this->_entérinerBéguins();
 	}
 	
 	protected function _decoupeBloc($chaîne, $laFinEstVraimentLaFin = true) { return $this->découperBloc($chaîne, $laFinEstVraimentLaFin); }
@@ -144,7 +154,9 @@ class Sqleur
 			$chaine = $this->_resteEnCours.$chaine;
 		$this->_chaîneEnCours = $chaine;
 		
-		preg_match_all("#\#|\\\\|;|--|\n|/\*|\*/|'|\\\\'|\\$[a-zA-Z0-9_]*\\$#", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
+		$expr = '#|\\\\|;|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
+		if($this->_mode & Sqleur::MODE_BEGIN_END) $expr .= '|[bB][eE][gG][iI][nN]|[cC][aA][sS][eE]|[eE][nN][dD]';
+		preg_match_all("@$expr@", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
 		$taille = strlen($chaine);
 		$decoupes = $decoupes[0];
@@ -155,6 +167,8 @@ class Sqleur
 		{
 			$chaineDerniereDecoupe = $this->_chaineDerniereDecoupe = "\n"; // Le début de fichier, c'est équivalent à une fin de ligne avant le début de fichier.
 			$dernierRetour = 0;
+			$this->_béguins = array();
+			$this->_béguinsPotentiels = array();
 		}
 		else
 		{
@@ -175,9 +189,15 @@ class Sqleur
 			{
 				case ';':
 					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
+					$dernierArret = $decoupes[$i][1] + 1;
+					if(($this->_mode & Sqleur::MODE_BEGIN_END))
+						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
+						{
+							$this->_ajouterBoutRequête(';');
+							break;
+						}
 					$this->_sors($this->_requeteEnCours);
 					$this->_requeteEnCours = '';
-					$dernierArret = $decoupes[$i][1] + 1;
 					break;
 				case "\n":
 					$dernierRetour = $decoupes[$i][1] + 1;
@@ -237,6 +257,9 @@ class Sqleur
 				case '$':
 					if(!$this->dansUnSiÀLaTrappe())
 					$this->_mangerChaîne($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierRetour, /*&*/ $chaineNouvelleDecoupe, /*&*/ $dernierArret, /*&*/ $nouvelArret);
+					break;
+				default:
+					$this->_motClé($chaine, $taille, $laFinEstVraimentLaFin, $decoupes, $dernierRetour, $dernierArret, $i);
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
@@ -578,6 +601,63 @@ class Sqleur
 		'defined',
 		'concat',
 	);
+	
+	/*- Intestins ------------------------------------------------------------*/
+	
+	/**
+	 * Analyse les mots-clés SQL qui, dans certaines situations, peuvent indiquer un bloc dans lequel le point-virgule n'est pas fermant.
+	 * Le cas échéant, ajoute le mot-clé à la pile de décompte des niveaux.
+	 */
+	protected function _motClé($chaîne, $taille, $laFinEstVraimentLaFin, $découpes, $dernierRetour, $dernierArrêt, $i)
+	{
+		$motClé = strtolower($découpes[$i][0]);
+		switch($motClé)
+		{
+			case 'begin':
+			case 'case':
+			case 'end':
+				break;
+			default: throw new Exception("Bloc de découpe inattendu $motClé");
+		}
+		
+		// Nous supposons être dans du SQL pur, où l'end ne peut fermer que du begin ou du case.
+		// Dans le cas contraire (combiné avec un autre mot-clé: end loop, end if) il faudra rechercher aussi ces structures afin de distinguer les différents end, et ne pas comptabiliser un end loop comme fermant un begin (on pourra se contenter de détecter les combinaisons dans la regex boulimique: elles ressortiront alors distinctes du end).
+		if
+		(
+			($découpes[$i][1] == $dernierArrêt || $découpes[$i][1] == $dernierRetour || strpbrk(substr($chaîne, $découpes[$i][1] - 1, 1), " \t") !== false) // Est-on sûr de n'avoir rien avant?
+			&& // Ni rien après?
+			(
+				($découpes[$i][1] + strlen($découpes[$i][0]) == $taille && $laFinEstVraimentLaFin)
+				|| strpbrk(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1), " \t\r\n;") !== false
+			)
+		)
+			$this->_béguinsPotentiels[] = $découpes[$i][0];
+	}
+	
+	/**
+	 * Enregistrer les begin / end qui jusque-là n'étaient que potentiels.
+	 * À appeler lorsque le bloc SQL les contenant est définitivement agrégé à $this->_requeteEnCours.
+	 */
+	protected function _entérinerBéguins()
+	{
+		foreach($this->_béguinsPotentiels as $motClé)
+			switch($motClé)
+			{
+				case 'end':
+					if(!count($this->_béguins))
+						throw new Exception("Problème d'imbrication: $motClé sans début correspondant");
+					$début = array_pop($this->_béguins);
+					if(!isset(Sqleur::$FINS[$début]))
+						throw new Exception("Problème d'imbrication: $début (remonté comme mot-clé de début de bloc) non référencé");
+					if($motClé != Sqleur::$FINS[$début])
+						throw new Exception("Problème d'imbrication: $motClé n'est pas censé fermer ".Sqleur::$FINS[$début]);
+					break;
+				default:
+					$this->_béguins[] = $motClé;
+					break;
+			}
+		$this->_béguinsPotentiels = array();
+	}
 }
 
 ?>
