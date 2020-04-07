@@ -122,7 +122,7 @@ class JoueurSql extends Sqleur
 					throw new Exception('#format: veuillez préciser un format');
 				$this->format = $format;
 				if(isset($sép))
-					$this->sépChamps = sprintf($sép); // Pour les \t etc.
+					$this->sépChamps = stripcslashes($sép); // Pour les \t etc.
 				break;
 			case '#silence':
 				$this->bavard = 0;
