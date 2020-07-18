@@ -258,6 +258,8 @@ class Sqleur
 					if(!$this->dansUnSiÀLaTrappe())
 					$this->_mangerChaîne($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierRetour, /*&*/ $chaineNouvelleDecoupe, /*&*/ $dernierArret, /*&*/ $nouvelArret);
 					break;
+				case '\\':
+					break;
 				default:
 					$this->_motClé($chaine, $taille, $laFinEstVraimentLaFin, $decoupes, $dernierRetour, $dernierArret, $i);
 					break;
