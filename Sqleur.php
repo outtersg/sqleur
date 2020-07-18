@@ -571,10 +571,11 @@ class Sqleur
 	protected function _appliquerDéfs($chaîne) { return $this->appliquerDéfs($chaîne); }
 	public function appliquerDéfs($chaîne)
 	{
-		// Les remplacements statiques en premier (même si on ne respecte plus l'ordre mêlés des statiques et des dynamiques).
-		$chaîne = strtr($chaîne, $this->_defs['stat']);
+		// La séparation statiques / dynamiques nous oblige à les passer dans un ordre différent de l'initial (qui mêlait statiques et dynamiques).
+		// On choisit les dynamiques d'abord, car, plus complexes, certaines de leurs parties peuvent être surchargées par des statiques.
 		foreach($this->_defs['dyn'] as $expr => $rempl)
 			$chaîne = preg_replace_callback($expr, $rempl, $chaîne);
+		$chaîne = strtr($chaîne, $this->_defs['stat']);
 		return $chaîne;
 	}
 	
