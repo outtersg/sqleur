@@ -25,7 +25,7 @@ include_once 'SqleurPreproExpr.php';
 
 class SqleurPreproDef
 {
-	protected $_préfixes = array('#calc', '#set');
+	protected $_préfixes = array('#calc', '#set', '#define');
 	
 	public function préprocesse($motClé, $directiveComplète)
 	{
