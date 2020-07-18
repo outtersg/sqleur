@@ -450,11 +450,6 @@ class Sqleur
 			$requeteEnCours = $this->_requeteEnCours;
 			switch($motCle)
 			{
-			case '#define':
-				$déf = preg_split('/[ 	]+/', $directive, 3);
-				$contenuDéf = isset($déf[2]) ? $déf[2] : '';
-					$this->ajouterDéfs(array($déf[1] => $this->_appliquerDéfs($contenuDéf)));
-				break;
 			case '#encoding':
 				$encodage = trim(substr($directive, $posEspace));
 				if(in_array(preg_replace('/[^a-z0-9]/', '', strtolower($encodage)), array('', 'utf8')))
