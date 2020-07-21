@@ -391,17 +391,22 @@ class Sqleur
 			case '#while':
 			case '#if':
 				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace);
-				if($motCle == '#else')
-					$vrai = true;
-				else
-					$vrai = $this->_calculerPrepro($texteCondition);
 				$condition =
 					in_array($motCle, array('#if', '#while'))
 					? new SqleurCond($this, in_array($motCle, array('#while')) ? $texteCondition : null)
 					: array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
-				if(!$condition->déjàFaite && $vrai) // Si pas déjà fait, et que le if est avéré.
+				// Si pas déjà fait, et que la condition est avérée.
+				if
+				(
+					!$condition->déjàFaite
+					&&
+					(
+						$motCle == '#else' // Si l'on atteint un #else dont la condition n'est pas déjà traitée, c'est qu'on rentre dans le #else.
+						|| $this->_calculerPrepro($texteCondition)
+					)
+				)
 				{
 					$this->_sortie = $condition->sortie;
 					$this->_requeteEnCours = $condition->requêteEnCours;
