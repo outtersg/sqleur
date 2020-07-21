@@ -391,12 +391,16 @@ class Sqleur
 			case '#while':
 			case '#if':
 				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace);
+				$pointDEntrée = in_array($motCle, array('#if', '#while'));
 				$condition =
-					in_array($motCle, array('#if', '#while'))
+					$pointDEntrée
 					? new SqleurCond($this, in_array($motCle, array('#while')) ? $texteCondition : null)
 					: array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
+				// Inutile de recalculer tous les #if imbriqués sous un #if 0.
+				if($pointDEntrée && $this->dansUnSiÀLaTrappe())
+					$condition->déjàFaite = true;
 				// Si pas déjà fait, et que la condition est avérée.
 				if
 				(
