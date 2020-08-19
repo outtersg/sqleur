@@ -153,7 +153,7 @@ class JoueurSql extends Sqleur
 		if($appliquerDéfs)
 			$sql = $this->_appliquerDéfs($sql);
 		if($this->bavard)
-		fprintf(STDERR, "    ".strtr($sql, array("\n" => "\n    ")).";\n");
+		fprintf(STDERR, "  %s;\n", strtr($sql, array("\n" => "\n  ")));
 		$rés = $this->bdd->query($sql);
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
 		if(!$interne && ($nCols = $rés->columnCount()) > 0)
