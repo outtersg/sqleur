@@ -21,6 +21,16 @@ compteur et multiplieur = [31mCOMPTEUR MULTIPLIEUR[0m;
 [31mCorps de boucle ne devant pas être appelé[0m;
 #done
 
+#set RIEN 0
+#for COMPTEUR in 1 2 3
+#set RIEN RIEN + COMPTEUR
+#done
+#if RIEN == 6
+Boucle for = [32mRIEN[0m;
+#else
+Boucle for = [31mRIEN[0m;
+#endif
+
 #else
 
 #if COMPTEUR >= 2
