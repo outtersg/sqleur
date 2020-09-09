@@ -85,7 +85,7 @@ class SqleurCond
 		$this->_sqleur->mémoriserÉtat(true);
 		$this->_sqleur->_ligne = $this->ligne;
 		$corps = $this->corps();
-		while($this->_sqleur->calculerExpr($this->boucle))
+		while($this->avérée())
 		{
 			$this->_sqleur->_ligne = $this->ligne;
 			$this->_sqleur->découperBloc($corps, false);
