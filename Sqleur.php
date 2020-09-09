@@ -225,6 +225,11 @@ class Sqleur
 							$this->_posAprès = $decoupes[$i][1] + 1;
 							$blocPréprocesse = preg_replace('#\\\\$#m', '', rtrim($blocPréprocesse));
 							$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
+							/* Assurons-nous que les prépro qui voudront inspecter $this->_chaîneEnCours y trouveront bien le contenu de $chaine:
+							 * si un de nos prépro a appelé un #include ou autre qui a appeler récursivement un découperBloc(), celui-ci aura modifié $this->_chaîneEnCours,
+							 * mais en rendant la main le dépilage de la pile PHP fait que notre fonction retrouve automatiquement son $chaine,
+							 * tandis que $this->_chaîneEnCours doit être restauré explicitement. */
+							$this->_chaîneEnCours = $chaine;
 							$this->_préprocesse($blocPréprocesse);
 							$chaineDerniereDecoupe = $this->_chaineDerniereDecoupe;
 							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour; ne serait-ce que pour que si notre #if est suivi d'un #endif, celui-ci voie le \n qui le précède).
