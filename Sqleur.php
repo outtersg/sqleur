@@ -391,6 +391,13 @@ class Sqleur
 			case '#while':
 				$boucle = true;
 				break;
+			case '#for':
+				$boucle = true;
+				$cond = preg_split('/[\s\r\n]+/', trim($cond));
+				if(!isset($cond[1]) || $cond[1] != 'in')
+					throw $this->exception('#for <var> in <val> <val>');
+				unset($cond[1]);
+				break;
 		}
 		return new SqleurCond($this, $cond, $boucle);
 	}
@@ -406,9 +413,10 @@ class Sqleur
 			case '#else':
 			case '#elif':
 			case '#while':
+			case '#for':
 			case '#if':
 				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace);
-				$pointDEntrée = in_array($motCle, array('#if', '#while'));
+				$pointDEntrée = in_array($motCle, array('#if', '#while', '#for'));
 				$condition = $pointDEntrée ? $this->_cond($motCle, $texteCondition) : array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
