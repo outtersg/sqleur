@@ -422,7 +422,7 @@ class Sqleur
 					&&
 					(
 						$motCle == '#else' // Si l'on atteint un #else dont la condition n'est pas déjà traitée, c'est qu'on rentre dans le #else.
-						|| $this->_calculerPrepro($texteCondition)
+						|| $condition->avérée()
 					)
 				)
 				{
