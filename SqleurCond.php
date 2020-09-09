@@ -34,12 +34,17 @@ class SqleurCond
 		$this->déjàFaite = false;
 		$this->enCours = false;
 		$this->cond = $cond;
+		if(is_array($this->cond))
+			$this->var = array_shift($this->cond);
 		$this->boucle = $boucle;
 	}
 	
 	public function avérée()
 	{
+		if(is_string($this->cond))
 			return $this->_sqleur->calculerExpr($this->cond);
+		else if(is_array($this->cond))
+			return count($this->cond) > 0;
 	}
 	
 	public function enCours($ouiOuNon)
@@ -73,7 +78,7 @@ class SqleurCond
 				break;
 			}
 		if(!isset($trouvé))
-			throw $this->_sqleur->exception('#done: le #while '.$this->cond.' correspondant n\'a pas été ouvert dans ce fichier');
+			throw $this->_sqleur->exception('#done: le #while '.(is_string($this->cond) ? $this->cond : serialize($this->cond)).' correspondant n\'a pas été ouvert dans ce fichier');
 		
 		// On récupère ce sur quoi était en train de bosser le Sqleur avant de recontrer le #done.
 		$this->corps .= substr($this->_sqleur->_chaîneEnCours, 0, $this->_sqleur->_posAvant);
@@ -98,7 +103,7 @@ class SqleurCond
 		if($this->_étêtage)
 		{
 			if($this->_étêtage > strlen($this->corps))
-				throw $this->_sqleur->exception('corps de boucle '.$this->cond.' non défini');
+				throw $this->_sqleur->exception('corps de boucle '.(is_string($this->cond) ? $this->cond : serialize($this->cond)).' non défini');
 			$this->corps = substr($this->corps, $this->_étêtage);
 			$this->_étêtage = 0;
 		}
