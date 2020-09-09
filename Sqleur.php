@@ -398,7 +398,7 @@ class Sqleur
 					throw $this->exception('#for <var> in <val> <val>');
 				unset($cond[1]);
 				$val = $cond[2];
-				$val = $this->calculerExpr($val, true);
+				$val = $this->calculerExpr($val, true, true);
 				$val = preg_split('/[\s\r\n]+/', implode(' ', $val));
 				array_splice($cond, 1, 2, $val);
 				break;
