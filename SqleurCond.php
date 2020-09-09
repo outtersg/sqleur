@@ -37,6 +37,11 @@ class SqleurCond
 		$this->boucle = $boucle;
 	}
 	
+	public function avérée()
+	{
+			return $this->_sqleur->calculerExpr($this->cond);
+	}
+	
 	public function enCours($ouiOuNon)
 	{
 		// Si nous devons boucler, on s'abonne à tout ce qui passera par le Sqleur afin d'accumuler le corps de boucle pour pouvoir ensuite le rejouer.
