@@ -619,10 +619,10 @@ class Sqleur
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr) { return $this->calculerExpr($expr); }
-	public function calculerExpr($expr)
+	public function calculerExpr($expr, $multi = false)
 	{
 		$e = new SqleurPreproExpr();
-		return $e->calculer($expr, $this);
+		return $e->calculer($expr, $this, $multi);
 	}
 	
 	public static $FonctionsPréproc = array
