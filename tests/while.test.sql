@@ -30,6 +30,15 @@ Boucle for = [32mRIEN[0m;
 #else
 Boucle for = [31mRIEN[0m;
 #endif
+#set RIEN ""
+#for COMPTEUR in a b c
+#set RIEN concat(RIEN, COMPTEUR)
+#done
+#if RIEN == "abc"
+Boucle for = [32mRIEN[0m;
+#else
+Boucle for = [31mRIEN[0m;
+#endif
 
 #else
 
