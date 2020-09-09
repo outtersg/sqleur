@@ -507,14 +507,20 @@ class SqleurPreproExpr
 					return $cat == 'bimulti';
 	}
 	
-	public function calculer($expr, $contexte)
+	public function calculer($expr, $contexte, $multi = false)
 	{
 		$racine = $this->compiler($expr);
 	
+		$r = $multi && is_array($racine) ? $racine : array($racine);
+		foreach($r as $num => $racine)
+		{
 		if(!($racine instanceof NœudPrepro))
 			throw new Exception('Expression ininterprétable: '.$expr);
 		
-		return $racine->exécuter($contexte);
+			$r[$num] = $racine->exécuter($contexte);
+		}
+		
+		return $multi ? $r : array_shift($r);
 	}
 	
 	public function aff($truc, $délimiteurs = '[]')
