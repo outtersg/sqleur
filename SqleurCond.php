@@ -66,6 +66,9 @@ class SqleurCond
 		$this->_étêtage = $this->_sqleur->_posAprès; // Tout ce qui précède la directive elle-même devra sauter.
 		
 		$this->_sqleur->_boucles[] = $this;
+		
+		if(isset($this->var) && is_array($this->cond))
+			$this->_sqleur->ajouterDéfs(array($this->var => array_shift($this->cond)));
 	}
 	
 	protected function _terminer()
@@ -92,6 +95,8 @@ class SqleurCond
 		$corps = $this->corps();
 		while($this->avérée())
 		{
+			if(isset($this->var) && is_array($this->cond))
+				$this->_sqleur->ajouterDéfs(array($this->var => array_shift($this->cond)));
 			$this->_sqleur->_ligne = $this->ligne;
 			$this->_sqleur->découperBloc($corps, false);
 		}
