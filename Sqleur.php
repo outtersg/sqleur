@@ -383,6 +383,18 @@ class Sqleur
 	{
 	}
 	
+	protected function _cond($motClé, $cond)
+	{
+		$boucle = false;
+		switch($motClé)
+		{
+			case '#while':
+				$boucle = true;
+				break;
+		}
+		return new SqleurCond($this, $cond, $boucle);
+	}
+	
 	protected function _préprocesse($directive)
 	{
 		$requeteEnCours = $this->_requeteEnCours;
@@ -397,10 +409,7 @@ class Sqleur
 			case '#if':
 				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace);
 				$pointDEntrée = in_array($motCle, array('#if', '#while'));
-				$condition =
-					$pointDEntrée
-					? new SqleurCond($this, in_array($motCle, array('#while')) ? $texteCondition : null)
-					: array_pop($this->_conditions);
+				$condition = $pointDEntrée ? $this->_cond($motCle, $texteCondition) : array_pop($this->_conditions);
 				if(!$condition)
 					throw $this->exception('#else sans #if');
 				// Inutile de recalculer tous les #if imbriqués sous un #if 0.
