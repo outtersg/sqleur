@@ -393,10 +393,14 @@ class Sqleur
 				break;
 			case '#for':
 				$boucle = true;
-				$cond = preg_split('/[\s\r\n]+/', trim($cond));
+				$cond = preg_split('/[\s\r\n]+/', trim($cond), 3);
 				if(!isset($cond[1]) || $cond[1] != 'in')
 					throw $this->exception('#for <var> in <val> <val>');
 				unset($cond[1]);
+				$val = $cond[2];
+				$val = $this->calculerExpr($val, true);
+				$val = preg_split('/[\s\r\n]+/', implode(' ', $val));
+				array_splice($cond, 1, 2, $val);
 				break;
 		}
 		return new SqleurCond($this, $cond, $boucle);
