@@ -4,6 +4,7 @@
 require_once dirname(__FILE__).'/Sqleur.php';
 require_once dirname(__FILE__).'/SqleurPreproIncl.php';
 require_once dirname(__FILE__).'/SqleurPreproDef.php';
+require_once dirname(__FILE__).'/SqleurPreproPrepro.php';
 
 class Flux
 {
@@ -92,6 +93,7 @@ class JoueurSql extends Sqleur
 		(
 			new SqleurPreproIncl(),
 			new SqleurPreproDef(),
+			new SqleurPreproPrepro(),
 			$this,
 		);
 		parent::__construct(array($this, 'exécuter'), $prépros);
