@@ -80,7 +80,7 @@ class JoueurSql extends Sqleur
 	
 	public $sépChamps = ';';
 	
-	protected $bdd;
+	public $bdd;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
 	protected $bavard = 1;
