@@ -434,6 +434,7 @@ class Sqleur
 					&&
 					(
 						$motCle == '#else' // Si l'on atteint un #else dont la condition n'est pas déjà traitée, c'est qu'on rentre dans le #else.
+						|| (in_array($motCle, array('#elif')) && ($condition->cond = $texteCondition) && false) // Pour un #elif, nouvelle condition. Un petit false pour être sûrs de tester la ligne suivante.
 						|| $condition->avérée()
 					)
 				)
