@@ -624,11 +624,13 @@ class Sqleur
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr) { return $this->calculerExpr($expr); }
-	public function calculerExpr($expr, $multi = false, $motsChaînes = false)
+	public function calculerExpr($expr, $multi = false, $motsChaînes = false, $exécMultiRés = null)
 	{
 		$e = new SqleurPreproExpr();
 		$this->motsChaînes = $motsChaînes;
+		$this->exécMultiRés = $exécMultiRés;
 		$r = $e->calculer($expr, $this, $multi);
+		unset($this->exécMultiRés);
 		unset($this->motsChaînes);
 		return $r;
 	}
