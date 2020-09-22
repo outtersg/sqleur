@@ -626,12 +626,16 @@ class NœudPrepro
 				$rés = $contexte->exécuter($this->f, true, true);
 				if(is_object($rés) && $rés instanceof PDOStatement)
 				{
-					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1)
+					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1 && !isset($contexte->exécMultiRés))
 						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($ls).' résultats');
-					$l = $ls[0];
+					$r = array();
+					foreach($ls as & $l)
+					{
 					if(count($l) != 1)
 						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($l).' colonnes'); // À FAIRE?: renvoyer un résultat tableau?
-					return array_shift($l);
+						$l = array_shift($l);
+					}
+					return isset($contexte->exécMultiRés) ? implode($contexte->exécMultiRés, $ls) : $ls[0]; /* À FAIRE: pouvoir travailler sur des tableaux (et donc renvoyer le tableau plutôt que son implosion). */
 				}
 				else
 					throw new ErreurExpr("Résultat inattendu à l'exécution de `{$this->f}`");
