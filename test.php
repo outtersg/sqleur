@@ -2,6 +2,7 @@
 
 function aff($req)
 {
+	if(isset($GLOBALS['rés'])) $GLOBALS['rés'] .= $req.";\n";
 	echo "[90m$req[0m\n";
 }
 
@@ -15,6 +16,9 @@ class Rempl
 
 function faire($chemin)
 {
+	if(!file_exists(($cheminRés = strtr($chemin, array('.sql' => '.res.sql'))))) $cheminRés = null;
+	$GLOBALS['rés'] = isset($cheminRés) ? '' : null;
+	
 	$prépros = array();
 	$mode = 0;
 	require_once "Sqleur.php";
@@ -40,6 +44,9 @@ function faire($chemin)
 	$rempl = new Rempl();
 	$s->avecDéfs(array('#{{([^}]+|}[^}]+)+}}#' => array($rempl, 'r')));
 	$s->decoupeFichier($chemin);
+	
+	if(isset($cheminRés))
+		comp(file_get_contents($cheminRés), $GLOBALS['rés']);
 }
 
 function comp($attendu, $obtenu)
