@@ -42,6 +42,28 @@ function faire($chemin)
 	$s->decoupeFichier($chemin);
 }
 
+function comp($attendu, $obtenu)
+{
+	$tmp = sys_get_temp_dir().'/temp.sqleurtest';
+	$comp = array
+	(
+		'attendu' => $attendu,
+		'obtenu' => $obtenu,
+	);
+	foreach($comp as $quoi => $contenu)
+		$comp[$quoi] = preg_replace("/(^|\r\n?|\n)(?:\s*[\r\n])+/", '\1', preg_replace('/[\r\n]+;/', ';', $contenu));
+	if($comp['obtenu'] != $comp['attendu'])
+	{
+		foreach($comp as $quoi => $contenu)
+			file_put_contents($tmp.'.'.$quoi.'.sql', $contenu);
+		system("diff -uw $tmp.attendu.sql $tmp.obtenu.sql > $tmp.diff");
+		echo preg_replace(array('/^(-.*)$/m', '/^(\+.*)$/m'), array('[32m\1[0m', '[31m\1[0m'), file_get_contents($tmp.'.diff'));
+		unlink($tmp.'.attendu.sql');
+		unlink($tmp.'.obtenu.sql');
+		unlink($tmp.'.diff');
+	}
+}
+
 function _const($nom)
 {
 	$miroir = new ReflectionClass('Sqleur');
