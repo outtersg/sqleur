@@ -24,6 +24,65 @@
 include_once 'SqleurCond.php';
 include_once 'SqleurPreproExpr.php';
 
+/* NOTE: problématiques du découpage
+ * Le Sqleur joue deux rôles: préprocesseur (#include, #define, #if, etc.) et découpeur.
+ * Une partie du travail de préprocession est le remplacement d'expressions (préalablement définies par #define).
+ *  1. Il ne doit pas être fait prématurément
+ *     Si TOTO vaut tutu, et qu'on lit un bloc:
+ *       TOTO
+ *       #define TOTO titi
+ *       TOTO
+ *     seul le premier TOTO doit être remplacé par tutu, le second ne pourra être remplacé (par titi) qu'une fois la nouvelle définition de TOTO passée.
+ *     (a fortiori on ne remplacera pas TOTO par tutu dans le #define lui-même, sous peine d'aboutir à un "#define tutu titi" non désiré)
+ *  2. Il ne doit pas être fait trop tard non plus
+ *     Si dans l'exemple précédent on attend la fin de bloc pour effectuer les remplacements, le premier TOTO sera remplacé par titi aussi, ce qui est faux.
+ *  3. Dans certains cas il ne doit pas être fait du tout
+ *     Dans:
+ *       #define TOTO tata
+ *       #for TOTO in titi tutu
+ *           drop table TOTO;
+ *       #done
+ *     Le #for, en arrivant au #done qui va déclencher la boucle, doit recevoir le TOTO brut, et non pas remplacé par tata.
+ *  4. Il doit avoir été fait avant l'émission à la base
+ *     De toute évidence sur le ; marqueur de fin d'instruction SQL, il faut que tous les remplacements aient été faits.
+ *  5. Mais il ne doit pas attendre le ; pour être fait
+ *     Sans quoi dans:
+ *       #define micmac min(COL) as COL##_min, max(COL) as COL##_max
+ *       select
+ *       #define COL num
+ *       micmac
+ *       #define COL nom
+ *       micmac
+ *       from t;
+ *     Renverra deux fois nom_min et nom_max, en omettant num_*.
+ *  6. Si 5. traite le problème des remplacements dans une instruction, il existe aussi le problème de l'instruction dans le remplacement:
+ *       #define micmac select min(COL) from TABLE; select max(COL) from TABLE;
+ *     Après remplacement de micmac, un nouveau découpage doit être fait car il contient un ; et donc on doit émettre deux requêtes.
+ *  7. Dans le nouveau découpage, on ne doit évidemment pas effectuer les remplacements (une fois suffit).
+ *  8. Le remplacement ne peut être effectué arbitrairement sur un bloc à traiter
+ *     Le bloc peut être issu d'une lecture d'un fichier par paquets (mettons de 4 Ko);
+ *     avec pas de bol, notre terme à remplacer (mettons TITI) peut tomber pile à cheval entre deux blocs de 4 Ko;
+ *     si notre fichier contient "… TITI TI|TI TITI …" (le | figurant la limite de bloc),
+ *     il nous faut avoir préservé la première moitié du "TITI" découpé ("TI"), pour l'accoler avant le début du bloc suivant ("TI TITI"),
+ *     afin de reconstituer un TITI qui pourra être remplacé.
+ *  9. On ne peut cependant atermoyer éternellement
+ *     Dans le cas extrême du COPY FROM STDIN, la suite du fichier peut faire plusieurs Mo avant de tomber sur un ; de fin ou un # de préprocesseur;
+ *     ces Mo doivent avoir été remplacés au fur et à mesure, on ne va pas garder tout ça en mémoire.
+ * 10. Attention aux doubles remplacements
+ *     Dans l'exemple du 8., avec pour défs TITI=TOTO et TOTO=tutu, si l'on a pu remplacer le premier TITI par TOTO, donnant une chaîne résiduelle de "TOTO TI",
+ *     l'accolage de "TI TITI" donne "TOTO TITI TITI", où l'on peut alors effectuer les remplacements.
+ *     Mais il ne faut en aucun cas remplacer le premier TOTO par tutu, car il est issu d'un remplacement.
+ *     La chaîne résiduelle doit donc être scindée en deux: "TOTO| TI", avec | figurant la fin du dernier remplacement;
+ *     seul ce qui se trouve après est candidat à remplacement.
+ * 11. Compteur de ligne
+ *     Si le remplacement est multi-lignes, la numérotation des lignes dans le fichier source doit avoir été faite *avant* les remplacements.
+ *     Une erreur Sqleur ou SQL doit être signalée avec le bon numéro de ligne d'origine.
+ * 12. Prépros spéciaux et connaissance des requêtes
+ *     Les prépros de #test travaillent généralement en interceptant "la prochaine requête".
+ *     À cet effet il est nécessaire d'avoir, dès la préprocession, connaissance du découpage.
+ *     Ou alors, si on veut proprement découper les étages, le prépro pourrait émettre une fausse requête, de manière à ce qu'elle soit interceptée par l'étage requête et traitée à ce moment.
+ */
+
 class Sqleur
 {
 	const MODE_BEGIN_END = 0x01;
