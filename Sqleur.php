@@ -202,6 +202,13 @@ class Sqleur
 				case "\n":
 					$dernierRetour = $decoupes[$i][1] + 1;
 					++$this->_ligne;
+					/* On pousse dès ici, pour bénéficier des remplacements de #define:
+					 * - Pas de risque de "couper" une définition (le nom #definé ne peut contenir que du [a-zA-Z0-9_])
+					 * - Mais un besoin de le faire, au cas où l'instruction suivante est un prépro qui re#define: le SQL qui nous précède doit avoir l'ancienne valeur.
+					 */
+					/* À FAIRE: optim: faire le remplacement sur toute suite contiguë de lignes banales (non interrompue par une instruction prépro), et non ligne par ligne. */
+					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $dernierRetour - $dernierArret));
+					$dernierArret = $dernierRetour;
 					break;
 				case '#':
 					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
