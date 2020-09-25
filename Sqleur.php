@@ -337,7 +337,7 @@ class Sqleur
 		 * On s'assure aussi qu'il ne chevauche pas le marqueur de début: il serait malvenu que dans la chaîne $marqueur$marqueur$marqueur$ (équivalente en SQL à 'marqueur'), la fin de bloc tombant au milieu (donc |$marqueur$mar|queur$marqueur$|), prenant le $ fermant du premier $marqueur$ initial pour l'ouvrant potentiel du $marqueur$ final, on le garde de côté, ce qui serait équivalent à avoir lu |$marqueur$| puis |($mar)queur$marqueur$|, autrement dit $marqueur$$marqueur$marqueur$.
 		 */
 		$j = $i < $n ? $i : $i - 1;
-		$nouvelArret = $decoupes[$j][1] + strlen($decoupes[$j][0]);
+		$nouvelArret = $j >= 0 ? $decoupes[$j][1] + strlen($decoupes[$j][0]) : 0;
 		$fragment = substr($chaine, $dernierArret, $nouvelArret - $dernierArret);
 		if
 		(
