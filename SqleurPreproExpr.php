@@ -512,15 +512,31 @@ class SqleurPreproExpr
 		$racine = $this->compiler($expr);
 	
 		$r = $multi && is_array($racine) ? $racine : array($racine);
+		$rés = array();
 		foreach($r as $num => $racine)
 		{
 		if(!($racine instanceof NœudPrepro))
 			throw new Exception('Expression ininterprétable: '.$expr);
 		
-			$r[$num] = $racine->exécuter($contexte);
+			$racine = $racine->exécuter($contexte);
+			if(!$multi)
+				return $racine;
+			
+			/* Les expressions renvoyant un tableau sont aplaties, au même niveau que les autres.
+			 * Ex.:
+			 *   `select 'pomme' union select 'banane'` "chou-fleur"
+			 * donnera:
+			 *   [ pomme, banane, chou-fleur ]
+			 * et non:
+			 *   [ [ pomme, banane ], chou-fleur ]
+			 */
+			if(is_array($racine))
+				$rés = array_merge($rés, $racine);
+			else
+				$rés[] = $racine;
 		}
 		
-		return $multi ? $r : array_shift($r);
+		return $rés;
 	}
 	
 	public function aff($truc, $délimiteurs = '[]')
@@ -635,7 +651,16 @@ class NœudPrepro
 						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($l).' colonnes'); // À FAIRE?: renvoyer un résultat tableau?
 						$l = array_shift($l);
 					}
-					return isset($contexte->exécMultiRés) ? implode($contexte->exécMultiRés, $ls) : $ls[0]; /* À FAIRE: pouvoir travailler sur des tableaux (et donc renvoyer le tableau plutôt que son implosion). */
+					return
+						isset($contexte->exécMultiRés)
+						?
+							(
+								$contexte->exécMultiRés === true
+								? $ls
+								: implode($contexte->exécMultiRés, $ls)
+							)
+						: $ls[0]
+					;
 				}
 				else
 					throw new ErreurExpr("Résultat inattendu à l'exécution de `{$this->f}`");
