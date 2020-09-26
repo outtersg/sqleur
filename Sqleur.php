@@ -695,6 +695,7 @@ class Sqleur
 	 * @param string $expr Expression textuelle.
 	 * @param boolean $multi Autorisée à renvoyer un tableau de résultats. Si false, une exception est levée lorsque l'expression résulte en une suite d'éléments plutôt qu'un résultat unique.
 	 * @param boolean $motsChaînes Si false, les mots sans guillemets doivent correpondre à une définition. Si true, une suite de caractères non entourée de guillemets sera cherchée comme définition, à défaut sera renvoyée telle quelle.
+	 *                Si null, est utilisée l'éventuelle $this->motsChaîne.
 	 * @param char $exécMultiRés Si non défini, un `select` renvoyant deux résultats provoque une erreur. Si défini, les deux résultats sont concaténés par $exécMultiRés pour être passés à la suite du traitement.
 	 * 
 	 * @return string
@@ -702,11 +703,13 @@ class Sqleur
 	public function calculerExpr($expr, $multi = false, $motsChaînes = false, $exécMultiRés = null)
 	{
 		$e = new SqleurPreproExpr();
+		$anciensMotsChaînes = isset($this->motsChaînes) ? $this->motsChaînes : null;
+		if(isset($motsChaînes))
 		$this->motsChaînes = $motsChaînes;
 		$this->exécMultiRés = $exécMultiRés;
 		$r = $e->calculer($expr, $this, $multi);
 		unset($this->exécMultiRés);
-		unset($this->motsChaînes);
+		$this->motsChaînes = $anciensMotsChaînes;
 		return $r;
 	}
 	
