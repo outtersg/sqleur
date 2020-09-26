@@ -25,7 +25,7 @@ include_once 'SqleurPreproExpr.php';
 
 class SqleurPreproDef
 {
-	protected $_préfixes = array('#calc', '#set', '#define');
+	protected $_préfixes = array('#calc', '#set', '#setn', '#define');
 	
 	public function préprocesse($motClé, $directiveComplète)
 	{
@@ -41,7 +41,7 @@ class SqleurPreproDef
 		if(!in_array($motClé, array('#define')))
 		{
 			$e = new SqleurPreproExpr();
-			$val = $e->calculer($val, $this->_sqleur);
+			$val = $e->calculer($val, $this->_sqleur, false, in_array($motClé, array('#setn')));
 		}
 		else
 			$val = $this->_sqleur->appliquerDéfs($val);
