@@ -685,6 +685,7 @@ class Sqleur
 			 * Cependant celui-ci doit être un tableau de tableaux, donc notre IFS s'adapte.
 			 */
 			$this->_defs['IFS'][''] = $this->IFS;
+			$this->_defs['statr'] = array();
 			foreach($this->_defs['stat'] as $clé => $val)
 				$this->_defs['statr'][$clé] = is_array($val) ? implode($this->IFS, $val) : $val;
 		}
