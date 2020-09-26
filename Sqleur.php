@@ -700,7 +700,7 @@ class Sqleur
 	 * 
 	 * @return string
 	 */
-	public function calculerExpr($expr, $multi = false, $motsChaînes = false, $exécMultiRés = null)
+	public function calculerExpr($expr, $multi = false, $motsChaînes = null, $exécMultiRés = null)
 	{
 		$e = new SqleurPreproExpr();
 		$anciensMotsChaînes = isset($this->motsChaînes) ? $this->motsChaînes : null;
