@@ -507,7 +507,7 @@ class SqleurPreproExpr
 					return $cat == 'bimulti';
 	}
 	
-	public function calculer($expr, $contexte, $multi = false)
+	public function calculer($expr, $contexte, $multi = false, $exécMultiRés = null)
 	{
 		$racine = $this->compiler($expr);
 	
@@ -518,7 +518,7 @@ class SqleurPreproExpr
 		if(!($racine instanceof NœudPrepro))
 			throw new Exception('Expression ininterprétable: '.$expr);
 		
-			$racine = $racine->exécuter($contexte);
+			$racine = $racine->exécuter($contexte, $exécMultiRés);
 			if(!$multi)
 				return $racine;
 			
@@ -605,7 +605,7 @@ class NœudPrepro
 		$this->f = $fils;
 	}
 	
-	public function exécuter($contexte)
+	public function exécuter($contexte, $exécMultiRés = null)
 	{
 		switch($this->t)
 		{
@@ -642,7 +642,7 @@ class NœudPrepro
 				$rés = $contexte->exécuter($this->f, true, true);
 				if(is_object($rés) && $rés instanceof PDOStatement)
 				{
-					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1 && !isset($contexte->exécMultiRés))
+					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1 && !isset($exécMultiRés))
 						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($ls).' résultats');
 					$r = array();
 					foreach($ls as & $l)
@@ -652,12 +652,12 @@ class NœudPrepro
 						$l = array_shift($l);
 					}
 					return
-						isset($contexte->exécMultiRés)
+						isset($exécMultiRés)
 						?
 							(
-								$contexte->exécMultiRés === true
+								$exécMultiRés === true
 								? $ls
-								: implode($contexte->exécMultiRés, $ls)
+								: implode($exécMultiRés, $ls)
 							)
 						: $ls[0]
 					;
@@ -704,6 +704,7 @@ class NœudPrepro
 				return preg_match($regex, $fils[0]);
 			case 'in':
 				$gauche = $this->_contenu($this->f[0], $contexte);
+				/* À FAIRE: on devrait pouvoir descendre un exécMultiRés ici, pour faire du #if "truc" in `select` */
 				$droite = $this->_contenus($this->f[1], $contexte);
 				return in_array($gauche, $droite);
 			case 'or':

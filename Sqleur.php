@@ -706,9 +706,7 @@ class Sqleur
 		$anciensMotsChaînes = isset($this->motsChaînes) ? $this->motsChaînes : null;
 		if(isset($motsChaînes))
 		$this->motsChaînes = $motsChaînes;
-		$this->exécMultiRés = $exécMultiRés;
-		$r = $e->calculer($expr, $this, $multi);
-		unset($this->exécMultiRés);
+		$r = $e->calculer($expr, $this, $multi, $exécMultiRés);
 		$this->motsChaînes = $anciensMotsChaînes;
 		return $r;
 	}
