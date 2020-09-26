@@ -661,7 +661,11 @@ class Sqleur
 		foreach($this->_defs as & $ptrEnsembleDéfs)
 			$ptrEnsembleDéfs = array_diff_key($ptrEnsembleDéfs, $défs);
 		foreach($défs as $id => $contenu)
-			$this->_defs[is_string($contenu) || is_numeric($contenu) ? 'stat' : 'dyn'][$id] = $contenu;
+		{
+			$type = is_string($contenu) || is_numeric($contenu) || !is_callable($contenu) ? 'stat' : 'dyn';
+			$this->_defs[$type][$id] = $contenu;
+		}
+		unset($this->_defs['statr']); // Cache pour remplacements textuels, à recalculer puisque stat a bougé.
 	}
 	
 	protected function _appliquerDéfs($chaîne) { return $this->appliquerDéfs($chaîne); }
@@ -671,7 +675,20 @@ class Sqleur
 		// On choisit les dynamiques d'abord, car, plus complexes, certaines de leurs parties peuvent être surchargées par des statiques.
 		foreach($this->_defs['dyn'] as $expr => $rempl)
 			$chaîne = preg_replace_callback($expr, $rempl, $chaîne);
-		$chaîne = strtr($chaîne, $this->_defs['stat']);
+		if(!isset($this->_defs['statr']) || $this->_defs['IFS'][''] != $this->IFS)
+		{
+			if(!isset($this->IFS))
+				$this->IFS = ' ';
+			/* NOTE: $this->_defs['IFS']['']
+			 * Pour que l'IFS soit entreposé conjointement au statr qu'il a produit (histoire de sauter en même temps, qu'on ne garde pas un IFS décorrélé de son statr),
+			 * on le met dans _defs (qui saute en tout ou rien).
+			 * Cependant celui-ci doit être un tableau de tableaux, donc notre IFS s'adapte.
+			 */
+			$this->_defs['IFS'][''] = $this->IFS;
+			foreach($this->_defs['stat'] as $clé => $val)
+				$this->_defs['statr'][$clé] = is_array($val) ? implode($this->IFS, $val) : $val;
+		}
+		$chaîne = strtr($chaîne, $this->_defs['statr']);
 		return $chaîne;
 	}
 	
