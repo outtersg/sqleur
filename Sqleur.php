@@ -200,9 +200,23 @@ class Sqleur
 		'case' => 'end',
 	);
 	
-	protected function _ajouterBoutRequête($bout)
+	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true)
 	{
-		$this->_requeteEnCours .= $this->_appliquerDéfs($bout);
+		/* À FAIRE: Ouille, on applique les définitions ici, après découpe, ce qui veut dire que si notre définition contient plusieurs instructions on finira avec une seule instruction contenant un point-virgule! */
+		/* À FAIRE: si on fait le point précédent (repasser par un découperBloc), adapter le calcul des lignes aux lignes originales (un remplacement peut contenir un multi-lignes). */
+		/* À FAIRE: appeler sur chaque fin de ligne (on ne peut avoir de symbole à remplacer à cheval sur une fin de ligne) pour permettre au COPY par exemple de consommer en flux tendu. */
+		if($appliquerDéfs)
+		{
+			if(isset($this->_requêteRemplacée) && $this->_requêteRemplacée == substr($this->_requeteEnCours, 0, $tDéjàRempl = strlen($this->_requêteRemplacée)))
+			{
+				$bout = substr($this->_requeteEnCours, $tDéjàRempl).$bout;
+				$this->_requeteEnCours = $this->_requêteRemplacée;
+			}
+			$bout = $this->_appliquerDéfs($bout);
+		}
+		$this->_requeteEnCours .= $bout;
+		if($appliquerDéfs)
+			$this->_requêteRemplacée = $this->_requeteEnCours;
 		$this->_entérinerBéguins();
 	}
 	
