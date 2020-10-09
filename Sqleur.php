@@ -430,7 +430,18 @@ class Sqleur
 			$nouvelArret -= $nCarsÀRéserver;
 			$fragment = substr($fragment, 0, -$nCarsÀRéserver);
 		}
-		$this->_ajouterBoutRequête($fragment);
+		/* NOTE: ajout sans remplacement
+		 * On ajoute le bout lu sans effectuer les remplacements, pour éviter de couper un #define.
+		 * Ex.:
+		 *   #define MACRO(x, y) …
+		 *   MACRO('a', 'b');
+		 * Si on effectue les remplacements à chaque fin de chaîne, ils seront appliqués à "MACRO('a'" puis ", 'b'", et enfin à ");" (remplacement de fin de requête).
+		 * La macro n'aura alors pas moyen de s'appliquer (il lui faut repérer ses parenthèses ouvrante et fermante dans le même bloc).
+		 * Le seul cas qui justifie le remplacement avant émission de l'instruction complète (hors cas du COPY où un remplacement ligne à ligne est bienvenu) est lorsque notre chaîne est coupée d'un #define ("problématique 2.").
+		 * Mais dans ce cas, nous passons la main à l'instruction de préproc dont la première action sera d'_ajouterBoutRequête(true).
+		 * Inutile donc que nous le fassions.
+		 */
+		$this->_ajouterBoutRequête($fragment, false);
 		$dernierArret = $nouvelArret;
 	}
 	
