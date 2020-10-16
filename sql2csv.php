@@ -109,9 +109,14 @@ class JoueurSql extends Sqleur
 				$this->avecEnTêtes = true;
 				$ligne = preg_split('/[ \t]+/', $ligne);
 				for($i = 0; ++$i < count($ligne);)
+				{
+					if(preg_match('/^(?:sans-?en-?t(?:e|ê)tes?|no-?head(?:er)s?)$/', $ligne[$i]))
+					{
+						$this->avecEnTêtes = false; break;
+						continue;
+					}
 					switch($ligne[$i])
 					{
-						case 'sans-en-tete': $this->avecEnTêtes = false; break;
 						case "'":
 							// Grosse bidouille pour interpréter tout ce qui ressemble à ' ' comme un espace (qui a été dégommé par le preg_split).
 							if($i + 1 < count($ligne) && $ligne[$i + 1] == "'")
@@ -125,6 +130,7 @@ class JoueurSql extends Sqleur
 								throw new Exception('#format: \''.$ligne[$i].'\' non reconnu');
 							break;
 					}
+				}
 				if(!isset($format))
 					throw new Exception('#format: veuillez préciser un format');
 				$this->format = $format;
