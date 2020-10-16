@@ -106,6 +106,7 @@ class JoueurSql extends Sqleur
 		switch($instr)
 		{
 			case '#format':
+				$this->avecEnTêtes = true;
 				$ligne = preg_split('/[ \t]+/', $ligne);
 				for($i = 0; ++$i < count($ligne);)
 					switch($ligne[$i])
