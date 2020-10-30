@@ -29,6 +29,7 @@ class SqleurCond
 		$this->sortie = $this->_sqleur->_sortie;
 		$this->défs = $this->_sqleur->_defs;
 		$this->requêteEnCours = $this->_sqleur->_requeteEnCours;
+		$this->requêteRemplacée = isset($this->_sqleur->_requêteRemplacée) ? $this->_sqleur->_requêteRemplacée : null;
 		$this->ligne = $this->_sqleur->_ligne;
 		
 		$this->déjàFaite = false;

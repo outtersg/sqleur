@@ -130,6 +130,7 @@ class Sqleur
 		$this->_conditions = array(); // Pile des conditions de préprocesseur.
 		unset($this->_chaineDerniereDecoupe);
 		unset($this->_requeteEnCours);
+		unset($this->_requêteRemplacée);
 		unset($this->_resteEnCours);
 		$this->_dansChaîne = null;
 	}
@@ -207,7 +208,8 @@ class Sqleur
 		/* À FAIRE: appeler sur chaque fin de ligne (on ne peut avoir de symbole à remplacer à cheval sur une fin de ligne) pour permettre au COPY par exemple de consommer en flux tendu. */
 		if($appliquerDéfs)
 		{
-			if(isset($this->_requêteRemplacée) && $this->_requêteRemplacée == substr($this->_requeteEnCours, 0, $tDéjàRempl = strlen($this->_requêteRemplacée)))
+			isset($this->_requêteRemplacée) || $this->_requêteRemplacée = '';
+			if($this->_requêteRemplacée == substr($this->_requeteEnCours, 0, $tDéjàRempl = strlen($this->_requêteRemplacée))) // Notre fiabilité laissant à douter, on s'assure que $this->_requêteRemplacée est bien le début de l'accumulateur.
 			{
 				$bout = substr($this->_requeteEnCours, $tDéjàRempl).$bout;
 				$this->_requeteEnCours = $this->_requêteRemplacée;
@@ -249,7 +251,10 @@ class Sqleur
 			$dernierRetour = $chaineDerniereDecoupe == "\n" ? 0 : -1;
 		}
 		if(!isset($this->_requeteEnCours))
+		{
 			$this->_requeteEnCours = '';
+			unset($this->_requêteRemplacée);
+		}
 		
 		for($i = 0; $i < $n; ++$i)
 		{
@@ -271,6 +276,7 @@ class Sqleur
 						}
 					$this->_sors($this->_requeteEnCours);
 					$this->_requeteEnCours = '';
+					unset($this->_requêteRemplacée);
 					break;
 				case "\n":
 					$dernierRetour = $decoupes[$i][1] + 1;
@@ -366,6 +372,7 @@ class Sqleur
 			$this->_sors($this->_requeteEnCours);
 			unset($this->_chaineDerniereDecoupe);
 			unset($this->_requeteEnCours);
+			unset($this->_requêteRemplacée);
 			unset($this->_resteEnCours);
 			if($this->_retourDirect)
 		{
@@ -531,6 +538,7 @@ class Sqleur
 				{
 					$this->_sortie = $condition->sortie;
 					$this->_requeteEnCours = $condition->requêteEnCours;
+					$this->_requêteRemplacée = $condition->requêteRemplacée;
 					$this->_defs = $condition->défs;
 					$condition->enCours(true);
 					$condition->déjàFaite = true;
@@ -541,6 +549,7 @@ class Sqleur
 					if($condition->enCours) // Si on clôt l'en-cours.
 					{
 						$condition->requêteEnCours = $requeteEnCours; // On mémorise.
+						$condition->requêteRemplacée = $this->_requêteRemplacée;
 						$condition->défs = $this->_defs;
 						$condition->enCours(false);
 					}
@@ -555,6 +564,7 @@ class Sqleur
 				if(!$condition->enCours) // Si le dernier bloc traité (#if ou #else) était à ignorer,
 				{
 					$this->_requeteEnCours = $condition->requêteEnCours; // On restaure.
+					$this->_requêteRemplacée = $condition->requêteRemplacée;
 					$this->_defs = $condition->défs;
 				}
 				$condition->enCours(false);
