@@ -83,6 +83,29 @@ include_once 'SqleurPreproExpr.php';
  *     Ou alors, si on veut proprement découper les étages, le prépro pourrait émettre une fausse requête, de manière à ce qu'elle soit interceptée par l'étage requête et traitée à ce moment.
  */
 
+/* À FAIRE: état de découpe
+ * Soit le SQL suivant:
+ *   #define CONSTANTE 16384
+ *   insert into toto values(CONSTANTE);
+ *   select * from toto;
+ * À l'heure actuelle nous avons 3 variables:
+ * - _resteEnCours: chaîne lue mais non encore découpée (ex.: tout le pré-SQL précédent, brut, en un seul bloc)
+ * - _requeteEnCours: chaîne lue et découpée mais non encore remplacée (ex.: découpée selon les points-virgules, donc "insert into toto values(CONSTANTE)")
+ * - _requêteRemplacée: chaîne lue, découpée, et préprocessée (ex.: "insert into toto values(16384)")
+ * N'étaient les remplacements, elles pourraient être vues comme de simples marqueurs de position sur un seul bloc qui serait la chaîne lue, complète, brute:
+ * - un premier marqueur (P) "j'ai déjà découpé et préprocessé jusqu'ici"
+ * - un second marqueur (D) "j'ai déjà juste découpé jusqu'ici"
+ * Les choix d'implémentation font que, pour le bloc …(P)…(D)…:
+ * - _requêteRemplacée = …(P)
+ * - _requeteEnCours = …(P)…(D)
+ * - _resteEnCours = (D)…
+ * _requeteEnCours contient donc _requêteRemplacée, afin que les préprocesseurs qui souhaitent avoir une préversion de la chaîne résultante n'aient qu'à accéder à la variable, sans la concaténer à quoi que ce soit.
+ * Cependant cela a pour inconvénient notable de devoir synchroniser _requêteRemplacée et _requeteEnCours: on ne peut juste passer une partie traitée du second au premier, il faut l'y dupliquer.
+ * La solution presqu'élégante aurait été d'embarquer un caractère très spécial dans la chaîne (ex.: \001), permettant la concaténation sans se poser de question, et la mémorisation / restauration faciles (une seule variable), mais ceci complique la lecture (nécessité de faire sauter le \001; même si lorsque l'on veut jouer une requête normalement il est en toute fin de chaîne), et induit un risque si la requête SQL permet des données binaires (ex.: blob) contenant le caractère séparateur.
+ * L'autre solution consiste donc à trimballer une position de marqueur conjointement au bloc mémoire accumulé (ce qui est fait actuellement; avoir une chaîne de caractères plutôt qu'un simple entier permet de vérifier que ce qu'on croit être le "déjà traité" est bien le prélude du "déjà découpé": tant on a peu confiance en notre capacité à balader les deux ensemble.
+ * Pour améliorer la situation, il serait donc bon de passer par une seule variable état (facile à trimballer / recopier atomiquement, sans risque d'oubli), à deux membres. Voire trois si on y cale le _resteEnCours (ce qui a du sens car ce qui a été découpé de _resteEnCours est censé se retrouvé dans _requeteEnCours. Les deux sont liés).
+ */
+
 class Sqleur
 {
 	const MODE_BEGIN_END = 0x01;
