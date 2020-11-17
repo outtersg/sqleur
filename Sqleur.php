@@ -720,6 +720,7 @@ class Sqleur
 			$ptrEnsembleDéfs = array_diff_key($ptrEnsembleDéfs, $défs);
 		foreach($défs as $id => $contenu)
 		{
+			if(!isset($contenu)) continue;
 			$type = is_string($contenu) || is_numeric($contenu) || !is_callable($contenu) ? 'stat' : 'dyn';
 			$this->_defs[$type][$id] = $contenu;
 		}
