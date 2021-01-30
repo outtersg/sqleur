@@ -23,6 +23,7 @@
 
 require_once dirname(__FILE__).'/Sqleur.php';
 require_once dirname(__FILE__).'/SqleurPreproIncl.php';
+require_once dirname(__FILE__).'/SqleurPreproDef.php';
 require_once dirname(__FILE__).'/SqleurPreproTest.php';
 require_once dirname(__FILE__).'/SqleurPreproPif.php';
 
@@ -38,6 +39,7 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 		$prépros = array
 		(
 			'i' => new SqleurPreproIncl(),
+			'd' => new SqleurPreproDef(),
 			't' => new SqleurPreproTest(SqleurPreproTest::PHPUNIT),
 			'p' => new SqleurPreproPif(),
 		);
