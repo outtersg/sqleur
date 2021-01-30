@@ -45,6 +45,15 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 		$this->sqleur = new Sqleur(array($this, 'sortir'), $prépros);
 	}
 	
+	protected function bdd()
+	{
+		if(isset($this->bdd))
+			return $this->bdd;
+		if(($conne = getenv('bdd')) === false)
+			throw new Exception('la variable d\'environnement $bdd doit contenir la chaîne de connection à la base');
+		return $this->bdd = new PDO($conne);
+	}
+	
 	public function sql()
 	{
 		$infosClasse = new ReflectionClass($this);
