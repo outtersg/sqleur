@@ -43,6 +43,9 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 		);
 		$prépros['t']->_accuErr = $this;
 		$this->sqleur = new Sqleur(array($this, 'sortir'), $prépros);
+		
+		if(count($GLOBALS['argv']) > 2)
+			$this->fichier = $GLOBALS['argv'][2];
 	}
 	
 	protected function bdd()
@@ -56,6 +59,7 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 	
 	public function sql()
 	{
+		if(isset($this->fichier)) return $this->fichier;
 		$infosClasse = new ReflectionClass($this);
 		return strtr($infosClasse->getFileName(), array('.php' => '.sql'));
 	}
