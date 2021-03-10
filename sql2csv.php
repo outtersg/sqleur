@@ -247,6 +247,26 @@ class JoueurSql extends Sqleur
 	}
 }
 
+class JoueurSqlPdo extends JoueurSql
+{
+	public function __construct()
+	{
+		$this->bdd();
+		parent::__construct();
+	}
+	
+	protected function bdd()
+	{
+		if(isset($this->bdd))
+			return $this->bdd;
+		if(($conne = getenv('bdd')) === false)
+			throw new Exception('la variable d\'environnement $bdd doit contenir la chaîne de connection à la base');
+		$conne = preg_replace('#^([^:]*)://([^@:]*):([^@]*)@([^/:]*)(?::([0-9]+))?/(.*)$#', '\1:host=\4;port=\5;user=\2;password=\3;dbname=\6', $conne);
+		$conne = strtr($conne, array(';port=;' => ';'));
+		return $this->bdd = new PDO($conne);
+	}
+}
+
 class Sql2Csv
 {
 	public function __construct($argv, $j)
