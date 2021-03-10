@@ -70,7 +70,7 @@ class SqleurPreproTestExpr extends SqleurPreproTest
 		catch(Exception $ex)
 		{
 			$rés = '! '.$ex->getMessage();
-			if($résAttendu{0} == '!')
+			if(substr($résAttendu, 0, 1) == '!')
 			{
 				$résAttendu = preg_replace('/^! */', '', $résAttendu);
 				if(preg_match("\003$résAttendu\003", $ex->getMessage()))
