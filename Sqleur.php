@@ -281,7 +281,7 @@ class Sqleur
 		
 		for($i = 0; $i < $n; ++$i)
 		{
-			$chaineNouvelleDecoupe = $decoupes[$i][0]{0};
+			$chaineNouvelleDecoupe = substr($decoupes[$i][0], 0, 1);
 			// Si on est dans une chaîne, même interrompue, on y retourne. Elle est seule à pouvoir décider de s'interrompre (soit pour fin de tampon, soit pour passage de relais temporaire au préprocesseur).
 			if($this->_dansChaîne && $this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] != static::CHAÎNE_PASSE_LA_MAIN && !$this->dansUnSiÀLaTrappe())
 				$chaineNouvelleDecoupe = $this->_dansChaîne[static::DANS_CHAÎNE_DÉBUT];
@@ -453,7 +453,7 @@ class Sqleur
 		(
 			$i >= $n && strlen($fin) > 1
 			&& ($fragmentSaufMarqueurEntrée = substr($fragment, $débutIntérieur))
-			&& ($posDébutMarqueurFin = strpos($fragmentSaufMarqueurEntrée, $fin{0}, max(0, strlen($fragmentSaufMarqueurEntrée) - (strlen($fin) - 1)))) !== false // On cherche les (strlen($fin) - 1) caractères, car si on cherchait dans les strlen($fin) derniers (et qu'on le trouvait), cela voudrait dire qu'on aurait le marqueur de fin en entier, qui aurait été détecté à la découpe.
+			&& ($posDébutMarqueurFin = strpos($fragmentSaufMarqueurEntrée, substr($fin, 0, 1), max(0, strlen($fragmentSaufMarqueurEntrée) - (strlen($fin) - 1)))) !== false // On cherche les (strlen($fin) - 1) caractères, car si on cherchait dans les strlen($fin) derniers (et qu'on le trouvait), cela voudrait dire qu'on aurait le marqueur de fin en entier, qui aurait été détecté à la découpe.
 		)
 		{
 			$nCarsÀRéserver = strlen($fragmentSaufMarqueurEntrée) - $posDébutMarqueurFin;
@@ -730,6 +730,7 @@ class Sqleur
 	protected function _appliquerDéfs($chaîne) { return $this->appliquerDéfs($chaîne); }
 	public function appliquerDéfs($chaîne)
 	{
+		if(is_array($chaîne)) $chaîne = $chaîne[0];
 		// La séparation statiques / dynamiques nous oblige à les passer dans un ordre différent de l'initial (qui mêlait statiques et dynamiques).
 		// On choisit les dynamiques d'abord, car, plus complexes, certaines de leurs parties peuvent être surchargées par des statiques.
 		foreach($this->_defs['dyn'] as $expr => $rempl)
