@@ -563,7 +563,7 @@ class SqleurPreproExpr
 					return $r;
 			}
 		else if(is_array($truc))
-			return $délimiteurs{0}.implode(',', array_map(array($this, 'aff'), $truc)).$délimiteurs{1};
+			return substr($délimiteurs, 0, 1).implode(',', array_map(array($this, 'aff'), $truc)).substr($délimiteurs, 1, 1);
 		return serialize($truc);
 	}
 	
