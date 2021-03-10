@@ -333,3 +333,42 @@ class Sql2Csv
 			$j->jouer($entrée);
 	}
 }
+
+class Sql2CsvPdo extends Sql2Csv
+{
+	public function __construct($argv)
+	{
+		try
+		{
+			$j = new JoueurSqlPdo();
+			parent::__construct($argv, $j);
+		}
+		catch(Exception $e)
+		{
+			//fprintf(STDERR, '%s', $this->affex($e));
+			//exit(1);
+			throw $e;
+		}
+	}
+	
+	public function affex($e)
+	{
+		$aff = '### '.$e->getFile().':'.$e->getLine().': '.get_class($e).': '.$e->getMessage()."\n";
+		$aff = $this->rouge($aff);
+		foreach(array_slice($e->getTrace(), 0, 8) as $l)
+			$aff .= "\t".$l['file'].':'.$l['line'].': '.(isset($l['class']) ? $l['class'].'.' : '').$l['function']."()\n";
+		return $aff;
+	}
+	
+	public function rouge($bla)
+	{
+		$bla = preg_replace('/^/m', '[031m', $bla);
+		$bla = preg_replace('/$/m', '[0m', $bla);
+		return $bla;
+	}
+}
+
+if(isset($argv) && isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) == __FILE__)
+	new Sql2CsvPdo($argv);
+
+?>
