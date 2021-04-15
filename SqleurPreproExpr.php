@@ -98,10 +98,13 @@ class SqleurPreproExpr
 		),
 		array
 		(
-			'!' => 'devant',
-			'not' => 'devant',
 			'and' => 'bi',
 			'or' => 'bi',
+		),
+		array
+		(
+			'!' => 'devant',
+			'not' => 'devant',
 		),
 		array
 		(
