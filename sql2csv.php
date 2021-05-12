@@ -247,6 +247,17 @@ class JoueurSql extends Sqleur
 	}
 }
 
+/**
+ * SQL PreProcessor
+ */
+class SPP extends JoueurSql
+{
+	public function exécuter($sql, $appliquerDéfs = false, $interne = false)
+	{
+		echo $sql.";\n";
+	}
+}
+
 class JoueurSqlPdo extends JoueurSql
 {
 	public function __construct()
@@ -283,6 +294,7 @@ class Sql2Csv
 		for($i = 0; ++$i < count($argv);)
 			switch($argv[$i])
 			{
+				case '-E': break;
 				case '--raw':
 					$formatSortie = JoueurSql::CSVBRUT;
 					break;
@@ -369,6 +381,9 @@ class Sql2CsvPdo extends Sql2Csv
 }
 
 if(isset($argv) && isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) == __FILE__)
+	if(in_array('-E', $argv))
+		new Sql2Csv($argv, new SPP());
+	else
 	new Sql2CsvPdo($argv);
 
 ?>
