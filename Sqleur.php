@@ -347,6 +347,7 @@ class Sqleur
 					break;
 				case '-':
 					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
+					$dernierArret = $decoupes[$i][1];
 					while(++$i < $n && $decoupes[$i][0] != "\n") {}
 					if($i < $n)
 					{
@@ -359,6 +360,7 @@ class Sqleur
 				case '/':
 					/* À FAIRE: pour décharger la mémoire, voir si on ne peut pas passer par le traitement des chaînes capable de calculer un _resteEnCours minimal. */
 					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
+					$dernierArret = $decoupes[$i][1];
 					while(++$i < $n && $decoupes[$i][0] != '*/')
 						if($decoupes[$i][0] == "\n")
 							++$this->_ligne;
