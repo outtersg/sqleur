@@ -289,8 +289,8 @@ class Sqleur
 			switch($chaineNouvelleDecoupe)
 			{
 				case ';':
-					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
-					$dernierArret = $decoupes[$i][1] + 1;
+					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
+					++$dernierArret;
 					if(($this->_mode & Sqleur::MODE_BEGIN_END))
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
@@ -309,12 +309,12 @@ class Sqleur
 					 * - Mais un besoin de le faire, au cas où l'instruction suivante est un prépro qui re#define: le SQL qui nous précède doit avoir l'ancienne valeur.
 					 */
 					/* À FAIRE: optim: faire le remplacement sur toute suite contiguë de lignes banales (non interrompue par une instruction prépro), et non ligne par ligne. */
-					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $dernierRetour - $dernierArret));
-					$dernierArret = $dernierRetour;
+					$this->_mangerBout($chaine, /*&*/ $dernierArret, $dernierRetour);
 					break;
 				case '#':
 					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
 					{
+						# À FAIRE: est-on protégés contre la fin de bloc au beau milieu de l'instruction?
 						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
 						$j = $i;
 						while(++$i < $n && $decoupes[$i][0] != "\n")
@@ -346,8 +346,7 @@ class Sqleur
 					}
 					break;
 				case '-':
-					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
-					$dernierArret = $decoupes[$i][1];
+					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
 					while(++$i < $n && $decoupes[$i][0] != "\n") {}
 					if($i < $n)
 					{
@@ -359,8 +358,7 @@ class Sqleur
 					break;
 				case '/':
 					/* À FAIRE: pour décharger la mémoire, voir si on ne peut pas passer par le traitement des chaînes capable de calculer un _resteEnCours minimal. */
-					$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
-					$dernierArret = $decoupes[$i][1];
+					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
 					while(++$i < $n && $decoupes[$i][0] != '*/')
 						if($decoupes[$i][0] == "\n")
 							++$this->_ligne;
