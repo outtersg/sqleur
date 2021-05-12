@@ -408,6 +408,12 @@ class Sqleur
 		}
 	}
 	
+	protected function _mangerBout($chaîne, & $dernierArret, $jusquÀ)
+	{
+		$this->_ajouterBoutRequête(substr($chaîne, $dernierArret, $jusquÀ - $dernierArret));
+		$dernierArret = $jusquÀ;
+	}
+	
 	protected function _mangerChaîne($chaine, $decoupes, $n, & $i, & $dernierRetour, & $chaineNouvelleDecoupe, & $dernierArret, & $nouvelArret)
 	{
 		$chaîneType = $chaineNouvelleDecoupe;
