@@ -133,7 +133,7 @@ class JoueurSql extends Sqleur
 				{
 					if(preg_match('/^(?:sans-?en-?t(?:e|ê)tes?|no-?head(?:er)s?)$/', $ligne[$i]))
 					{
-						$this->avecEnTêtes = false; break;
+						$this->avecEnTêtes = false;
 						continue;
 					}
 					switch($ligne[$i])
