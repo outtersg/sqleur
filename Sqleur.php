@@ -349,29 +349,8 @@ class Sqleur
 					}
 					break;
 				case '-':
-					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
-					while(++$i < $n && $decoupes[$i][0] != "\n") {}
-					if($i < $n)
-					{
-						if($this->_mode & Sqleur::MODE_COMM_MONOLIGNE)
-							$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
-						else
-						$dernierArret = $decoupes[$i][1];
-						--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
-					}
-					else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
-						$dernierArret = $taille;
-					break;
 				case '/':
-					/* À FAIRE: pour décharger la mémoire, voir si on ne peut pas passer par le traitement des chaînes capable de calculer un _resteEnCours minimal. */
-					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
-					while(++$i < $n && $decoupes[$i][0] != '*/')
-						if($decoupes[$i][0] == "\n")
-							++$this->_ligne;
-					if($i < $n)
-						$dernierArret = $decoupes[$i][1] + 2;
-					else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
-						$dernierArret = $taille;
+					$this->_mangerCommentaire($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierArret, $laFinEstVraimentLaFin, $chaineNouvelleDecoupe == '-' ? Sqleur::MODE_COMM_MONOLIGNE : Sqleur::MODE_COMM_MULTILIGNE);
 					break;
 				case "'":
 				case '$':
@@ -485,6 +464,35 @@ class Sqleur
 		 */
 		$this->_ajouterBoutRequête($fragment, false);
 		$dernierArret = $nouvelArret;
+	}
+	
+	protected function _mangerCommentaire($chaîne, $découpes, $n, & $i, & $dernierArrêt, $laFinEstVraimentLaFin, $mode)
+	{
+		/* À FAIRE?: en mode /, pour décharger la mémoire, voir si on ne peut pas passer par un traitement type "chaînes" capable de calculer un _resteEnCours minimal. */
+		
+		switch($mode)
+		{
+			case Sqleur::MODE_COMM_MONOLIGNE:  $borne = "\n"; $etDélim = false; break;
+			case Sqleur::MODE_COMM_MULTILIGNE: $borne = "*/"; $etDélim = true; break;
+		}
+		
+		$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $découpes[$i][1]);
+		
+		while(++$i < $n && $découpes[$i][0] != $borne)
+			if($découpes[$i][0] == "\n") // Implicitement: && $mode != '-', car en ce cas, la condition d'arrêt nous a déjà fait sortir.
+				++$this->_ligne;
+		if($i < $n)
+		{
+			$tÉpilogue = $etDélim ? strlen($découpes[$i][0]) : 0;
+			if($this->_mode & $mode) // Si le mode du Sqleur demande de sortir aussi ce type de commentaire, on s'exécute.
+				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $découpes[$i][1] + $tÉpilogue);
+			else // Sinon on ne fait qu'avancer le curseur sans signaler le commentaire lui-même.
+				$dernierArrêt = $découpes[$i][1] + $tÉpilogue;
+			if($mode == Sqleur::MODE_COMM_MONOLIGNE)
+				--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
+		}
+		else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
+			$dernierArrêt = strlen($chaîne);
 	}
 	
 	protected function _sors($requete, $brut = false, $appliquerDéfs = false)
