@@ -109,6 +109,9 @@ include_once 'SqleurPreproExpr.php';
 class Sqleur
 {
 	const MODE_BEGIN_END = 0x01;
+	const MODE_COMM_MULTILIGNE = 0x02; // Transmet-on les commentaires /* comm */?
+	const MODE_COMM_MONOLIGNE  = 0x04; // Transmet-on les commentaires -- comm?
+	const MODE_COMM_TOUS       = 0x06; // MODE_COMM_MULTILIGNE|MODE_COMM_MONOLIGNE
 	
 	/**
 	 * Constructeur.
@@ -118,7 +121,7 @@ class Sqleur
 	public function __construct($sortie = null, $préprocesseurs = array())
 	{
 		$this->avecDéfs(array());
-		$this->_mode = 0;
+		$this->_mode = Sqleur::MODE_COMM_TOUS;
 		$this->_fichier = null;
 		$this->_ligne = null;
 		$this->_dernièreLigne = null;
@@ -350,6 +353,9 @@ class Sqleur
 					while(++$i < $n && $decoupes[$i][0] != "\n") {}
 					if($i < $n)
 					{
+						if($this->_mode & Sqleur::MODE_COMM_MONOLIGNE)
+							$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
+						else
 						$dernierArret = $decoupes[$i][1];
 						--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
 					}
