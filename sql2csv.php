@@ -230,7 +230,7 @@ class JoueurSql extends Sqleur
 		
 		$this->sortie->ouvrir($re);
 		
-		if(isset($colonnes) && $this->avecEnTêtes)
+		if(isset($colonnes) && $this->avecEnTêtes && $colonnes != array('?column?')) // À FAIRE: autres BdD que PostgreSQL.
 			$this->exporterLigne($colonnes);
 		
 		while(($l = $résultat->fetch()) !== false)
