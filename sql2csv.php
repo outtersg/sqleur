@@ -285,7 +285,9 @@ class JoueurSqlPdo extends JoueurSql
 			throw new Exception('la variable d\'environnement $bdd doit contenir la chaîne de connection à la base');
 		$conne = preg_replace('#^([^:]*)://([^@:]*):([^@]*)@([^/:]*)(?::([0-9]+))?/(.*)$#', '\1:host=\4;port=\5;user=\2;password=\3;dbname=\6', $conne);
 		$conne = strtr($conne, array(';port=;' => ';'));
-		return $this->bdd = new PDO($conne);
+		$this->bdd = new PDO($conne);
+		$this->bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		return $this->bdd;
 	}
 }
 
