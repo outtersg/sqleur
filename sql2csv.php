@@ -131,11 +131,16 @@ class JoueurSql extends Sqleur
 				$ligne = preg_split('/[ \t]+/', $ligne);
 				for($i = 0; ++$i < count($ligne);)
 				{
-					if(preg_match('/^(?:sans-?en-?t(?:e|ê)tes?|no-?head(?:er)s?)$/', $ligne[$i]))
+					if
+					(
+						($avec = preg_match('/^(?:en-?t(?:e|ê|é)t(?:e|é)s?|head(?:er)s?)$/', $ligne[$i]))
+						|| preg_match('/^(?:(?:sans-?en-?|(?:é|e))t(?:e|ê|é)t(?:e|é)s?|no-?head(?:er)s?)$/', $ligne[$i])
+					)
 					{
-						$this->avecEnTêtes = false;
-						continue;
+						$qqc = true;
+						$this->avecEnTêtes = $avec;
 					}
+					else
 					switch($ligne[$i])
 					{
 						case "'":
@@ -153,6 +158,9 @@ class JoueurSql extends Sqleur
 					}
 				}
 				if(!isset($format))
+					if(isset($qqc)) // Bon on n'a pas défini le format mais d'autres choses ont été faites.
+						break;
+					else
 					throw new Exception('#format: veuillez préciser un format');
 				$this->format = $format;
 				if(isset($sép))
