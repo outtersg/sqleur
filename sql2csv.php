@@ -169,6 +169,7 @@ class JoueurSql extends Sqleur
 			case '#silence':
 				$this->bavard = 0;
 				break;
+			case '#bavard': $this->bavard = 1; break;
 			default: return false;
 		}
 	}
