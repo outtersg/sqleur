@@ -199,6 +199,8 @@ class JoueurSql extends Sqleur
 		fprintf(STDERR, "  %s;\n", strtr($sql, array("\n" => "\n  ")));
 		$rés = $this->bdd->query($sql);
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
+		// À FAIRE: passer tout ça après le premier fetch(), sans quoi notice "> row number 0 is out of range 0..-1".
+		// Au cas où le fetch() renvoie effectivement false on aura toujours le message, mais sinon ça fera plus propre.
 		if(!$interne && ($nCols = $rés->columnCount()) > 0)
 		{
 			$colonnes = array();
