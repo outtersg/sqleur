@@ -220,15 +220,15 @@ class JoueurSql extends Sqleur
 		
 		$re = false;
 		foreach($this->sortiesDéjàUtilisées as $sortieAncienne)
-			if($sortieAncienne->descr === $this->sortie->descr)
+			if($sortieAncienne === $this->sortie->descr)
 			{
 				if($this->sortie->descr !== Flux::STDOUT)
-				fprintf(STDERR, '# La sortie "%s" est réutilisée en ayant déjà servi pour l\'export d\'une autre requête. Nous ne garantissons pas que le fichier résultant sera cohérent entre les deux exports qui y sont combinés.'."\n", $sortieAncienne->descr);
+				fprintf(STDERR, '# La sortie "%s" est réutilisée en ayant déjà servi pour l\'export d\'une autre requête. Nous ne garantissons pas que le fichier résultant sera cohérent entre les deux exports qui y sont combinés.'."\n", $sortieAncienne);
 				$re = true;
 				break;
 			}
 		
-		$this->sortiesDéjàUtilisées[] = $this->sortie;
+		$this->sortiesDéjàUtilisées[] = $this->sortie->descr;
 		
 		$this->sortie->ouvrir($re);
 		
