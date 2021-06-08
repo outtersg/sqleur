@@ -132,11 +132,11 @@ class JoueurSql extends Sqleur
 	
 	public function préprocesse($instr, $ligne)
 	{
+		$ligne = preg_split('/[ \t]+/', $ligne);
 		switch($instr)
 		{
 			case '#format':
 				$this->avecEnTêtes = true;
-				$ligne = preg_split('/[ \t]+/', $ligne);
 				for($i = 0; ++$i < count($ligne);)
 				{
 					if
