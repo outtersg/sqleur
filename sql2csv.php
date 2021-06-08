@@ -237,6 +237,7 @@ class JoueurSql extends Sqleur
 		foreach($this->sortiesDéjàUtilisées as $sortieAncienne)
 			if($sortieAncienne === $this->sortie->descr)
 			{
+				// À FAIRE: ce contrôle à la lecture de la première ligne, afin de ne pas alerter si le nombre de colonnes est identique.
 				if($this->sortie->descr !== Flux::STDOUT)
 				fprintf(STDERR, '# La sortie "%s" est réutilisée en ayant déjà servi pour l\'export d\'une autre requête. Nous ne garantissons pas que le fichier résultant sera cohérent entre les deux exports qui y sont combinés.'."\n", $sortieAncienne);
 				$re = true;
