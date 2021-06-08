@@ -117,7 +117,6 @@ class JoueurSql extends Sqleur
 	
 	public function __construct()
 	{
-		// À FAIRE: permettre des directives #output dans le SQL pour changer de fichier de sortie; cela permettrait de caser plusieurs exports dans le même .sql, en séparant chaque export par cette directive.
 		$prépros = array
 		(
 			new SqleurPreproIncl(),
@@ -178,6 +177,14 @@ class JoueurSql extends Sqleur
 				$this->bavard = 0;
 				break;
 			case '#bavard': $this->bavard = 1; break;
+			case '#sortie':
+			case '#output':
+				if(!isset($ligne[1]) || in_array($ligne[1], array('1', 'stdout')))
+					$sortie = Flux::STDOUT;
+				else
+					$sortie = $this->_sqleur->appliquerDéfs($ligne[1]);
+				$this->sortie->basculer($sortie);
+				break;
 			default: return false;
 		}
 	}
