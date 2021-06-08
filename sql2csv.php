@@ -44,6 +44,15 @@ class Flux
 	
 	public function __construct($descr, $sortieSinonEntrée)
 	{
+		$this->sortieSinonEntrée = $sortieSinonEntrée;
+		$this->basculer($descr);
+	}
+	
+	public function basculer($descr)
+	{
+		if($descr === $this->descr) return;
+		if(isset($this->descr)) $this->fermer();
+		
 		if(is_int($descr))
 		{
 			switch($descr)
@@ -65,7 +74,6 @@ class Flux
 		else
 			$this->état = Flux::À_OUVRIR;
 		$this->descr = $descr;
-		$this->sortieSinonEntrée = $sortieSinonEntrée;
 	}
 	
 	public function ouvrir($re = false)
