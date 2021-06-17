@@ -503,7 +503,7 @@ class Sqleur
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
 		if($appliquerDéfs)
 			$requete = $this->_appliquerDéfs($requete);
-		if(strlen($requete = trim($requete)))
+		if(strlen($requete = trim($requete)) && !$this->_queDuVent)
 		{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
