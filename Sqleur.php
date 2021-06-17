@@ -227,7 +227,7 @@ class Sqleur
 		'case' => 'end',
 	);
 	
-	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true)
+	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false)
 	{
 		/* À FAIRE: Ouille, on applique les définitions ici, après découpe, ce qui veut dire que si notre définition contient plusieurs instructions on finira avec une seule instruction contenant un point-virgule! */
 		/* À FAIRE: si on fait le point précédent (repasser par un découperBloc), adapter le calcul des lignes aux lignes originales (un remplacement peut contenir un multi-lignes). */
@@ -243,6 +243,8 @@ class Sqleur
 			$bout = $this->_appliquerDéfs($bout);
 		}
 		$this->_requeteEnCours .= $bout;
+		if($this->_queDuVent && !$duVent && trim($bout))
+			$this->_queDuVent = false;
 		if($appliquerDéfs)
 			$this->_requêteRemplacée = $this->_requeteEnCours;
 		$this->_entérinerBéguins();
@@ -279,6 +281,7 @@ class Sqleur
 		if(!isset($this->_requeteEnCours))
 		{
 			$this->_requeteEnCours = '';
+			$this->_queDuVent = true;
 			unset($this->_requêteRemplacée);
 		}
 		
@@ -302,6 +305,7 @@ class Sqleur
 						}
 					$this->_sors($this->_requeteEnCours);
 					$this->_requeteEnCours = '';
+					$this->_queDuVent = true; /* À FAIRE: le gérer aussi dans les conditions (empiler et dépiler). */
 					unset($this->_requêteRemplacée);
 					break;
 				case "\n":
@@ -391,9 +395,9 @@ class Sqleur
 		}
 	}
 	
-	protected function _mangerBout($chaîne, & $dernierArret, $jusquÀ)
+	protected function _mangerBout($chaîne, & $dernierArret, $jusquÀ, $duVent = false)
 	{
-		$this->_ajouterBoutRequête(substr($chaîne, $dernierArret, $jusquÀ - $dernierArret));
+		$this->_ajouterBoutRequête(substr($chaîne, $dernierArret, $jusquÀ - $dernierArret), true, $duVent);
 		$dernierArret = $jusquÀ;
 	}
 	
