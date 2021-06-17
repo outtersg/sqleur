@@ -489,7 +489,7 @@ class Sqleur
 		{
 			$arrêt = $i >= $n ? strlen($chaîne) : $découpes[$i][1] + ($tÉpilogue = $etDélim ? strlen($découpes[$i][0]) : 0);
 			if($this->_mode & $mode) // Si le mode du Sqleur demande de sortir aussi ce type de commentaire, on s'exécute.
-				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $arrêt);
+				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $arrêt, true);
 			else // Sinon on ne fait qu'avancer le curseur sans signaler le commentaire lui-même.
 				$dernierArrêt = $arrêt;
 			if($mode == Sqleur::MODE_COMM_MONOLIGNE && $i < $n)
