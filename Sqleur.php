@@ -481,18 +481,16 @@ class Sqleur
 		while(++$i < $n && $découpes[$i][0] != $borne)
 			if($découpes[$i][0] == "\n") // Implicitement: && $mode != '-', car en ce cas, la condition d'arrêt nous a déjà fait sortir.
 				++$this->_ligne;
-		if($i < $n)
+		if($i < $n || $laFinEstVraimentLaFin) // Seconde condition: si on arrive en bout de truc, l'EOF clot notre commentaire.
 		{
-			$tÉpilogue = $etDélim ? strlen($découpes[$i][0]) : 0;
+			$arrêt = $i >= $n ? strlen($chaîne) : $découpes[$i][1] + ($tÉpilogue = $etDélim ? strlen($découpes[$i][0]) : 0);
 			if($this->_mode & $mode) // Si le mode du Sqleur demande de sortir aussi ce type de commentaire, on s'exécute.
-				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $découpes[$i][1] + $tÉpilogue);
+				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $arrêt);
 			else // Sinon on ne fait qu'avancer le curseur sans signaler le commentaire lui-même.
-				$dernierArrêt = $découpes[$i][1] + $tÉpilogue;
-			if($mode == Sqleur::MODE_COMM_MONOLIGNE)
+				$dernierArrêt = $arrêt;
+			if($mode == Sqleur::MODE_COMM_MONOLIGNE && $i < $n)
 				--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour).
 		}
-		else if($laFinEstVraimentLaFin) // Si on arrive en bout de truc, l'EOF clot notre commentaire.
-			$dernierArrêt = strlen($chaîne);
 	}
 	
 	protected function _sors($requete, $brut = false, $appliquerDéfs = false)
