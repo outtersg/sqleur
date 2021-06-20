@@ -642,7 +642,19 @@ class NœudPrepro
 						$r .= $this->_contenu($f, $contexte);
 				return $r;
 			case '`':
+				$queDuVentAvant = isset($contexte->_queDuVent) ? $contexte->_queDuVent : null;
+				try
+				{
+					$contexte->_queDuVent = false;
 				$rés = $contexte->exécuter($this->f, true, true);
+					$contexte->_queDuVent = $queDuVentAvant;
+				}
+				catch(Exception $e)
+				{
+					$contexte->_queDuVent = $queDuVentAvant;
+					throw $e;
+				}
+				
 				if(is_object($rés) && $rés instanceof PDOStatement)
 				{
 					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1 && !isset($exécMultiRés))
