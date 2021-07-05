@@ -23,6 +23,28 @@
 
 class SqlUtils
 {
+	public static $FONCS;
+	
+	public function __construct()
+	{
+		if(!isset(SqlUtils::$FONCS))
+		{
+			$foncs = array
+			(
+				'strlen',
+				'substr',
+				'strpos',
+				'strrpos',
+			);
+			foreach($foncs as $fonc)
+				SqlUtils::$FONCS[$fonc] = $fonc;
+			
+			if(function_exists('mb_strrpos'))
+				foreach(SqlUtils::$FONCS as & $pFonc)
+					$pFonc = 'mb_'.$pFonc;
+		}
+	}
+	
 	/**
 	 * Renvoie un extrait d'une requête SQL autour de la position $pos, suivi d'une ligne avec un marqueur ^ sous $pos.
 	 */
