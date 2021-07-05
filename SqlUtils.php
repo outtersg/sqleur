@@ -94,6 +94,7 @@ class SqlUtils
 			$m = $ex->getMessage().":\n".$this->contexteSql($sql, -1 + $re[1]);
 		
 		if(isset($m))
+			/* À FAIRE: rebalancer une get_class($ex) serait plus propre, malheureusement certaines classes internes n'ont pas le constructeur adéquat. */
 			return new Exception($m, $ex->getCode(), $ex);
 		
 		return $ex;
