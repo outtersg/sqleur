@@ -56,6 +56,17 @@ class SqlUtils
 		
 		return $sql."\n".str_repeat(' ', $pos - $débutLigne).'^';
 	}
+	
+	public function jolieEx($ex, $sql)
+	{
+		if(preg_match('/ at character ([0-9]+)$/', $ex->getMessage(), $re))
+			$m = $ex->getMessage()."\n".$this->contexteSql($sql, 0 + $re[1]);
+		
+		if(isset($m))
+			return new Exception($m, $ex->getCode(), $ex);
+		
+		return $ex;
+	}
 }
 
 ?>
