@@ -56,6 +56,11 @@ class SqlUtils
 		
 		$index = str_repeat(' ', $pos - $débutLigne).'^';
 		
+		// Les caractères qui prennent un peu plus de place.
+		for($i = $débutLigne - 1; ++$i < $pos;)
+			if($sql[$i] == "\t")
+				$index[$i - $débutLigne] = "\t";
+		
 		return $sql."\n".$index;
 	}
 	
