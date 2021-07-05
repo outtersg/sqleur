@@ -23,6 +23,39 @@
 
 class SqlUtils
 {
+	/**
+	 * Renvoie un extrait d'une requête SQL autour de la position $pos, suivi d'une ligne avec un marqueur ^ sous $pos.
+	 */
+	public function contexteSql($sql, $pos)
+	{
+		$tCon = 0x100; // Taille contexte.
+		$tExt = 2 * $tCon; // Taille extrait.
+		
+		/* À FAIRE: du mb lorsque disponible. Tester avec une requête contenant des accents UTF-8 pour savoir si la pos est en octets ou caractères. */
+		/* À FAIRE: la version avec codes ANSI souligné, quand dans un terminal. */
+		/* À FAIRE: la version avec ... à la place de … */
+		
+		if($pos > $tCon)
+		{
+			$sql = '…'.substr($sql, $pos - $tCon, $tExt);
+			$pos = $tCon + strlen('…');
+		}
+		else
+			$sql = substr($sql, 0, $tExt);
+		
+		// On ne conserve la requête que jusqu'au premier retour à la ligne après $pos.
+		
+		if(($couic = strpos($sql, "\n", $pos)) !== false)
+			$sql = substr($sql, 0, $couic);
+		
+		// Hum, curieux comportement de strrpos: -1 signifie "en partant du dernier caractère, *mais ce dernier compris*", -2 "sauf le dernier caractère", etc.
+		if(($débutLigne = strrpos($sql, "\n", $pos - strlen($sql))) === false)
+			$débutLigne = 0;
+		else
+			++$débutLigne;
+		
+		return $sql."\n".str_repeat(' ', $pos - $débutLigne).'^';
+	}
 }
 
 ?>
