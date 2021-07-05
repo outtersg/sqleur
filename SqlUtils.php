@@ -54,7 +54,9 @@ class SqlUtils
 		else
 			++$débutLigne;
 		
-		return $sql."\n".str_repeat(' ', $pos - $débutLigne).'^';
+		$index = str_repeat(' ', $pos - $débutLigne).'^';
+		
+		return $sql."\n".$index;
 	}
 	
 	public function jolieEx($ex, $sql)
