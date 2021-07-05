@@ -212,7 +212,16 @@ class JoueurSql extends Sqleur
 			$sql = $this->_appliquerDéfs($sql);
 		if($this->bavard)
 		fprintf(STDERR, "  %s;\n", strtr($sql, array("\n" => "\n  ")));
+		try
+		{
 		$rés = $this->bdd->query($sql);
+		}
+		catch(Exception $ex)
+		{
+			require_once dirname(__FILE__).'/SqlUtils.php';
+			$u = new SqlUtils();
+			throw $u->jolieEx($ex, $sql);
+		}
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
 		// À FAIRE: passer tout ça après le premier fetch(), sans quoi notice "> row number 0 is out of range 0..-1".
 		// Au cas où le fetch() renvoie effectivement false on aura toujours le message, mais sinon ça fera plus propre.
