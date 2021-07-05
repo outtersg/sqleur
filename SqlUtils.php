@@ -91,7 +91,7 @@ class SqlUtils
 	public function jolieEx($ex, $sql)
 	{
 		if(preg_match('/ at character ([0-9]+)$/', $ex->getMessage(), $re))
-			$m = $ex->getMessage()."\n".$this->contexteSql($sql, 0 + $re[1]);
+			$m = $ex->getMessage().":\n".$this->contexteSql($sql, -1 + $re[1]);
 		
 		if(isset($m))
 			return new Exception($m, $ex->getCode(), $ex);
