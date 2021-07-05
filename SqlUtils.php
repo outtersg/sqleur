@@ -50,28 +50,30 @@ class SqlUtils
 	 */
 	public function contexteSql($sql, $pos)
 	{
+		foreach(SqlUtils::$FONCS as $orig => $impl)
+			$$orig = $impl;
+		
 		$tCon = 0x100; // Taille contexte.
 		$tExt = 2 * $tCon; // Taille extrait.
 		
-		/* À FAIRE: du mb lorsque disponible. Tester avec une requête contenant des accents UTF-8 pour savoir si la pos est en octets ou caractères. */
 		/* À FAIRE: la version avec codes ANSI souligné, quand dans un terminal. */
 		/* À FAIRE: la version avec ... à la place de … */
 		
 		if($pos > $tCon)
 		{
-			$sql = '…'.substr($sql, $pos - $tCon, $tExt);
-			$pos = $tCon + strlen('…');
+			$sql = '…'.$substr($sql, $pos - $tCon, $tExt);
+			$pos = $tCon + $strlen('…');
 		}
 		else
-			$sql = substr($sql, 0, $tExt);
+			$sql = $substr($sql, 0, $tExt);
 		
 		// On ne conserve la requête que jusqu'au premier retour à la ligne après $pos.
 		
-		if(($couic = strpos($sql, "\n", $pos)) !== false)
-			$sql = substr($sql, 0, $couic);
+		if(($couic = $strpos($sql, "\n", $pos)) !== false)
+			$sql = $substr($sql, 0, $couic);
 		
 		// Hum, curieux comportement de strrpos: -1 signifie "en partant du dernier caractère, *mais ce dernier compris*", -2 "sauf le dernier caractère", etc.
-		if(($débutLigne = strrpos($sql, "\n", $pos - strlen($sql))) === false)
+		if(($débutLigne = $strrpos($sql, "\n", $pos - $strlen($sql))) === false)
 			$débutLigne = 0;
 		else
 			++$débutLigne;
@@ -80,7 +82,7 @@ class SqlUtils
 		
 		// Les caractères qui prennent un peu plus de place.
 		for($i = $débutLigne - 1; ++$i < $pos;)
-			if($sql[$i] == "\t")
+			if($substr($sql, $i, 1) == "\t")
 				$index[$i - $débutLigne] = "\t";
 		
 		return $sql."\n".$index;
