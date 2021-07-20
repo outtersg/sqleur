@@ -725,12 +725,14 @@ class NœudPrepro
 			case 'or':
 			case 'and':
 				$gauche = $this->_contenu($this->f[0], $contexte);
-				$droite = $this->_contenu($this->f[1], $contexte);
 				switch($this->t)
 				{
-					case 'or': return $gauche || $droite;
-					case 'and': return $gauche && $droite;
+					case 'or': $raccourci = $gauche; break;
+					case 'and': $raccourci = !$gauche; break;
 				}
+				if($raccourci) return $gauche;
+				$droite = $this->_contenu($this->f[1], $contexte);
+				return $droite;
 			case 'defined':
 			case 'f':
 				return $this->_exécuterF($contexte);
