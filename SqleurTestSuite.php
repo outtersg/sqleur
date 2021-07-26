@@ -56,7 +56,9 @@ class SqleurTestSuite extends \PHPUnit\Framework\TestCase
 			return $this->bdd;
 		if(($conne = getenv('bdd')) === false)
 			throw new Exception('la variable d\'environnement $bdd doit contenir la chaîne de connection à la base');
-		return $this->bdd = new PDO($conne);
+		$this->bdd = new PDO($conne);
+		$this->bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		return $this->bdd;
 	}
 	
 	public function sql()
