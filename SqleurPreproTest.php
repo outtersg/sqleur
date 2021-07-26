@@ -168,7 +168,7 @@ class SqleurPreproTest
 				break;
 			default:
 				if($résAttendu != $rés)
-					$this->_err($this->_sqleur->exception($req.': résultat obtenu différent de celui attendu:'."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>"));
+					$this->_err($this->_sqleur->exception('résultat obtenu différent de celui attendu:'."\n".$req."\n<<<<<<<\n".$résAttendu."\n=======\n".$rés."\n>>>>>>>"));
 				break;
 		}
 	}
