@@ -202,6 +202,7 @@ class JoueurSql extends Sqleur
 	public function jouer($chemin)
 	{
 		$fluxEntrée = new Flux($chemin, false);
+		$this->_fichier = is_int($chemin) ? getcwd().'/-' : $chemin;
 		$requêtes = $this->decoupeFlux($fluxEntrée->ouvrir());
 		$fluxEntrée->fermer();
 	}
