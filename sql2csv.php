@@ -291,6 +291,12 @@ class SPP extends JoueurSql
 {
 	public function exécuter($sql, $appliquerDéfs = false, $interne = false)
 	{
+		// Si la dernière ligne est susceptible de masquer notre point-virgule (commentaire, ou autre), on rajoute un retour, que le point-virgule ait sa ligne à part.
+		if(preg_match("#(--|\n/)[^\n]*\$#", $sql))
+			$sql .= "\n";
+		// Notre purge de commentaires et blocs #if inutiles peut avoir laissé des trous peu appréciés de certains (SQL*Plus).
+		$sql = preg_replace("#(?:\n\\s*)+\n#", "\n", $sql);
+		
 		echo $sql.";\n";
 	}
 }
