@@ -30,8 +30,8 @@ function faire($chemin)
 		if($l[1] == 'prepro')
 			$prépros = array_slice($l, 2);
 		else if($l[1] == 'sqleur._mode')
-			foreach(explode('|', $l[2]) as $mode)
-				$mode |= _const(trim($mode));
+			foreach(explode('|', $l[2]) as $cmode)
+				$mode |= _const(trim($cmode));
 	}
 	foreach($prépros as $i => $prépro)
 	{
