@@ -91,17 +91,20 @@ class SqleurCond
 	
 	public function boucler()
 	{
+		$dernièreDécoupe = $this->_sqleur->_chaineDerniereDecoupe;
 		$this->_sqleur->mémoriserÉtat(true);
 		$this->_sqleur->_ligne = $this->ligne;
 		$corps = $this->corps();
 		while($this->avérée())
 		{
+			$this->_sqleur->_chaineDerniereDecoupe = "\n"; // Le re-bloc commence par un "\n".
 			if(isset($this->var) && is_array($this->cond))
 				$this->_sqleur->ajouterDéfs(array($this->var => array_shift($this->cond)));
 			$this->_sqleur->_ligne = $this->ligne;
 			$this->_sqleur->découperBloc($corps, false);
 		}
 		$this->_sqleur->restaurerÉtat();
+		$this->_sqleur->_chaineDerniereDecoupe = $dernièreDécoupe;
 	}
 	
 	public function corps()
