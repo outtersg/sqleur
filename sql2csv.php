@@ -191,7 +191,8 @@ class JoueurSql extends Sqleur
 	
 	public function notifDiag($message)
 	{
-		fprintf(STDERR, '> '.trim($message)."\n");
+		if(($message = trim($message)) != 'row number 0 is out of range 0..-1') // Message généré par nous lorsque nous accédons aux méta-données (colonnes) avant d'avoir prélevé le contenu, cf. le commentaire sur row number 0 dans ce fichier.
+		fprintf(STDERR, "> %s\n", $message);
 	}
 	
 	public function sortie($sortie)
