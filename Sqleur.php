@@ -796,7 +796,10 @@ class Sqleur
 	 * @param boolean $multi Autorisée à renvoyer un tableau de résultats. Si false, une exception est levée lorsque l'expression résulte en une suite d'éléments plutôt qu'un résultat unique.
 	 * @param boolean $motsChaînes Si false, les mots sans guillemets doivent correpondre à une définition. Si true, une suite de caractères non entourée de guillemets sera cherchée comme définition, à défaut sera renvoyée telle quelle.
 	 *                Si null, est utilisée l'éventuelle $this->motsChaîne.
-	 * @param char $exécMultiRés Si non défini, un `select` renvoyant deux résultats provoque une erreur. Si défini, les deux résultats sont concaténés par $exécMultiRés pour être passés à la suite du traitement.
+	 * @param char $exécMultiRés Susceptible de renvoyer plusieurs résultats.
+	 *                           Si non défini, un `select` renvoyant deux résultats provoque une erreur.
+	 *                           Si chaîne de caractères, les deux résultats sont concaténés par $exécMultiRés pour être passés à la suite du traitement.
+	 *                           Si entier ou true, le résultat est renvoyé sous forme de tableau (et $exécMultiRés donne le nombre de colonnes attendues).
 	 * 
 	 * @return string
 	 */

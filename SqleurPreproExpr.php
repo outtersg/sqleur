@@ -660,17 +660,19 @@ class NœudPrepro
 					if(count($ls = $rés->fetchAll(PDO::FETCH_ASSOC)) != 1 && !isset($exécMultiRés))
 						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($ls).' résultats');
 					$r = array();
+					$nCols = is_int($exécMultiRés) ? $exécMultiRés : 1;
 					foreach($ls as & $l)
 					{
-					if(count($l) != 1)
-						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($l).' colonnes'); // À FAIRE?: renvoyer un résultat tableau?
+						if(count($l) != $nCols)
+						throw new ErreurExpr('`'.$this->f.'` renvoie '.count($l).' colonnes');
+						if(!is_int($exécMultiRés))
 						$l = array_shift($l);
 					}
 					return
 						isset($exécMultiRés)
 						?
 							(
-								$exécMultiRés === true
+								$exécMultiRés === true || is_int($exécMultiRés)
 								? $ls
 								: implode($exécMultiRés, $ls)
 							)
