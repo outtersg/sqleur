@@ -74,7 +74,14 @@ class SqleurCond
 	protected function _défSiVar()
 	{
 		if(isset($this->var) && is_array($this->cond))
-			$this->_sqleur->ajouterDéfs(array($this->var => array_shift($this->cond)));
+		{
+			$val = array_shift($this->cond);
+			$défs =
+				is_array($this->var) && is_array($val)
+				? array_diff_key(array_combine($this->var, $val), array('' => true)) // La clé vide (#for VAL1,,VAL2 in `select 1, 'm''en fiche', 2`) signifie que l'on souhaite ignorer le résultat.
+				: array(is_array($this->var) ? $this->var[0] : $this->var => $val);
+			$this->_sqleur->ajouterDéfs($défs);
+		}
 	}
 	
 	protected function _terminer()
