@@ -68,6 +68,11 @@ class SqleurCond
 		
 		$this->_sqleur->_boucles[] = $this;
 		
+		$this->_défSiVar();
+	}
+	
+	protected function _défSiVar()
+	{
 		if(isset($this->var) && is_array($this->cond))
 			$this->_sqleur->ajouterDéfs(array($this->var => array_shift($this->cond)));
 	}
@@ -98,8 +103,7 @@ class SqleurCond
 		while($this->avérée())
 		{
 			$this->_sqleur->_chaineDerniereDecoupe = "\n"; // Le re-bloc commence par un "\n".
-			if(isset($this->var) && is_array($this->cond))
-				$this->_sqleur->ajouterDéfs(array($this->var => array_shift($this->cond)));
+			$this->_défSiVar();
 			$this->_sqleur->_ligne = $this->ligne;
 			$this->_sqleur->découperBloc($corps, false);
 		}
