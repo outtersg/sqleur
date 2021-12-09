@@ -497,7 +497,7 @@ class Sqleur
 		}
 	}
 	
-	protected function _sors($requete, $brut = false, $appliquerDéfs = false)
+	protected function _sors($requete, $brut = false, $appliquerDéfs = false, $interne = false)
 	{
 		/* À FAIRE: le calcul qui suit est faux si $requete a subi un remplacement de _defs où le remplacement faisait plus d'une ligne. */
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
@@ -507,14 +507,14 @@ class Sqleur
 		{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
-			return call_user_func($this->_sortie, $requete);
+			return call_user_func($this->_sortie, $requete, false, $interne);
 		}
 	}
 	
 	// À FAIRE: possibilité de demander la "vraie" sortie. Mais pas facile, car un certain nombre de préprocesseurs peuvent la court-circuiter.
-	public function exécuter($req, $appliquerDéfs = false)
+	public function exécuter($req, $appliquerDéfs = false, $interne = false)
 	{
-		return $this->_sors($req, true, $appliquerDéfs);
+		return $this->_sors($req, true, $appliquerDéfs, $interne);
 	}
 	
 	public function dansUnSiÀLaTrappe()
