@@ -535,6 +535,11 @@ class Sqleur
 				$boucle = true;
 				break;
 			case '#for':
+				if($this->dansUnSiÀLaTrappe())
+				{
+					$cond = '0';
+					break;
+				}
 				$boucle = true;
 				$_ = '\s\r\n';
 				$cond = trim($cond);
