@@ -1,7 +1,9 @@
 <?php
 
-function aff($req, $fermeture = ';')
+function aff($req, $fermeture = false)
 {
+	// Notre aff() pouvant être appelée par Sqleur.exécuter() qui désormais lui force un premier paramètre à false, on interprète ce dernier comme notre séparateur habituel.
+	if($fermeture === false) $fermeture = ';';
 	if(isset($GLOBALS['rés'])) $GLOBALS['rés'] .= $req.$fermeture."\n";
 	echo "[90m$req[0m\n";
 }
