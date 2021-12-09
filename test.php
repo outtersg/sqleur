@@ -1,8 +1,8 @@
 <?php
 
-function aff($req)
+function aff($req, $fermeture = ';')
 {
-	if(isset($GLOBALS['rés'])) $GLOBALS['rés'] .= $req.";\n";
+	if(isset($GLOBALS['rés'])) $GLOBALS['rés'] .= $req.$fermeture."\n";
 	echo "[90m$req[0m\n";
 }
 
@@ -11,6 +11,44 @@ class Rempl
 	public function r($corr)
 	{
 		return eval($corr[1].';');
+	}
+}
+
+class JoueurPdo
+{
+	public function __construct($bdd)
+	{
+		$this->bdd = $bdd;
+	}
+	
+	public function exécuter($sql, $appliquerDéfs = false, $interne = false)
+	{
+		$rés = $this->bdd->query($sql);
+		if($interne)
+			return $rés;
+		$rés->setFetchMode(PDO::FETCH_ASSOC);
+		if(isset($GLOBALS['rés']))
+			aff("--", '');
+		foreach($rés->fetchAll() as $l)
+			aff(implode("\t", $l), '');
+	}
+}
+
+class PréproBdd
+{
+	public function préprocesse($instr, $ligne)
+	{
+		switch($instr)
+		{
+			case '#bdd':
+			case '#db':
+				$ligne = explode(' ', $ligne, 2);
+				$bdd = new PDO($ligne[1]);
+				$bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+				$joueur = new JoueurPdo($bdd);
+				$this->_sqleur->_sortie = array($joueur, 'exécuter');
+				break;
+		}
 	}
 }
 
@@ -39,6 +77,7 @@ function faire($chemin)
 		require_once $prépro.'.php';
 		$prépros[$i] = new $prépro();
 	}
+	$prépros[] = new PréproBdd();
 	$s = new Sqleur('aff', $prépros);
 	$s->_mode = $mode;
 	$rempl = new Rempl();
