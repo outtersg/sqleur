@@ -74,6 +74,7 @@ class SqleurPreproCopy
 		
 		$bazar = substr($req, strlen($rd[0]), -strlen($rf[0]));
 		foreach(explode("\n", $bazar) as $l)
+			if($l) // Les lignes vides ne nous intéressent pas.
 			$this->_pousseur->ligne($l);
 		
 		$this->_pousseur->fin();
