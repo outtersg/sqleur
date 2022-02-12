@@ -94,7 +94,7 @@ class SqleurPreproCopyPousseurPg
 	{
 		$expr = 'from (?<from>stdin)|delimiter \'(?<delim>[^\']+)\'';
 		
-		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+$expr)*)\$/i", $req, $r))
+		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
 		preg_match_all("/^\\s+(?:$expr)\$/i", $r['p'], $rpss, PREG_SET_ORDER);
 		$rp = array();
