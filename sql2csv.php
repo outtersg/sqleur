@@ -125,7 +125,7 @@ class JoueurSql extends Sqleur
 			$this,
 		);
 		parent::__construct(array($this, 'exécuter'), $prépros);
-		if(method_exists($this->bdd, 'pgsqlSetNoticeCallback'))
+		if($this->bdd && method_exists($this->bdd, 'pgsqlSetNoticeCallback'))
 			$this->bdd->pgsqlSetNoticeCallback(array($this, 'notifDiag'));
 	}
 	
