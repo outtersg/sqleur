@@ -18,32 +18,70 @@ import java.sql.*;
 public class Sqlmoins
 {
     public static void main(String[] args) throws Exception {
+		/* Lecture des paramètres. */
+		
+		String conn = null;
+		String[] auth;
+		int posParam;
+		char sepReq = '\n';
+		
+		for(posParam = -1; ++posParam < args.length;)
+		{
+			if(args[posParam].equals("-0"))
+				sepReq = (char)0;
+			else if(conn == null)
+				// Le premier paramètre est la chaîne de connexion.
+				conn = args[posParam];
+			else
+				// Le premier paramètre non standard est une requête.
+				break;
+		}
+		
+		if(conn == null)
+			throw new Exception("La chaîne de connexion (premier paramètre) doit être de la forme id/mdp@machine:port:base");
+		auth = conn.split("@", 2);
+		if(auth.length < 2)
+			throw new Exception("La chaîne de connexion (premier paramètre) doit être de la forme id/mdp@machine:port:base");
+		conn = auth[1];
+		auth = auth[0].split("/", 2);
+		if(auth.length < 2)
+			throw new Exception("La chaîne de connexion (premier paramètre) doit être de la forme id/mdp@machine:port:base");
 
     // write your code here
         //step1 load the driver class
         Class.forName("oracle.jdbc.driver.OracleDriver");
 
 //step2 create  the connection object
-        Connection con= DriverManager.getConnection(
-                "jdbc:oracle:thin:@host:port:service_name",
-                "ora_user","password");
+        Connection con= DriverManager.getConnection("jdbc:oracle:thin:@"+conn, auth[0], auth[1]);
 
 //step3 create the statement object
         Statement stmt=con.createStatement();
 
 //step4 execute query
-        ResultSet rs=stmt.executeQuery("select c1,c2,c3 from my shitty table");
+		
 //        while(rs.next())
 //            System.out.println(rs.getInt(1)+"  "+rs.getString(2)+"  "+rs.getString(3));
 
 //step5 close the connection object
 
 
-        String fileName = "C:\\Temp\\output.csv";
+		/* À FAIRE: vers System.out */
+		/* À FAIRE: ne pas échapper les retours à la ligne si en mode séparateur \003 */
+		/* À FAIRE: déguillemetter les noms de colonne */
+		
+		String fileName = "/tmp/res.csv";
         boolean async = true;
 
+		for(--posParam; ++posParam < args.length;)
+		{
+			if(args[posParam].equals("-o") && posParam < args.length - 1)
+			{
+				fileName = args[++posParam];
+				continue;
+			}
+			
         try (CSVWriter writer = new CSVWriter(fileName)) {
-
+				ResultSet rs = stmt.executeQuery(args[posParam]);
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
             ResultSetHelperService.RESULT_FETCH_SIZE=50000;
             //Define MAX extract rows, -1 means unlimited.
@@ -52,6 +90,7 @@ public class Sqlmoins
             int result = writer.writeAll(rs, true);
             //return result - 1;
             System.out.println("Result: " + (result - 1));
+			}
         }
         con.close();
     }
