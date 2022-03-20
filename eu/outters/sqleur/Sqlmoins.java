@@ -65,11 +65,10 @@ public class Sqlmoins
 //step5 close the connection object
 
 
-		/* À FAIRE: vers System.out */
 		/* À FAIRE: ne pas échapper les retours à la ligne si en mode séparateur \003 */
 		/* À FAIRE: déguillemetter les noms de colonne */
 		
-		String fileName = "/tmp/res.csv";
+		String fileName = null;
         boolean async = true;
 
 		for(--posParam; ++posParam < args.length;)
@@ -77,6 +76,8 @@ public class Sqlmoins
 			if(args[posParam].equals("-o") && posParam < args.length - 1)
 			{
 				fileName = args[++posParam];
+				if(fileName.equals("-"))
+					fileName = null;
 				continue;
 			}
 			
@@ -89,6 +90,7 @@ public class Sqlmoins
             writer.setAsyncMode(async);
             int result = writer.writeAll(rs, true);
             //return result - 1;
+				if(fileName != null)
             System.out.println("Result: " + (result - 1));
 			}
         }
