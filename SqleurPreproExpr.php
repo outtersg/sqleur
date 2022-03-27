@@ -180,6 +180,12 @@ class SqleurPreproExpr
 			{
 				$this->_positionner($bouts, /*&*/ $exprComplète, /*&*/ $positions); // Par référence plutôt que par retour, pour que, même en cas  d'interruption prématurée (Exception), nos deux variables aient commencé à être remplies.
 				$this->_source = $exprComplète;
+				// Si on est le premier à calculer \$exprComplète et \$positions, en sortant de nous on reperdra cette info laborieusement calculée.
+				// On fait donc comme si notre appelant avait ce contexte, pour que, même sortis de cet arborer(), les NœudPrepro disposent encore du contexte.
+				// L'alternative eût été d'attacher le contexte aux NœudPrepro (qu'ils prennent leur autonomie une fois que nous les avons émis),
+				// mais puisqu'ils ne sont censés être exploités que par nous (usage interne au SqleurPreproExpr), ne nous embêtons pas.
+				if(!$ancienSource)
+					$ancienSource = $exprComplète;
 			}
 		
 			$r = $this->_arborer($bouts, $positions);
