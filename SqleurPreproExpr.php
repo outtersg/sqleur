@@ -219,7 +219,7 @@ class SqleurPreproExpr
 							if($this->_virguleRétrogradée($bouts, $num))
 								break;
 							// Autres cas.
-							$racine = new NœudPrepro($bout);
+							$racine = new NœudPrepro($bout, null, $positions[$num]);
 							$fils = array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1));
 								$positionsFils = array(array_slice($positions, 0, $num), array_slice($positions, $num + 1));
 							foreach($fils as $numFil => $fil)
@@ -253,7 +253,7 @@ class SqleurPreproExpr
 							return $racine;
 						case 'devant':
 							$this->_splice($bouts, $positions, $num, 1);
-							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions));
+							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions), $positions[$num]);
 							return $racine;
 						case ')':
 							// On vérifie qu'on est appelés au bon endroit.
@@ -262,7 +262,7 @@ class SqleurPreproExpr
 							if($bout != static::$Fermantes[$ouvrante])
 								throw new ErreurExpr($bout.' trouvé, '.static::$Fermantes[$ouvrante].' attendu', $positions, $num);
 							// On ne s'embête pas: l'arboraison sera faite par la parenthèse ouvrante correspondante.
-							$racine = new NœudPrepro($bout, array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1)));
+							$racine = new NœudPrepro($bout, array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1)), $positions[$num]); // À FAIRE: $positions[$num], ou $positions[0]?
 							return $racine;
 						case '(':
 							$this->_parenthèses[] = $bout;
@@ -270,7 +270,7 @@ class SqleurPreproExpr
 							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), $posDedansEtAprès);
 							if(!is_object($dedansEtAprès) || ! $dedansEtAprès instanceof NœudPrepro || $dedansEtAprès->t != static::$Fermantes[$bout])
 								throw new ErreurExpr($bout.' sans son '.static::$Fermantes[$bout], $positions, $num);
-							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0], $posDedansEtAprès));
+							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0], $posDedansEtAprès), $positions[$num]);
 							$après = $dedansEtAprès->f[1];
 							$this->_splice($bouts, $positions, $num, count($bouts), array_merge(array($dedans), $après));
 							// On ne partira pas d'ici sans avoir déterminé l'usage de cette parenthèse: ouvre-t-elle une liste d'arguments de fonction, ou bien sert-elle simplement à regrouper des trucs pour une question de priorité d'opérateurs?
@@ -298,7 +298,7 @@ class SqleurPreproExpr
 							$chaînes = implode('', $chaînes);
 							if($bout == '/')
 								$chaînes = $this->_regex($chaînes);
-							$nœud = new NœudPrepro($bout == "'" ? '"' : $bout, $chaînes);
+							$nœud = new NœudPrepro($bout == "'" ? '"' : $bout, $chaînes, $positions[$num]);
 							$this->_splice($bouts, $positions, $num, $fin - $num + 1, array($nœud));
 							return $this->arborer($bouts, $positions);
 					}
@@ -309,7 +309,7 @@ class SqleurPreproExpr
 			if(is_object($truc) || is_array($truc))
 				$trucs[] = $truc;
 			else if(strlen(trim($truc)))
-				$trucs[] = new NœudPrepro('mot', $truc);
+				$trucs[] = new NœudPrepro('mot', $truc, $positions[$num]);
 		return $trucs;
 	}
 	
@@ -440,7 +440,7 @@ class SqleurPreproExpr
 			}
 			else
 			{
-				$bout = new NœudPrepro('f', array($bouts[$numPréc], $bout));
+				$bout = new NœudPrepro('f', array($bouts[$numPréc], $bout), $positions[$num]);
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == '(')
 					$bout->f[1] = $bout->f[1]->f;
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == ',')
@@ -608,10 +608,12 @@ class ErreurExpr extends Exception
 
 class NœudPrepro
 {
-	public function __construct($type, $fils = null)
+	public function __construct($type, $fils = null, $pos = null)
 	{
 		$this->t = $type;
 		$this->f = $fils;
+		if(isset($pos))
+			$this->pos = $pos;
 	}
 	
 	public function exécuter($contexte, $exécMultiRés = null)
