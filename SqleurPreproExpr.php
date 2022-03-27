@@ -272,7 +272,9 @@ class SqleurPreproExpr
 								throw new ErreurExpr($bout.' sans son '.static::$Fermantes[$bout], $positions, $num);
 							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0], $posDedansEtAprès), $positions[$num]);
 							$après = $dedansEtAprès->f[1];
-							$this->_splice($bouts, $positions, $num, count($bouts), array_merge(array($dedans), $après));
+							// L'arborer() doit avoir, après avoir déniché la parenthèse fermante, renvoyé à gauche le contenu de parenthèses, arboré, et à droite la suite des éléments, *intouchée*: l'aile droite du nœud renvoyé se superpose parfaitement à la partie droite de $bouts.
+							//assert('$après == array_slice($bouts, -count($après))');
+							$this->_splice($bouts, $positions, $num, count($bouts) - count($après) - $num, array($dedans));
 							// On ne partira pas d'ici sans avoir déterminé l'usage de cette parenthèse: ouvre-t-elle une liste d'arguments de fonction, ou bien sert-elle simplement à regrouper des trucs pour une question de priorité d'opérateurs?
 							$this->_usageParenthèse(/*&*/ $bouts, /*&*/ $positions, /*&*/ $num);
 							// Réarborons le tout!
