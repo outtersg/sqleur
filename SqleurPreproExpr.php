@@ -215,11 +215,10 @@ class SqleurPreproExpr
 							// Autres cas.
 							$racine = new NœudPrepro($bout);
 							$fils = array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1));
-							if(isset($positions))
 								$positionsFils = array(array_slice($positions, 0, $num), array_slice($positions, $num + 1));
 							foreach($fils as $numFil => $fil)
 							{
-								$fil = $this->arborer($fil, isset($positionsFils) ? $positionsFils[$numFil] : null, $exprComplète);
+								$fil = $this->arborer($fil, $positionsFils[$numFil], $exprComplète);
 								if(is_array($fil))
 								{
 									// À FAIRE: permettre la dernière virgule vide.
@@ -261,7 +260,7 @@ class SqleurPreproExpr
 							return $racine;
 						case '(':
 							$this->_parenthèses[] = $bout;
-							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), $positions ? array_slice($positions, $num + 1) : null, $exprComplète);
+							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), array_slice($positions, $num + 1), $exprComplète);
 							if(!is_object($dedansEtAprès) || ! $dedansEtAprès instanceof NœudPrepro || $dedansEtAprès->t != static::$Fermantes[$bout])
 								throw new ErreurExpr($bout.' sans son '.static::$Fermantes[$bout], $positions, $num);
 							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0]));
