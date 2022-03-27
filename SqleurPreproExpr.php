@@ -270,7 +270,7 @@ class SqleurPreproExpr
 							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), $posDedansEtAprès);
 							if(!is_object($dedansEtAprès) || ! $dedansEtAprès instanceof NœudPrepro || $dedansEtAprès->t != static::$Fermantes[$bout])
 								throw new ErreurExpr($bout.' sans son '.static::$Fermantes[$bout], $positions, $num);
-							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0]));
+							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0], $posDedansEtAprès));
 							$après = $dedansEtAprès->f[1];
 							$this->_splice($bouts, $positions, $num, count($bouts), array_merge(array($dedans), $après));
 							// On ne partira pas d'ici sans avoir déterminé l'usage de cette parenthèse: ouvre-t-elle une liste d'arguments de fonction, ou bien sert-elle simplement à regrouper des trucs pour une question de priorité d'opérateurs?
