@@ -140,10 +140,12 @@ class SqleurPreproExpr
 		'{' => '}',
 	);
 	
-	public function arborer($bouts, $positions = null, $exprComplète = null)
+	/**
+	 * Calcule les positions de chaque bout
+	 * (en fonction de la position et taille des bouts qui le précèdent)
+	 */
+	protected function _positionner($bouts, & $exprComplète, & $positions)
 	{
-		if(!isset($positions))
-		{
 			$exprComplète = '';
 			$pos = 0;
 			$positions = array();
@@ -154,33 +156,36 @@ class SqleurPreproExpr
 					$exprBout = $bout;
 				else if(is_object($bout) && $bout instanceof NœudPrepro && isset($bout->expr))
 					$exprBout = $bout->expr;
+			// Un fragment à taille indéterminable: plus possible de poursuivre la recherche de positions.
 				else
-					return $this->_arborer($bouts, null, null);
+			{
+				//throw new ErreurExpr('Erreur interne: impossible de déterminer la taille du fragment '.$num, $positions, $num);
+				// Finalement plus rageant que grave: certes ça ne devrait pas arriver, mais si ça arrive, il nous manquera quelques positions, et encore, celles-ci ne sont exploitées que si une erreur d'expression survient. Pas le cas nominal, quoi.
+				// On s'assure juste d'avoir un $positions complet.
+				$positions += array_fill_keys(array_keys($bouts), null);
+				return;
+			}
 				$pos += strlen($exprBout);
 				$exprComplète .= $exprBout;
 			}
-		}
-		else if(count($bouts) > 0)
-		{
-			$numBout = count($bouts) - 1;
-			$bout = $bouts[$numBout];
-			if(is_string($bout))
-				$exprBout = $bout;
-			else if(is_object($bout) && $bout instanceof NœudPrepro && isset($bout->expr))
-				$exprBout = $bout->expr;
-			if(isset($exprBout))
-				$exprComplète = substr($exprComplète, 0, $positions[$numBout] + strlen($exprBout));
-			else
-				$exprComplète = null;
-		}
-		else
-			$exprComplète = '';
-			
+	}
+	
+	public function arborer($bouts, $positions = null)
+	{
+		$exprComplète = $ancienSource = isset($this->_source) ? $this->_source : null;
+		
 		try
 		{
-			$r = $this->_arborer($bouts, $positions, $exprComplète);
+			if(!isset($positions))
+			{
+				$this->_positionner($bouts, /*&*/ $exprComplète, /*&*/ $positions); // Par référence plutôt que par retour, pour que, même en cas  d'interruption prématurée (Exception), nos deux variables aient commencé à être remplies.
+				$this->_source = $exprComplète;
+			}
+		
+			$r = $this->_arborer($bouts, $positions);
 			if(is_object($r) && $r instanceof NœudPrepro && !isset($r->expr) && !isset($r->pos))
-				$r->infosPosition($bouts, $positions, 0, count($bouts) - 1, $exprComplète);
+				$r->infosPosition($bouts, $positions, 0, count($bouts) - 1);
+			$this->_source = $ancienSource;
 			return $r;
 		}
 		catch(ErreurExpr $ex)
@@ -193,11 +198,12 @@ class SqleurPreproExpr
 					$ex->setMessage($ex->getMessage()."\n  dans ".$exprComplète);
 				$ex->_dernierPassage = $exprComplète;
 			}
+			$this->_source = $ancienSource;
 			throw $ex;
 		}
 	}
 	
-	public function _arborer($bouts, $positions, $exprComplète)
+	public function _arborer($bouts, $positions)
 	{
 		foreach(static::$Prios as $plan => $recherchésPlan)
 		{
@@ -218,7 +224,7 @@ class SqleurPreproExpr
 								$positionsFils = array(array_slice($positions, 0, $num), array_slice($positions, $num + 1));
 							foreach($fils as $numFil => $fil)
 							{
-								$fil = $this->arborer($fil, $positionsFils[$numFil], $exprComplète);
+								$fil = $this->arborer($fil, $positionsFils[$numFil]);
 								if(is_array($fil))
 								{
 									// À FAIRE: permettre la dernière virgule vide.
@@ -247,7 +253,7 @@ class SqleurPreproExpr
 							return $racine;
 						case 'devant':
 							$this->_splice($bouts, $positions, $num, 1);
-							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions, $exprComplète));
+							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions));
 							return $racine;
 						case ')':
 							// On vérifie qu'on est appelés au bon endroit.
@@ -260,7 +266,8 @@ class SqleurPreproExpr
 							return $racine;
 						case '(':
 							$this->_parenthèses[] = $bout;
-							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), array_slice($positions, $num + 1), $exprComplète);
+							$posDedansEtAprès = array_slice($positions, $num + 1);
+							$dedansEtAprès = $this->arborer(array_slice($bouts, $num + 1), $posDedansEtAprès);
 							if(!is_object($dedansEtAprès) || ! $dedansEtAprès instanceof NœudPrepro || $dedansEtAprès->t != static::$Fermantes[$bout])
 								throw new ErreurExpr($bout.' sans son '.static::$Fermantes[$bout], $positions, $num);
 							$dedans = new NœudPrepro($bout, $this->arborer($dedansEtAprès->f[0]));
@@ -269,7 +276,7 @@ class SqleurPreproExpr
 							// On ne partira pas d'ici sans avoir déterminé l'usage de cette parenthèse: ouvre-t-elle une liste d'arguments de fonction, ou bien sert-elle simplement à regrouper des trucs pour une question de priorité d'opérateurs?
 							$this->_usageParenthèse(/*&*/ $bouts, /*&*/ $positions, /*&*/ $num);
 							// Réarborons le tout!
-							return $this->arborer($bouts, $positions, $exprComplète);
+							return $this->arborer($bouts, $positions);
 						case 'chaîne':
 							$chaînes = array();
 							for($fin = $num; ++$fin < count($bouts);)
@@ -293,7 +300,7 @@ class SqleurPreproExpr
 								$chaînes = $this->_regex($chaînes);
 							$nœud = new NœudPrepro($bout == "'" ? '"' : $bout, $chaînes);
 							$this->_splice($bouts, $positions, $num, $fin - $num + 1, array($nœud));
-							return $this->arborer($bouts, $positions, $exprComplète);
+							return $this->arborer($bouts, $positions);
 					}
 				}
 		}
@@ -792,7 +799,7 @@ class NœudPrepro
 		return $fils;
 	}
 	
-	public function infosPosition($bouts, $positions, $numDébut, $numFin, $exprComplète)
+	public function infosPosition($bouts, $positions, $numDébut, $numFin)
 	{
 		// Position.
 		if(!isset($positions[$numDébut]))
@@ -805,7 +812,7 @@ class NœudPrepro
 			$boutFin = $boutFin->expr;
 		else if(!is_string($boutFin))
 			return;
-		$this->expr = substr($exprComplète, $this->pos, $positions[$numFin] + strlen($boutFin) - $this->pos);
+		$this->expr = substr($this->_source, $this->pos, $positions[$numFin] + strlen($boutFin) - $this->pos);
 	}
 }
 
