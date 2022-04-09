@@ -19,6 +19,15 @@ import java.sql.*;
 public class SqlMinus
 {
     public static void main(String[] args) throws Exception {
+		new SqlMinus(args);
+	}
+	
+	public Connection con;
+	public String fileName = null;
+	boolean async = true;
+	
+	public SqlMinus(String[] args) throws Exception
+	{
 		/* Lecture des paramètres. */
 		
 		String conn = null;
@@ -57,9 +66,7 @@ public class SqlMinus
     // write your code here
         //step1 load the driver class
         Class.forName("oracle.jdbc.driver.OracleDriver");
-
-//step2 create  the connection object
-        Connection con= DriverManager.getConnection("jdbc:oracle:thin:@"+conn, auth[0], auth[1]);
+		con = DriverManager.getConnection("jdbc:oracle:thin:@"+conn, auth[0], auth[1]);
 
 //step3 create the statement object
         Statement stmt=con.createStatement();
@@ -75,9 +82,6 @@ public class SqlMinus
 		/* À FAIRE: ne pas échapper les retours à la ligne si en mode séparateur \003 */
 		/* À FAIRE: déguillemetter les noms de colonne */
 		
-		String fileName = null;
-        boolean async = true;
-
 		for(--posParam; ++posParam < args.length;)
 		{
 			if(args[posParam].equals("-o") && posParam < args.length - 1)
