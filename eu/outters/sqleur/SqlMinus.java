@@ -14,6 +14,7 @@ package eu.outters.sqleur;
 import com.opencsv.CSVWriter;
 import com.opencsv.ResultSetHelperService;
 
+import java.io.IOException;
 import java.sql.*;
 
 public class SqlMinus
@@ -68,9 +69,6 @@ public class SqlMinus
         Class.forName("oracle.jdbc.driver.OracleDriver");
 		con = DriverManager.getConnection("jdbc:oracle:thin:@"+conn, auth[0], auth[1]);
 
-//step3 create the statement object
-        Statement stmt=con.createStatement();
-
 //step4 execute query
 		
 //        while(rs.next())
@@ -92,8 +90,18 @@ public class SqlMinus
 				continue;
 			}
 			
+			exec(args[posParam]);
+		}
+		con.close();
+    }
+	
+	public void exec(String req) throws SQLException, IOException, Exception
+	{
+		Statement stmt = con.createStatement();
+		
+		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
         try (CSVWriter writer = new CSVWriter(fileName)) {
-				ResultSet rs = stmt.executeQuery(args[posParam]);
+			ResultSet rs = stmt.executeQuery(req);
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
             ResultSetHelperService.RESULT_FETCH_SIZE=50000;
             //Define MAX extract rows, -1 means unlimited.
@@ -103,8 +111,6 @@ public class SqlMinus
             //return result - 1;
 				if(fileName != null)
             System.out.println("Result: " + (result - 1));
-			}
-        }
-        con.close();
-    }
+		}
+	}
 }
