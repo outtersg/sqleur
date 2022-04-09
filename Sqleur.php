@@ -113,6 +113,8 @@ class Sqleur
 	const MODE_COMM_MONOLIGNE  = 0x04; // Transmet-on les commentaires -- comm?
 	const MODE_COMM_TOUS       = 0x06; // MODE_COMM_MULTILIGNE|MODE_COMM_MONOLIGNE
 	
+	public $tailleBloc = 0x20000;
+	
 	/**
 	 * Constructeur.
 	 * 
@@ -199,7 +201,7 @@ class Sqleur
 	{
 		$nConditionsImbriquées = count($this->_conditions);
 		$this->_ligne = 1;
-		while(strlen($bloc = fread($f, 0x20000)))
+		while(strlen($bloc = fread($f, $this->tailleBloc)))
 			$this->_decoupeBloc($bloc, false);
 		$r = $laFinEstVraimentLaFin ? $this->_decoupeBloc('', true) : null;
 		if(($nConditionsImbriquées -= count($this->_conditions)))
