@@ -60,6 +60,7 @@ function faire($chemin)
 	$GLOBALS['rés'] = isset($cheminRés) ? '' : null;
 	
 	$prépros = array();
+	$options = array();
 	$mode = 0;
 	require_once "Sqleur.php";
 	foreach(file($chemin) as $l)
@@ -69,6 +70,8 @@ function faire($chemin)
 			break;
 		if($l[1] == 'prepro')
 			$prépros = array_slice($l, 2);
+		else if($l[1] == 'sqleur.tailleBloc')
+			$options['tailleBloc'] = 0 + trim($l[2]);
 		else if($l[1] == 'sqleur._mode')
 			foreach(explode('|', $l[2]) as $cmode)
 				$mode |= _const(trim($cmode));
@@ -81,6 +84,8 @@ function faire($chemin)
 	}
 	$prépros[] = new PréproBdd();
 	$s = new Sqleur('aff', $prépros);
+	foreach($options as $option => $valeur)
+		$s->$option = $valeur;
 	$s->_mode = $mode;
 	$rempl = new Rempl();
 	$s->avecDéfs(array('#{{([^}]+|}[^}]+)+}}#' => array($rempl, 'r')));
