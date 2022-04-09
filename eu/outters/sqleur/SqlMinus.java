@@ -97,18 +97,4 @@ public class SqlMinus
         }
         con.close();
     }
-
-    //Extract ResultSet to CSV file, auto-compress if the fileName extension is ".zip" or ".gz"
-//Returns number of records extracted
-    public static int ResultSet2CSV(final ResultSet rs, final String fileName, final String header, final boolean aync) throws Exception {
-        try (CSVWriter writer = new CSVWriter(fileName)) {
-            //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
-            ResultSetHelperService.RESULT_FETCH_SIZE=10000;
-            //Define MAX extract rows, -1 means unlimited.
-            ResultSetHelperService.MAX_FETCH_ROWS=20000;
-            writer.setAsyncMode(aync);
-            int result = writer.writeAll(rs, true);
-            return result - 1;
-        }
-    }
 }
