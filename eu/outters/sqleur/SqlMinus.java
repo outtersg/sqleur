@@ -5,7 +5,8 @@
 
 /*
 	[ -f opencsv.jar ] || curl -L -O https://github.com/hyee/OpenCSV/raw/master/release/opencsv.jar
-	javac -cp opencsv.jar Sqlmoins.java
+	javac -cp opencsv.jar eu/outters/sqleur/SqlMinus.java
+	jar cf sqlminus.jar eu/outters/sqleur/SqlMinus.class
  */
 
 package eu.outters.sqleur;
@@ -15,7 +16,7 @@ import com.opencsv.ResultSetHelperService;
 
 import java.sql.*;
 
-public class Sqlmoins
+public class SqlMinus
 {
     public static void main(String[] args) throws Exception {
 		/* Lecture des paramètres. */
