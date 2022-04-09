@@ -22,7 +22,7 @@ public class SqlMinus
 		/* Lecture des paramètres. */
 		
 		String conn = null;
-		String[] auth;
+		String[] auth = null;
 		int posParam;
 		char sepReq = '\n';
 		
@@ -38,14 +38,20 @@ public class SqlMinus
 				break;
 		}
 		
-		if(conn == null)
-			throw new Exception("La chaîne de connexion (premier paramètre) doit être de la forme id/mdp@machine:port:base");
+		if(conn != null)
+		{
 		auth = conn.split("@", 2);
 		if(auth.length < 2)
-			throw new Exception("La chaîne de connexion (premier paramètre) doit être de la forme id/mdp@machine:port:base");
+				conn = null;
+			else
+			{
 		conn = auth[1];
 		auth = auth[0].split("/", 2);
 		if(auth.length < 2)
+				conn = null;
+			}
+		}
+		if(conn == null)
 			throw new Exception("La chaîne de connexion (premier paramètre) doit être de la forme id/mdp@machine:port:base");
 
     // write your code here
