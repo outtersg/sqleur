@@ -323,17 +323,24 @@ class Sqleur
 				case '#':
 					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
 					{
-						# À FAIRE: est-on protégés contre la fin de bloc au beau milieu de l'instruction?
-						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$i][1] - $dernierArret));
 						$j = $i;
+						$ligne = $this->_ligne;
 						while(++$i < $n && $decoupes[$i][0] != "\n")
 							if($decoupes[$i][0] == '\\' && isset($decoupes[$i + 1]) && $decoupes[$i + 1][0] == "\n" && $decoupes[$i + 1][1] == $decoupes[$i][1] + 1)
 							{
 								++$i;
 								++$this->_ligne;
 							}
-						if($i < $n)
+						// On ne traite que si on aperçoit l'horizon de notre fin de ligne. Dans le cas contraire, on prétend n'avoir jamais trouvé notre #, pour que le Sqleur nous fournisse un peu de rab jusqu'à avoir un bloc complet.
+						if($i >= $n && !$laFinEstVraimentLaFin)
 						{
+							$i = $j;
+							$this->_ligne = $ligne;
+							$n = $i;
+							$chaineNouvelleDecoupe = $chaineDerniereDecoupe;
+							break;
+						}
+						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$j][1] - $dernierArret));
 							if($this->_dansChaîne)
 								$this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] = static::CHAÎNE_JETON_CONSOMMÉ;
 							$dernierArret = $decoupes[$i][1];
@@ -351,7 +358,6 @@ class Sqleur
 							$this->_préprocesse($blocPréprocesse);
 							$chaineDerniereDecoupe = $this->_chaineDerniereDecoupe;
 							--$i; // Le \n devra être traité de façon standard au prochain tour de boucle (calcul du $dernierRetour; ne serait-ce que pour que si notre #if est suivi d'un #endif, celui-ci voie le \n qui le précède).
-						}
 					}
 					break;
 				case '-':
