@@ -6,7 +6,7 @@
 /*
 	[ -f opencsv.jar ] || curl -L -O https://github.com/hyee/OpenCSV/raw/master/release/opencsv.jar
 	javac -cp opencsv.jar eu/outters/sqleur/SqlMinus.java
-	jar cf sqlminus.jar eu/outters/sqleur/SqlMinus.class
+	jar cf sqlminus.jar eu/outters/sqleur/*.class
  */
 
 package eu.outters.sqleur;
@@ -26,6 +26,12 @@ public class SqlMinus
 	
 	public Connection con;
 	public String fileName = null;
+	
+	public static String GRIS = "[90m";
+	public static String VERT = "[32m";
+	public static String JAUNE = "[33m";
+	public static String ROUGE = "[31m";
+	public static String BLANC = "[0m";
 	
 	public SqlMinus(String[] args) throws Exception
 	{
@@ -118,10 +124,15 @@ public class SqlMinus
 	
 	public void exec(String req) throws SQLException, IOException, Exception
 	{
+		System.err.print(GRIS+req.trim()+BLANC+" ");
+		
+		try
+		{
 		Statement stmt = con.createStatement();
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
-        try (CSVWriter writer = new CSVWriter(fileName)) {
+			try (CSVWriter writer = new EcrivainVerbeux(fileName, this))
+			{
 			ResultSet rs = stmt.executeQuery(req);
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
             ResultSetHelperService.RESULT_FETCH_SIZE=50000;
@@ -132,6 +143,42 @@ public class SqlMinus
             //return result - 1;
 				if(fileName != null)
             System.out.println("Result: " + (result - 1));
+			}
 		}
+		catch(Exception ex)
+		{
+			notif(-1, -1);
+			throw ex;
+		}
+	}
+	
+	public void notif(int nLignes, double durée)
+	{
+		if(nLignes <= 0)
+		{
+			long t = Math.round(durée);
+			String coul = t < 0 ? ROUGE : (t < 1000 ? VERT : (t < 10000 ? JAUNE : ROUGE));
+			String tchaîne = t < 0 ? "ERR" : (t < 1000 ? t+" ms" : (t < 10000 ? (t / 10000)+" s" : (t < 59500 ? Math.round(t / 1000.0)+" s" : (t / 60000)+" mn"+(t % 60000 > 0 ? " "+((t / 1000) % 60)+" s" : ""))));
+			System.err.println(GRIS+"; "+coul+"-- ["+tchaîne+"]"+BLANC);
+		}
+	}
+}
+
+class EcrivainVerbeux extends CSVWriter
+{
+	protected SqlMinus appelant;
+	protected double t0;
+	
+	public EcrivainVerbeux(String chemin, SqlMinus appelant) throws IOException
+	{
+		super(chemin);
+		this.appelant = appelant;
+		t0 = System.currentTimeMillis();
+	}
+	
+	protected void writeLog(int nLignes)
+	{
+		appelant.notif(nLignes, System.currentTimeMillis() - t0);
+		super.writeLog(nLignes);
 	}
 }
