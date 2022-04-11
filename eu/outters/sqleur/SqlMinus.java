@@ -25,7 +25,6 @@ public class SqlMinus
 	
 	public Connection con;
 	public String fileName = null;
-	boolean async = true;
 	
 	public SqlMinus(String[] args) throws Exception
 	{
@@ -106,7 +105,7 @@ public class SqlMinus
             ResultSetHelperService.RESULT_FETCH_SIZE=50000;
             //Define MAX extract rows, -1 means unlimited.
             ResultSetHelperService.MAX_FETCH_ROWS=-1;
-            writer.setAsyncMode(async);
+				writer.setAsyncMode(fileName != null);
             int result = writer.writeAll(rs, true);
             //return result - 1;
 				if(fileName != null)
