@@ -16,6 +16,7 @@ import com.opencsv.ResultSetHelperService;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.Scanner;
 
 public class SqlMinus
 {
@@ -33,12 +34,18 @@ public class SqlMinus
 		String conn = null;
 		String[] auth = null;
 		int posParam;
-		char sepReq = '\n';
+		char sepReq = ';'; // À FAIRE: le "mode débile" SQL*Plus, où en cas de begin, on bascule le séparateur sur /
+		boolean stdin = false;
 		
 		for(posParam = -1; ++posParam < args.length;)
 		{
 			if(args[posParam].equals("-0"))
+			{
 				sepReq = (char)0;
+				stdin = true;
+			}
+			else if(args[posParam].equals("-"))
+				stdin = true;
 			else if(conn == null)
 				// Le premier paramètre est la chaîne de connexion.
 				conn = args[posParam];
@@ -90,7 +97,22 @@ public class SqlMinus
 			}
 			
 			exec(args[posParam]);
+        }
+		
+		if(stdin)
+		{
+			Scanner lecteur = new Scanner(System.in);
+			if(sepReq == '\n')
+				while(lecteur.hasNextLine())
+					exec(lecteur.nextLine());
+			else
+			{
+				lecteur.useDelimiter(""+sepReq);
+				while(lecteur.hasNext())
+					exec(lecteur.next());
+			}
 		}
+		
 		con.close();
     }
 	
