@@ -226,8 +226,17 @@ class Sqleur
 	
 	static $FINS = array
 	(
+		// Ceux ouvrant un bloc, avec leur mot-clé de fin:
 		'begin' => 'end',
 		'case' => 'end',
+		'create package' => 'end',
+		'create or replace package' => 'end',
+		// Les autres:
+		'end' => true,
+		// Les faux-amis (similaires à un "vrai" mot-clé, remontés en tant que tel afin que, mis sur pied d'égalité, on puisse décider duquel il s'agit):
+		'begin transaction' => false,
+		'end if' => false,
+		'end loop' => false,
 	);
 	
 	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false)
@@ -262,7 +271,12 @@ class Sqleur
 		
 		$onEnFaitPlusPourSqlMoins = $this->_mode & Sqleur::MODE_SQLPLUS ? '(?:\s*\n/(?:\n|$))?' : '';
 		$expr = '#|\\\\|;'.$onEnFaitPlusPourSqlMoins.'|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
-		if($this->_mode & Sqleur::MODE_BEGIN_END) $expr .= '|[bB][eE][gG][iI][nN]|[cC][aA][sS][eE]|[eE][nN][dD]';
+		if($this->_mode & Sqleur::MODE_BEGIN_END)
+			// On repère non seulement les expressions entrant et sortant d'un bloc procédural,
+			// mais aussi les faux-amis ("end" de "end loop" à ne pas confondre avec celui fermant un "begin").
+			// N.B.: un contrôle sur le point-virgule sera fait par ailleurs (pour distinguer un "begin" de bloc procédural, de celui synonyme de "begin transaction" en PostgreSQL par exemple).
+			$expr .= preg_replace_callback('/[a-z]/', function($x) { return '['.$x[0].strtoupper($x[0]).']'; }, '|begin(?: transaction)?|case|end(?: if| loop)?|create(?: or replace)? package');
+// À FAIRE: distinguer le begin (end) du begin transaction et du begin; (= begin transaction PostgreSQL). Le second en repérant un ; immédiatement après notre mot-clé.
 		preg_match_all("@$expr@", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
 		$taille = strlen($chaine);
@@ -374,7 +388,14 @@ class Sqleur
 				case '\\':
 					break;
 				default:
-					$this->_motClé($chaine, $taille, $laFinEstVraimentLaFin, $decoupes, $dernierRetour, $dernierArret, $i);
+					// Les mots-clés.
+					// Certains mots-clés changent de sens en fonction de leur complétude (ex.: "begin" (début de bloc, end attendu) / "begin transaction" (instruction isolée))
+					// Si un des mots-clés pouvant aussi être début d'un autre mot-clé arrive en fin de bloc, on demande un complément d'information (lecture du paquet d'octets suivant pour nous assurer qu'il n'a pas une queue qui change sa sémantique).
+					if(Sqleur::CHAÎNE_COUPÉE == $this->_motClé($chaine, $taille, $laFinEstVraimentLaFin, $decoupes, $dernierRetour, $dernierArret, $i))
+					{
+						$n = $i;
+						$chaineNouvelleDecoupe = $chaineDerniereDecoupe;
+					}
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
@@ -845,17 +866,22 @@ class Sqleur
 	protected function _motClé($chaîne, $taille, $laFinEstVraimentLaFin, $découpes, $dernierRetour, $dernierArrêt, $i)
 	{
 		$motClé = strtolower($découpes[$i][0]);
-		switch($motClé)
-		{
-			case 'begin':
-			case 'case':
-			case 'end':
-				break;
-			default: throw new Exception("Bloc de découpe inattendu $motClé");
-		}
+		// Attention aux mots-clés en limite de bloc de lecture, qui peuvent en cacher un autre;
+		// mieux vaut alors sortir, et ne revenir qu'une fois assurés que rien ne le suit qui en ferait changer le sens (ex.: begin / begin transaction).
+		if($i == count($découpes) - 1 && !$laFinEstVraimentLaFin)
+			switch($motClé)
+			{
+				case 'begin':
+				case 'end':
+					// N.B.: fait double emploi avec le gros if() plus bas. Mais c'est plus prudent.
+					return Sqleur::CHAÎNE_COUPÉE;
+			}
+		// Un synonyme PostgreSQL prêtant à confusion.
+		if($motClé == 'begin' && isset($découpes[$i + 1]) && $découpes[$i + 1][1] == $découpes[$i][1] + strlen($motClé) && $découpes[$i + 1][0] == ';')
+			$motClé = 'begin transaction';
+		if(!isset(Sqleur::$FINS[$motClé]))
+			throw new Exception("Bloc de découpe inattendu $motClé");
 		
-		// Nous supposons être dans du SQL pur, où l'end ne peut fermer que du begin ou du case.
-		// Dans le cas contraire (combiné avec un autre mot-clé: end loop, end if) il faudra rechercher aussi ces structures afin de distinguer les différents end, et ne pas comptabiliser un end loop comme fermant un begin (on pourra se contenter de détecter les combinaisons dans la regex boulimique: elles ressortiront alors distinctes du end).
 		if
 		(
 			($découpes[$i][1] == $dernierArrêt || $découpes[$i][1] == $dernierRetour || strpbrk(substr($chaîne, $découpes[$i][1] - 1, 1), " \t") !== false) // Est-on sûr de n'avoir rien avant?
@@ -865,7 +891,7 @@ class Sqleur
 				|| strpbrk(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1), " \t\r\n;") !== false
 			)
 		)
-			$this->_béguinsPotentiels[] = $découpes[$i][0];
+			$this->_béguinsPotentiels[] = $motClé;
 	}
 	
 	/**
@@ -877,6 +903,10 @@ class Sqleur
 		foreach($this->_béguinsPotentiels as $motClé)
 			switch($motClé)
 			{
+				case 'end if':
+				case 'end loop':
+				case 'begin transaction':
+					break;
 				case 'end':
 					if(!count($this->_béguins))
 						throw new Exception("Problème d'imbrication: $motClé sans début correspondant");
