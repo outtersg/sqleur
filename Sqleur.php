@@ -112,6 +112,7 @@ class Sqleur
 	const MODE_COMM_MULTILIGNE = 0x02; // Transmet-on les commentaires /* comm */?
 	const MODE_COMM_MONOLIGNE  = 0x04; // Transmet-on les commentaires -- comm?
 	const MODE_COMM_TOUS       = 0x06; // MODE_COMM_MULTILIGNE|MODE_COMM_MONOLIGNE
+	const MODE_SQLPLUS         = 0x08; // Vraie bouse qui ne sachant pas compter ses imbrications de begin, end, demande un / après les commandes qui lui font peur.
 	
 	public $tailleBloc = 0x20000;
 	
@@ -259,7 +260,8 @@ class Sqleur
 			$chaine = $this->_resteEnCours.$chaine;
 		$this->_chaîneEnCours = $chaine;
 		
-		$expr = '#|\\\\|;|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
+		$onEnFaitPlusPourSqlMoins = $this->_mode & Sqleur::MODE_SQLPLUS ? '(?:\s*\n/(?:\n|$))?' : '';
+		$expr = '#|\\\\|;'.$onEnFaitPlusPourSqlMoins.'|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
 		if($this->_mode & Sqleur::MODE_BEGIN_END) $expr .= '|[bB][eE][gG][iI][nN]|[cC][aA][sS][eE]|[eE][nN][dD]';
 		preg_match_all("@$expr@", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
@@ -298,7 +300,7 @@ class Sqleur
 			{
 				case ';':
 					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
-					++$dernierArret;
+					$dernierArret += strlen($decoupes[$i][0]);
 					if(($this->_mode & Sqleur::MODE_BEGIN_END))
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
