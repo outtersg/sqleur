@@ -99,7 +99,9 @@ class SqleurPreproExpr
 		array
 		(
 			'and' => 'bi',
+			'&&' => 'bi',
 			'or' => 'bi',
+			'||' => 'bi',
 		),
 		array
 		(
@@ -741,12 +743,14 @@ class NœudPrepro
 				$droite = $this->_contenus($this->f[1], $contexte);
 				return in_array($gauche, $droite);
 			case 'or':
+			case '||':
 			case 'and':
+			case '&&':
 				$gauche = $this->_contenu($this->f[0], $contexte);
 				switch($this->t)
 				{
-					case 'or': $raccourci = $gauche; break;
-					case 'and': $raccourci = !$gauche; break;
+					case 'or': case '||': $raccourci = $gauche; break;
+					case 'and': case '&&': $raccourci = !$gauche; break;
 				}
 				if($raccourci) return $gauche;
 				$droite = $this->_contenu($this->f[1], $contexte);
