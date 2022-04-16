@@ -26,6 +26,7 @@ class SqleurPreproExpr
 	public static $Ops = array
 	(
 		'and', '&&', 'or', '||',
+		'not', '!',
 		'==', '=', '!=', '~', '<', '<=', '>=', '>',
 		'+', '-', '*', '/',
 		'in',
