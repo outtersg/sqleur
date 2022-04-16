@@ -108,7 +108,7 @@ include_once 'SqleurPreproExpr.php';
 
 class Sqleur
 {
-	const MODE_BEGIN_END = 0x01;
+	const MODE_BEGIN_END = 0x01; /* À FAIRE: le mettre par défaut? SQLite fonctionne comme ça, Oracle aussi, seul PostgreSQL définit ses fonctions en chaîne à $ mais ça change en PostgreSQL 14. */
 	const MODE_COMM_MULTILIGNE = 0x02; // Transmet-on les commentaires /* comm */?
 	const MODE_COMM_MONOLIGNE  = 0x04; // Transmet-on les commentaires -- comm?
 	const MODE_COMM_TOUS       = 0x06; // MODE_COMM_MULTILIGNE|MODE_COMM_MONOLIGNE
