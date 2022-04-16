@@ -47,10 +47,17 @@ class PréproBdd
 				$ligne = explode(' ', $ligne, 2);
 				$bdd = new PDO($ligne[1]);
 				$bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+				if(method_exists($bdd, 'pgsqlSetNoticeCallback'))
+					$bdd->pgsqlSetNoticeCallback(array($this, 'notifDiag'));
 				$joueur = new JoueurPdo($bdd);
 				$this->_sqleur->_sortie = array($joueur, 'exécuter');
 				break;
 		}
+	}
+	
+	public function notifDiag($message)
+	{
+		fprintf(STDERR, "> %s\n", $message);
 	}
 }
 
