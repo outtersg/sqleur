@@ -290,6 +290,14 @@ class JoueurSql extends Sqleur
  */
 class SPP extends JoueurSql
 {
+	public function __construct($sép = ";\n")
+	{
+		parent::__construct();
+		// A priori pour un client non PDO, donc passons un peu plus de temps à découper le plus robustement possible.
+		$this->_mode |= Sqleur::MODE_BEGIN_END|Sqleur::MODE_SQLPLUS;
+		$this->sépRequêtes = $sép;
+	}
+	
 	public function exécuter($sql, $appliquerDéfs = false, $interne = false)
 	{
 		// Si la dernière ligne est susceptible de masquer notre point-virgule (commentaire, ou autre), on rajoute un retour, que le point-virgule ait sa ligne à part.
@@ -298,7 +306,7 @@ class SPP extends JoueurSql
 		// Notre purge de commentaires et blocs #if inutiles peut avoir laissé des trous peu appréciés de certains (SQL*Plus).
 		$sql = preg_replace("#(?:\n\\s*)+\n#", "\n", $sql);
 		
-		echo $sql.";\n";
+		echo $sql.$this->sépRequêtes;
 	}
 }
 
@@ -428,7 +436,15 @@ class Sql2CsvPdo extends Sql2Csv
 
 if(isset($argv) && isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) == __FILE__)
 	if(in_array('-E', $argv))
-		new Sql2Csv($argv, new SPP());
+	{
+		$sép = ";\n";
+		if(($pos = array_search('-0', $argv)) !== false || ($pos = array_search('-print0', $argv)) !== false)
+		{
+			$sép = "\0";
+			array_splice($argv, $pos, 1);
+		}
+		new Sql2Csv($argv, new SPP($sép));
+	}
 	else
 	new Sql2CsvPdo($argv);
 
