@@ -290,7 +290,7 @@ class JoueurSql extends Sqleur
  */
 class SPP extends JoueurSql
 {
-	public function __construct($sép = ";\n")
+	public function __construct($sép = null)
 	{
 		parent::__construct();
 		// A priori pour un client non PDO, donc passons un peu plus de temps à découper le plus robustement possible.
@@ -306,7 +306,17 @@ class SPP extends JoueurSql
 		// Notre purge de commentaires et blocs #if inutiles peut avoir laissé des trous peu appréciés de certains (SQL*Plus).
 		$sql = preg_replace("#(?:\n\\s*)+\n#", "\n", $sql);
 		
-		echo $sql.$this->sépRequêtes;
+		$sép =
+			isset($this->sépRequêtes)
+			? $this->sépRequêtes
+			:
+			(
+				isset($this->terminaison)
+				? $this->terminaison.(substr($this->terminaison, -1) == "\n" ? '' : "\n")
+				: ";\n"
+			)
+		;
+		echo $sql.$sép;
 	}
 }
 
@@ -437,7 +447,7 @@ class Sql2CsvPdo extends Sql2Csv
 if(isset($argv) && isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) == __FILE__)
 	if(in_array('-E', $argv))
 	{
-		$sép = ";\n";
+		$sép = null;
 		if(($pos = array_search('-0', $argv)) !== false || ($pos = array_search('-print0', $argv)) !== false)
 		{
 			$sép = "\0";
