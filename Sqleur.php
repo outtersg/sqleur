@@ -321,7 +321,9 @@ class Sqleur
 							$this->_ajouterBoutRequête(';');
 							break;
 						}
+					$this->terminaison = $decoupes[$i][0];
 					$this->_sors($this->_requeteEnCours);
+					$this->terminaison = null;
 					$this->_requeteEnCours = '';
 					$this->_queDuVent = true; /* À FAIRE: le gérer aussi dans les conditions (empiler et dépiler). */
 					unset($this->_requêteRemplacée);
