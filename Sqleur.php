@@ -890,7 +890,7 @@ class Sqleur
 			&& // Ni rien après?
 			(
 				($découpes[$i][1] + strlen($découpes[$i][0]) == $taille && $laFinEstVraimentLaFin)
-				|| strpbrk(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1), " \t\r\n;") !== false
+				|| strpbrk(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1), " \t\r\n;,") !== false
 			)
 		)
 			$this->_béguinsPotentiels[] = $motClé;
