@@ -33,6 +33,12 @@ begin case when truc then rend les endives else machin end; end;
 create trigger truc
 begin case when truc then endbegin else machin end; end;
 
+-- Hum, et si le end n'est pas suivi d'un espace?
+#testdecoupe create trigger truc begin case when a then b end, case when truc then plouf else machin end; end
+create trigger truc
+begin case when a then b end, case when truc then plouf else machin end; end;
+select rien;
+
 -- Ne pas confondre avec un begin transaction! Cette fois-ci on ne recherche pas le end.
 #testdecoupe begin transaction
 begin transaction;
