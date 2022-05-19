@@ -112,7 +112,7 @@ class JoueurSql extends Sqleur
 	public $bdd;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
-	protected $bavard = 1;
+	public $bavard = 1;
 	protected $avecEnTêtes = true;
 	
 	public function __construct()
@@ -322,8 +322,9 @@ class SPP extends JoueurSql
 
 class JoueurSqlPdo extends JoueurSql
 {
-	public function __construct()
+	public function __construct($bdd = null)
 	{
+		$this->bdd = $bdd;
 		$this->bdd();
 		parent::__construct();
 	}
