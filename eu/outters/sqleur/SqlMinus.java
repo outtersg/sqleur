@@ -11,6 +11,7 @@
 
 package eu.outters.sqleur;
 
+import com.opencsv.CSVParser;
 import com.opencsv.CSVWriter;
 import com.opencsv.ResultSetHelperService;
 
@@ -26,6 +27,7 @@ public class SqlMinus
 	
 	public Connection con;
 	public String fileName = null;
+	protected char sepCsv = ';';
 	
 	public static String GRIS = "[90m";
 	public static String VERT = "[32m";
@@ -50,6 +52,8 @@ public class SqlMinus
 				sepReq = (char)0;
 				stdin = true;
 			}
+			else if(args[posParam].equals("-s"))
+				sepCsv = args[++posParam].charAt(0);
 			else if(args[posParam].equals("-"))
 				stdin = true;
 			else if(conn == null)
@@ -131,7 +135,7 @@ public class SqlMinus
 		Statement stmt = con.createStatement();
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
-			try (CSVWriter writer = new EcrivainVerbeux(fileName, this))
+			try (CSVWriter writer = new EcrivainVerbeux(fileName, sepCsv, this))
 			{
 			ResultSet rs = stmt.executeQuery(req);
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
@@ -168,6 +172,13 @@ class EcrivainVerbeux extends CSVWriter
 {
 	protected SqlMinus appelant;
 	protected double t0;
+	
+	public EcrivainVerbeux(String chemin, char sep, SqlMinus appelant) throws IOException
+	{
+		super(chemin, sep, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
+		this.appelant = appelant;
+		t0 = System.currentTimeMillis();
+	}
 	
 	public EcrivainVerbeux(String chemin, SqlMinus appelant) throws IOException
 	{
