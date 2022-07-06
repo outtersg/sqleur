@@ -162,7 +162,7 @@ public class SqlMinus
 		{
 			long t = Math.round(durée);
 			String coul = t < 0 ? ROUGE : (t < 1000 ? VERT : (t < 10000 ? JAUNE : ROUGE));
-			String tchaîne = t < 0 ? "ERR" : (t < 1000 ? t+" ms" : (t < 10000 ? (t / 10000)+" s" : (t < 59500 ? Math.round(t / 1000.0)+" s" : (t / 60000)+" mn"+(t % 60000 > 0 ? " "+((t / 1000) % 60)+" s" : ""))));
+			String tchaîne = t < 0 ? "ERR" : (t < 1000 ? t+" ms" : (t < 10000 ? (t / 1000)+" s" : (t < 59500 ? Math.round(t / 1000.0)+" s" : (t / 60000)+" mn"+(t % 60000 > 0 ? " "+((t / 1000) % 60)+" s" : ""))));
 			System.err.println(GRIS+"; "+coul+"-- ["+tchaîne+"]"+BLANC);
 		}
 	}
