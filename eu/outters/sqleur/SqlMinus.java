@@ -53,7 +53,31 @@ public class SqlMinus
 				stdin = true;
 			}
 			else if(args[posParam].equals("-s"))
-				sepCsv = args[++posParam].charAt(0);
+			{
+				String param = args[++posParam];
+				if(param.charAt(0) == '\\' && param.length() > 1)
+				{
+					if(param.equals("\\t"))
+						sepCsv = '\t';
+					else if(param.length() == 4)
+					{
+						int n = 0;
+						char c;
+						for(int i = 0; ++i <= 3;)
+							if((c = param.charAt(i)) >= '0' && c <= '9')
+								n = n * 8 + (c - '0');
+							else
+								throw new Exception("Séparateur non reconnu: "+param);
+						sepCsv = (char)n;
+					}
+					else
+						throw new Exception("Séparateur non reconnu: "+param);
+				}
+				else if(param.length() == 1)
+					sepCsv = param.charAt(0);
+				else
+					throw new Exception("Séparateur non reconnu: "+param);
+			}
 			else if(args[posParam].equals("-"))
 				stdin = true;
 			else if(conn == null)
