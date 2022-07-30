@@ -28,6 +28,7 @@ public class SqlMinus
 	public Connection con;
 	public String fileName = null;
 	protected char sepCsv = ';';
+	protected int delaiEntreSortiesStandard = 0;
 	
 	public static String GRIS = "[90m";
 	public static String VERT = "[32m";
@@ -78,6 +79,18 @@ public class SqlMinus
 				else
 					throw new Exception("Séparateur non reconnu: "+param);
 			}
+			else if(args[posParam].equals("--ss"))
+				// Séparation Sorties: millisecondes intercalées entre le retour sur une requête (stderr) et l'affichage du résultat (stdout).
+				/* N.B.: À travers un SSH, rien n'y fait: OpenSSH privilégiant stdout sur stderr, lorsque l'on affiche la séquence suivante (entre parenthèses: moment de l'événement, puis sortie concernée):
+				 *   (0 stderr) requête (6 stderr) ; -- durée ms
+				 *   (6 stdout) résultat
+				 *   (7 stdout) suite résultat
+				 * C'est restitué en:
+				 *   (0 stderr) requête (6 stdout) résultat
+				 *   (6 stderr) ; -- durée ms
+				 *   (7 stdout) suite résultat
+				 */
+				 delaiEntreSortiesStandard = Integer.parseInt(args[++posParam]);
 			else if(args[posParam].equals("-"))
 				stdin = true;
 			else if(conn == null)
@@ -187,8 +200,16 @@ public class SqlMinus
 			long t = Math.round(durée);
 			String coul = t < 0 ? ROUGE : (t < 1000 ? VERT : (t < 10000 ? JAUNE : ROUGE));
 			String tchaîne = t < 0 ? "ERR" : (t < 1000 ? t+" ms" : (t < 10000 ? (t / 1000)+" s" : (t < 59500 ? Math.round(t / 1000.0)+" s" : (t / 60000)+" mn"+(t % 60000 > 0 ? " "+((t / 1000) % 60)+" s" : ""))));
-			System.err.println(GRIS+"; "+coul+"-- ["+tchaîne+"]"+BLANC);
+			diag(GRIS+"; "+coul+"-- ["+tchaîne+"]"+BLANC);
 		}
+	}
+	
+	protected void diag(String message)
+	{
+		System.err.println(message);
+		System.err.flush();
+		if(delaiEntreSortiesStandard > 0)
+			try { Thread.sleep(delaiEntreSortiesStandard); } catch(Exception ex) {}
 	}
 }
 
