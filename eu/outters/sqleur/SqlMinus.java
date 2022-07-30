@@ -18,6 +18,8 @@ import com.opencsv.ResultSetHelperService;
 import java.io.IOException;
 import java.sql.*;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SqlMinus
 {
@@ -28,9 +30,12 @@ public class SqlMinus
 	public Connection con;
 	public String fileName = null;
 	public int diag = -1;
+	
+	protected boolean avecNomsColonne = true;
 	protected char sepCsv = ';';
 	protected String invite = null;
 	protected int delaiEntreSortiesStandard = 0;
+	protected Pattern exprSpe = null;
 	
 	public static String GRIS = "[90m";
 	public static String VERT = "[32m";
@@ -40,6 +45,10 @@ public class SqlMinus
 	
 	public SqlMinus(String[] args) throws Exception
 	{
+		/* Initialisation. */
+		
+		exprSpe = Pattern.compile("^ *set +(?<p0>(?<head>hea(?:d(?:ing)?)?)) (?<v0>on|off) *$", Pattern.CASE_INSENSITIVE);
+		
 		/* Lecture des paramètres. */
 		
 		String conn = null;
@@ -177,6 +186,16 @@ public class SqlMinus
 	
 	public void exec(String req) throws SQLException, IOException, Exception
 	{
+		Matcher spe = exprSpe.matcher(req);
+		if(spe.find())
+		{
+			String param = null;
+			if(spe.group("head") != null)
+				avecNomsColonne = spe.group("v0").equals("on");
+			if(invite != null) { System.out.print(invite); System.out.flush(); }
+			return;
+		}
+		
 		if(diag >= 2)
 		System.err.print(GRIS+req.trim()+BLANC+" ");
 		
@@ -199,7 +218,7 @@ public class SqlMinus
             //Define MAX extract rows, -1 means unlimited.
             ResultSetHelperService.MAX_FETCH_ROWS=-1;
 				writer.setAsyncMode(fileName != null);
-            int result = writer.writeAll(rs, true);
+            int result = writer.writeAll(rs, avecNomsColonne);
             //return result - 1;
 				if(fileName != null)
             System.out.println("Result: " + (result - 1));
