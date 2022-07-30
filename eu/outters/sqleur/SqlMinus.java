@@ -29,6 +29,7 @@ public class SqlMinus
 	public String fileName = null;
 	public int diag = -1;
 	protected char sepCsv = ';';
+	protected String invite = null;
 	protected int delaiEntreSortiesStandard = 0;
 	
 	public static String GRIS = "[90m";
@@ -46,6 +47,7 @@ public class SqlMinus
 		int posParam;
 		char sepReq = ';'; // À FAIRE: le "mode débile" SQL*Plus, où en cas de begin, on bascule le séparateur sur /
 		boolean stdin = false;
+		boolean sepCsvChoisi = false;
 		
 		for(posParam = -1; ++posParam < args.length;)
 		{
@@ -53,6 +55,12 @@ public class SqlMinus
 			{
 				sepReq = (char)0;
 				stdin = true;
+			}
+			else if(args[posParam].equals("-i"))
+			{
+				if(!sepCsvChoisi) sepCsv = '\t';
+				if(diag < 0) diag = 0;
+				if(invite == null) invite = "> ";
 			}
 			else if(args[posParam].equals("-s"))
 			{
@@ -79,6 +87,7 @@ public class SqlMinus
 					sepCsv = param.charAt(0);
 				else
 					throw new Exception("Séparateur non reconnu: "+param);
+				sepCsvChoisi = true;
 			}
 			else if(args[posParam].equals("--ss"))
 				// Séparation Sorties: millisecondes intercalées entre le retour sur une requête (stderr) et l'affichage du résultat (stdout).
@@ -150,6 +159,7 @@ public class SqlMinus
 		
 		if(stdin)
 		{
+			if(invite != null) { System.out.print(invite); System.out.flush(); }
 			Scanner lecteur = new Scanner(System.in);
 			if(sepReq == '\n')
 				while(lecteur.hasNextLine())
@@ -198,8 +208,13 @@ public class SqlMinus
 		catch(Exception ex)
 		{
 			notif(-1, -1);
+			if(invite != null)
+				diag(ROUGE+ex.getMessage()+BLANC);
+			else
 			throw ex;
 		}
+		
+		if(invite != null) { System.out.print(invite); System.out.flush(); }
 	}
 	
 	public void notif(int nLignes, double durée)
