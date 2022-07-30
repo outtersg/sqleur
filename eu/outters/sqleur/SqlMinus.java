@@ -27,6 +27,7 @@ public class SqlMinus
 	
 	public Connection con;
 	public String fileName = null;
+	public int diag = -1;
 	protected char sepCsv = ';';
 	protected int delaiEntreSortiesStandard = 0;
 	
@@ -100,6 +101,7 @@ public class SqlMinus
 				// Le premier paramètre non standard est une requête.
 				break;
 		}
+		if(diag < 0) diag = 3; /* À FAIRE?: selon que l'on est en -o ou non (car en -o le résultat part vers un fichier, donc besoin d'un retour, tandis que sans -o l'arrivée du résultat donne une indication d'où on en est). */
 		
 		if(conn != null)
 		{
@@ -165,6 +167,7 @@ public class SqlMinus
 	
 	public void exec(String req) throws SQLException, IOException, Exception
 	{
+		if(diag >= 2)
 		System.err.print(GRIS+req.trim()+BLANC+" ");
 		
 		try
@@ -172,7 +175,13 @@ public class SqlMinus
 		Statement stmt = con.createStatement();
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
-			try (CSVWriter writer = new EcrivainVerbeux(fileName, sepCsv, this))
+			try
+			(
+				CSVWriter writer =
+					diag > 0
+					? new EcrivainVerbeux(fileName, sepCsv, this)
+					: new CSVWriter(fileName, sepCsv, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END)
+			)
 			{
 			ResultSet rs = stmt.executeQuery(req);
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
