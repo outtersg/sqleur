@@ -886,14 +886,22 @@ class Sqleur
 		
 		if
 		(
-			($découpes[$i][1] == $dernierArrêt || $découpes[$i][1] == $dernierRetour || strpbrk(substr($chaîne, $découpes[$i][1] - 1, 1), " \t") !== false) // Est-on sûr de n'avoir rien avant?
+			// Est-on sûr de n'avoir rien avant?
+			($découpes[$i][1] == $dernierArrêt || $découpes[$i][1] == $dernierRetour || $this->délimiteur(substr($chaîne, $découpes[$i][1] - 1, 1)))
 			&& // Ni rien après?
 			(
 				($découpes[$i][1] + strlen($découpes[$i][0]) == $taille && $laFinEstVraimentLaFin)
-				|| strpbrk(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1), " \t\r\n;,") !== false
+				|| $this->délimiteur(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1))
 			)
 		)
 			$this->_béguinsPotentiels[] = $motClé;
+	}
+	
+	public function délimiteur($car)
+	{
+		// On inclut les caractères de contrôle, dont la tabulation.
+		// On s'arrête en 0x80, de peur de voir comme délimiteur des caractères UTF-8.
+		return ($car >= "\0" && $car < '0') || ($car > '9' && $car < 'A') || ($car > 'Z' && $car < 'a') || ($car > 'z' && $car <= chr(0x7F));
 	}
 	
 	/**
