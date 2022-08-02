@@ -701,6 +701,7 @@ class Sqleur
 			$this->_dernièreLigne,
 			$technique,
 			$this->_boucles,
+			isset($this->_resteEnCours) ? $this->_resteEnCours : null,
 		);
 		// Les boucles sont locales à un niveau d'inclusion.
 		$this->_boucles = array();
@@ -717,6 +718,7 @@ class Sqleur
 			$this->_dernièreLigne,
 			$technique,
 			$this->_boucles,
+			$this->_resteEnCours,
 		) = array_pop($this->_états);
 		if ($avecDéfs)
 			$this->_defs = $défs;

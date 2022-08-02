@@ -110,6 +110,7 @@ class SqleurCond
 		while($this->avérée())
 		{
 			$this->_sqleur->_chaineDerniereDecoupe = "\n"; // Le re-bloc commence par un "\n".
+			$this->_sqleur->_resteEnCours = null; /* À FAIRE: ne risque-t-on pas d'écraser quelque chose que le précédent tour de boucle souhaitait nous voir compléter? */
 			$this->_défSiVar();
 			$this->_sqleur->_ligne = $this->ligne;
 			$this->_sqleur->découperBloc($corps, false);
