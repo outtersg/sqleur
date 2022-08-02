@@ -885,6 +885,9 @@ class Sqleur
 			$motClé = 'begin transaction';
 		if(!isset(Sqleur::$FINS[$motClé]))
 			throw new Exception("Bloc de découpe inattendu $motClé");
+		// Les faux-amis sont les end quelque chose, qu'on ne gère pas ainsi que leur balise de démarrage.
+		if(!Sqleur::$FINS[$motClé])
+			return;
 		
 		if
 		(
