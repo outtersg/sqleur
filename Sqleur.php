@@ -921,12 +921,12 @@ class Sqleur
 					break;
 				case 'end':
 					if(!count($this->_béguins))
-						throw new Exception("Problème d'imbrication: $motClé sans début correspondant");
+						throw $this->exception("Problème d'imbrication: $motClé sans début correspondant");
 					$début = array_pop($this->_béguins);
 					if(!isset(Sqleur::$FINS[$début]))
-						throw new Exception("Problème d'imbrication: $début (remonté comme mot-clé de début de bloc) non référencé");
+						throw $this->exception("Problème d'imbrication: $début (remonté comme mot-clé de début de bloc) non référencé");
 					if($motClé != Sqleur::$FINS[$début])
-						throw new Exception("Problème d'imbrication: $motClé n'est pas censé fermer ".Sqleur::$FINS[$début]);
+						throw $this->exception("Problème d'imbrication: $motClé n'est pas censé fermer ".Sqleur::$FINS[$début]);
 					break;
 				default:
 					$this->_béguins[] = $motClé;
