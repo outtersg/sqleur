@@ -269,6 +269,8 @@ class Sqleur
 			$chaine = $this->_resteEnCours.$chaine;
 		$this->_chaîneEnCours = $chaine;
 		
+		// Tous le code gérant cet enquiquinante suite ";\n+/\n*" sera marqué de l'étiquette DML (Découpe Multi-Lignes):
+		// À FAIRE: DML dissocier $onEnFaitPlusPourSqlMoins du ; et ne vérifier leur séquence que dans le traitement DML? Là ça complique beaucoup de choses… Par contre en effet on gagne en perfs car on ne lit pas chaque / isolé, et on évite aussi de manger ceux de // ou /**/; sinon laisser l'expr comme ça, mais après preg_match_all traduire la suite en deux découpes successives. /!\ Bien traiter le cas où le ; était dans un bloc, et le \n/ dans le suivant. /!\ Attention aussi, là j'ai l'impression qu'on mange le / si on a un commentaire juste après le ;, de type ";//".
 		$onEnFaitPlusPourSqlMoins = $this->_mode & Sqleur::MODE_SQLPLUS ? '(?:\s*\n/(?:\n|$))?' : '';
 		$expr = '#|\\\\|;'.$onEnFaitPlusPourSqlMoins.'|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
 		if($this->_mode & Sqleur::MODE_BEGIN_END)
@@ -295,6 +297,14 @@ class Sqleur
 		{
 			$chaineDerniereDecoupe = $this->_chaineDerniereDecoupe;
 			$dernierRetour = $chaineDerniereDecoupe == "\n" ? 0 : -1;
+			// DML: Particularité: certaines $chaineDerniereDecoupe peuvent porter des retours à la ligne cachés; on restitue au mieux.
+			switch(substr($chaineDerniereDecoupe, 0, 1))
+			{
+				case ';':
+					$decoupes[-1] = [ $chaineDerniereDecoupe, -strlen($chaineDerniereDecoupe) ];
+					$chaineDerniereDecoupe = substr($chaineDerniereDecoupe, 0, 1);
+					break;
+			}
 		}
 		if(!isset($this->_requeteEnCours))
 		{
@@ -315,10 +325,13 @@ class Sqleur
 				case ';':
 					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
 					$dernierArret += strlen($decoupes[$i][0]);
+					// DML: étant susceptibles de porter du \n, et $chaineDerniereDecoupe n'étant jamais comparée à simplement ';', on y entrepose la restitution exacte de ce qui nous a invoqués (plutôt que seulement le premier caractère).
+					$nLignes = substr_count($chaineDerniereDecoupe = $decoupes[$i][0], "\n");
 					if(($this->_mode & Sqleur::MODE_BEGIN_END))
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
-							$this->_ajouterBoutRequête(';');
+							$this->_ajouterBoutRequête($chaineDerniereDecoupe);
+							$this->_ligne += $nLignes;
 							break;
 						}
 					$this->terminaison = $decoupes[$i][0];
@@ -327,6 +340,7 @@ class Sqleur
 					$this->_requeteEnCours = '';
 					$this->_queDuVent = true; /* À FAIRE: le gérer aussi dans les conditions (empiler et dépiler). */
 					unset($this->_requêteRemplacée);
+					$this->_ligne += $nLignes;
 					break;
 				case "\n":
 					$dernierRetour = $decoupes[$i][1] + 1;
@@ -339,7 +353,11 @@ class Sqleur
 					$this->_mangerBout($chaine, /*&*/ $dernierArret, $dernierRetour);
 					break;
 				case '#':
-					if($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
+					if
+					(
+						($chaineDerniereDecoupe == "\n" && $dernierRetour == $decoupes[$i][1]) // Seulement en début de ligne.
+						|| (isset($decoupes[$i - 1]) && preg_match("#/\n+$#", $decoupes[$i - 1][0]) && $decoupes[$i - 1][1] + strlen($decoupes[$i - 1][0]) == $decoupes[$i][1]) // … Avec le cas particulier du / SQL*Plus qui mange les \n qui le suivent. DML
+					)
 					{
 						$j = $i;
 						$ligne = $this->_ligne;
