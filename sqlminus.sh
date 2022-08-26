@@ -4,9 +4,17 @@ sqlm()
 {
 	local fichiers=
 	case "$* " in
-		*".sql ")
+		*".sql "|*=*)
 			# /!\ Repose sur le repapa des scripts de Guillaume.
-			exfifi() { case "$param" in *.sql) fichiers="$fichiers$param " ; false ;; esac ; } # exfifi = EXFIltre les FIchiers.
+			exfifi() # exfifi = EXFIltre les FIchiers.
+			{
+				case "$param" in
+					*.sql) fichiers="$fichiers$param " ; false ;;
+					# Les affectations de type VAR=VAL sont passées au préprocesseur.
+					*[^A-Za-z0-9_]*=*) true ;;
+					*=*) fichiers="$fichiers$param " ; false ;;
+				esac
+			}
 			repapa exfifi "$@" ; eval "$repapa"
 	esac
 	
