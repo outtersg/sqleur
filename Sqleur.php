@@ -334,12 +334,18 @@ class Sqleur
 							$this->_ligne += $nLignes;
 							break;
 						}
+						// Le ; après end (de langage procédural, et non pas dans un case end) a deux fonctions:
+						// une littérale (complète textuellement l'end), l'autre de séparateur.
+						// On ajoute donc sa fonction littérale (pour éviter l'erreur Oracle PLS-00103: end sans point-virgule).
+						else if($this->_vientDeTerminerUnBlocProcédural($decoupes, $i))
+							$this->_requeteEnCours .= ';';
 					$this->terminaison = $decoupes[$i][0];
 					$this->_sors($this->_requeteEnCours);
 					$this->terminaison = null;
 					$this->_requeteEnCours = '';
 					$this->_queDuVent = true; /* À FAIRE: le gérer aussi dans les conditions (empiler et dépiler). */
 					unset($this->_requêteRemplacée);
+					unset($this->_dernierBéguinBouclé);
 					$this->_ligne += $nLignes;
 					break;
 				case "\n":
@@ -948,12 +954,28 @@ class Sqleur
 						throw $this->exception("Problème d'imbrication: $début (remonté comme mot-clé de début de bloc) non référencé");
 					if($motClé != Sqleur::$FINS[$début])
 						throw $this->exception("Problème d'imbrication: $motClé n'est pas censé fermer ".Sqleur::$FINS[$début]);
+					$this->_dernierBéguinBouclé = $début;
 					break;
 				default:
 					$this->_béguins[] = $motClé;
 					break;
 			}
 		$this->_béguinsPotentiels = array();
+	}
+	
+	protected function _vientDeTerminerUnBlocProcédural($découpes, $i)
+	{
+		return
+			isset($this->_dernierBéguinBouclé)
+			&& $this->_dernierBéguinBouclé == 'begin'
+			&& $découpes[$i - 1][0] == 'end'
+			&&
+			(
+				($posMoi = $découpes[$i][1]) == ($posFinPréc = $découpes[$i - 1][1] + strlen($découpes[$i - 1][0]))
+				|| !($espace = trim(substr($this->_chaîneEnCours, $posFinPréc, $posMoi - $posFinPréc)))
+				|| (($this->_mode & Sqleur::MODE_SQLPLUS) && $espace == '/')
+			)
+		;
 	}
 }
 
