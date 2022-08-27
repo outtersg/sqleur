@@ -315,6 +315,8 @@ class Sqleur
 		
 		for($i = 0; $i < $n; ++$i)
 		{
+			// Normalisation "au premier caractère": pour la plupart de nos chaînes spéciales, le premier caractère est discriminant.
+			// Les bouts qui sortent de cette simplification (ex.: mots-clés) pourront travailler sur la version longue dans $decoupes[$i][0].
 			$chaineNouvelleDecoupe = substr($decoupes[$i][0], 0, 1);
 			// Si on est dans une chaîne, même interrompue, on y retourne. Elle est seule à pouvoir décider de s'interrompre (soit pour fin de tampon, soit pour passage de relais temporaire au préprocesseur).
 			if($this->_dansChaîne && $this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] != static::CHAÎNE_PASSE_LA_MAIN && !$this->dansUnSiÀLaTrappe())
@@ -422,6 +424,9 @@ class Sqleur
 						$n = $i;
 						$chaineNouvelleDecoupe = $chaineDerniereDecoupe;
 					}
+					else
+						// Bon sinon la normalisation d'un mot-clé ça fait plusieurs caractères.
+						$chaineNouvelleDecoupe = $decoupes[$i][0];
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
