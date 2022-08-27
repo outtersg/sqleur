@@ -316,6 +316,14 @@ class SPP extends JoueurSql
 				: ";\n"
 			)
 		;
+		
+		// Lorsque le ; est à la fois
+		// - partie intégrante du (pseudo-)SQL (ex.: procédural, avec du "begin fonction; end;", où Oracle braille si le end n'a pas son point-virgule)
+		// - et séparateur entre requêtes
+		// on fusionne ses deux usages en un seul point-virgule.
+		if(substr($sql, -1) == ';' && substr($sép, 0, 1) == ';')
+			$sép = substr($sép, 1);
+		
 		echo $sql.$sép;
 	}
 }
