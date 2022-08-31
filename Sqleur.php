@@ -931,6 +931,23 @@ class Sqleur
 			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne ];
 	}
 	
+	/**
+	 * Pointeur sur le dernier begin dans lequel on est entrés.
+	 *
+	 * @param bool $seulementEnCours Si vrai, ne remonte que les begin en cours de constitution.
+	 */
+	protected function & _ptrDernierBéguin($seulementEnCours = false)
+	{
+		$r = null;
+		
+		if(($dern = count($this->_béguinsPotentiels) - 1) >= 0)
+			return /*&*/ $this->_béguinsPotentiels[$dern];
+		if(!$seulementEnCours && ($dern = count($this->_béguins) - 1) >= 0)
+			return /*&*/ $this->_béguins[$dern];
+		
+		return /*&*/ $r;
+	}
+	
 	public function délimiteur($car)
 	{
 		// On inclut les caractères de contrôle, dont la tabulation.
