@@ -2,13 +2,13 @@
 -- or ce ; est fusionné avec celui de séparation de requêtes: pour distinguer les deux il faut passer en mode -0.
 -- Donc test en pur shell:
 #if 0
-esp="`printf '\100'`"
-cat tests/beginendpointvirgule.test.res0.sql > /tmp/1
-php sql2csv.php -E -0 tests/beginendpointvirgule.test.sql | tr '\000' $esp | sed -e "s/$esp/--#$esp/g" | tr $esp '\012' > /tmp/2
+esp="`printf '\100'`" &&
+cat tests/beginendpointvirgule.test.res0.sql > /tmp/1 &&
+php sql2csv.php -E -0 tests/beginendpointvirgule.test.sql | tr '\000' $esp | sed -e "s/$esp/--#$esp/g" | tr $esp '\012' > /tmp/2 &&
 for f in 1 2
 do
 	sed -e 's/ *--[^#].*//' -e '/^$/d' < /tmp/$f > /tmp/$f.propre
-done
+done &&
 diff -uw /tmp/2.propre /tmp/1.propre
 #endif
 
