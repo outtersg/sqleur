@@ -987,6 +987,25 @@ class Sqleur
 		$this->_béguinsPotentiels = array();
 	}
 	
+	/**
+	 * S'assure que tous les blocs procéduraux (begin …; end;) ont été fermés.
+	 * À appeler avant de passer le bloc à l'exécutant.
+	 */
+	protected function _vérifierBéguins()
+	{
+		if(count($this->_béguins))
+		{
+			$ligne = $this->_dernièreLigne;
+			$this->_dernièreLigne = $this->_béguins[0][2];
+			$béguins = array();
+			foreach($this->_béguins as $béguin)
+				$béguins[] = $béguin[1];
+			$ex = $this->exception('blocs non terminés ('.implode(', ', $béguins).')');
+			$this->_dernièreLigne = $ligne;
+			throw $ex;
+		}
+	}
+	
 	protected function _vientDeTerminerUnBlocProcédural($découpes, $i)
 	{
 		return
