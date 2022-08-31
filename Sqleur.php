@@ -229,10 +229,11 @@ class Sqleur
 		// Ceux ouvrant un bloc, avec leur mot-clé de fin:
 		'begin' => 'end',
 		'case' => 'end',
-		'create package' => 'end',
-		'create or replace package' => 'end',
+		'function as' => 'end',
 		// Les autres:
 		'end' => true,
+		'function' => true,
+		'as' => true,
 		// Les faux-amis (similaires à un "vrai" mot-clé, remontés en tant que tel afin que, mis sur pied d'égalité, on puisse décider duquel il s'agit):
 		'begin transaction' => false,
 		'end if' => false,
@@ -273,13 +274,17 @@ class Sqleur
 		// À FAIRE: DML dissocier $onEnFaitPlusPourSqlMoins du ; et ne vérifier leur séquence que dans le traitement DML? Là ça complique beaucoup de choses… Par contre en effet on gagne en perfs car on ne lit pas chaque / isolé, et on évite aussi de manger ceux de // ou /**/; sinon laisser l'expr comme ça, mais après preg_match_all traduire la suite en deux découpes successives. /!\ Bien traiter le cas où le ; était dans un bloc, et le \n/ dans le suivant. /!\ Attention aussi, là j'ai l'impression qu'on mange le / si on a un commentaire juste après le ;, de type ";//".
 		$onEnFaitPlusPourSqlMoins = $this->_mode & Sqleur::MODE_SQLPLUS ? '(?:\s*\n/(?:\n|$))?' : '';
 		$expr = '#|\\\\|;'.$onEnFaitPlusPourSqlMoins.'|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
+		$opEx = ''; // OPtions sur l'EXpression.
 		if($this->_mode & Sqleur::MODE_BEGIN_END)
+		{
 			// On repère non seulement les expressions entrant et sortant d'un bloc procédural,
 			// mais aussi les faux-amis ("end" de "end loop" à ne pas confondre avec celui fermant un "begin").
 			// N.B.: un contrôle sur le point-virgule sera fait par ailleurs (pour distinguer un "begin" de bloc procédural, de celui synonyme de "begin transaction" en PostgreSQL par exemple).
-			$expr .= preg_replace_callback('/[a-z]/', function($x) { return '['.$x[0].strtoupper($x[0]).']'; }, '|begin(?: transaction)?|case|end(?: if| loop)?|create(?: or replace)? package');
-// À FAIRE: distinguer le begin (end) du begin transaction et du begin; (= begin transaction PostgreSQL). Le second en repérant un ; immédiatement après notre mot-clé.
-		preg_match_all("@$expr@", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
+			$opEx .= 'i';
+			$this->_exprFonction = '(?:create(?: or replace)? )?(?:package|procedure|function)';
+			$expr .= '|begin(?: transaction)?|case|end(?: if| loop)?|'.$this->_exprFonction.'|as|is';
+		}
+		preg_match_all("@$expr@$opEx", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
 		$taille = strlen($chaine);
 		$decoupes = $decoupes[0];
@@ -292,6 +297,7 @@ class Sqleur
 			$dernierRetour = 0;
 			$this->_béguins = array();
 			$this->_béguinsPotentiels = array();
+			// À FAIRE: fusionner les deux listes, avec un marqueur de "entériné ou non": là on jongle trop entre entérinés et temporaires.
 		}
 		else
 		{
@@ -477,6 +483,7 @@ class Sqleur
 		}
 		else // C'est la découpe courante qui nous fait entrer dans la chaîne
 		{
+			$this->_entreEnChaîne($chaine, $decoupes, $i);
 			$fin = $decoupes[$i][0];
 			$débutIntérieur = strlen($fin);
 		}
@@ -561,6 +568,8 @@ class Sqleur
 	
 	protected function _sors($requete, $brut = false, $appliquerDéfs = false, $interne = false)
 	{
+		$this->_vérifierBéguins();
+		
 		/* À FAIRE: le calcul qui suit est faux si $requete a subi un remplacement de _defs où le remplacement faisait plus d'une ligne. */
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
 		if($appliquerDéfs)
@@ -893,6 +902,51 @@ class Sqleur
 	/*- Intestins ------------------------------------------------------------*/
 	
 	/**
+	 * Interrompt les processus lorsque qu'une chaîne intervient comme un pavé dans la mare.
+	 */
+	protected function _entreEnChaîne($fragment, $découpes, $i)
+	{
+		/*- Corps de fonction "mode chaîne" -*/
+		/* PostgreSQL permet de définir les corps de fonction sous deux formes:
+		 * - create function as $$ begin coucou; end; $$
+		 * - "create function as begin coucou; end;
+		 * Le premier mode est reposant pour l'analyseur (on passe toute la chaîne sans se poser de question à l'interpréteur SQL),
+		 * le second demande une analyse d'imbrication des begin … end pour savoir quel end signale la fin de fonction.
+		 */
+		
+		if($this->_mode & Sqleur::MODE_BEGIN_END)
+			if
+			(
+				($ptrBéguin = /*&*/ $this->_ptrDernierBéguin())
+				&& $ptrBéguin[0] == 'function as'
+			)
+			{
+				// Recherche de la dernière découpe significative avant notre entrée en chaîne.
+				for($j = $i; isset($découpes[--$j]) && !trim($découpes[$j][0]);) {}
+				// Correspond-elle à notre introducteur de begin ("as" dans "create function … as begin")?
+				if
+				(
+					isset($découpes[$j])
+					&& substr($ptrBéguin[1], -strlen($découpes[$j][0])) == $découpes[$j][0]
+					// Et précède-t-elle immédiatement notre chaîne?
+					&&
+					(
+						($posDD = $découpes[$j][1] + strlen($découpes[$j][0])) == $découpes[$i][1]
+						|| ($posDD >= 0 && !trim(substr($fragment, $posDD, $découpes[$i][1] - $posDD)))
+					)
+				)
+					// Alors nous sommes une chaîne juste derrière le "as",
+					// donc le begin (et son end) sera à l'_intérieur_ de la chaîne,
+					// et donc le "as" n'a plus à se préoccuper de trouver l'end correspondant;
+					// on le fait sauter des "en attente":
+					if(($dern = count($this->_béguinsPotentiels)))
+						unset($this->_béguinsPotentiels[$dern - 1]);
+					else
+						unset($this->_béguins[count($this->_béguins) - 1]);
+			}
+	}
+	
+	/**
 	 * Analyse les mots-clés SQL qui, dans certaines situations, peuvent indiquer un bloc dans lequel le point-virgule n'est pas fermant.
 	 * Le cas échéant, ajoute le mot-clé à la pile de décompte des niveaux.
 	 */
@@ -912,6 +966,14 @@ class Sqleur
 		// Un synonyme PostgreSQL prêtant à confusion.
 		if($motClé == 'begin' && isset($découpes[$i + 1]) && $découpes[$i + 1][1] == $découpes[$i][1] + strlen($motClé) && $découpes[$i + 1][0] == ';')
 			$motClé = 'begin transaction';
+		// Pour Oracle, les "create quelque chose as" sont des pré-begin (mais on ne doit pas attendre le begin pour prendre littéralement les ; car on peut avoir du "create … as ma_var integer; begin …; end;" (le ; avant le begin fait partie du bloc, et non pas sépare une instruction "create" d'une "begin")).
+		if(preg_match('#^'.$this->_exprFonction.'$#', $motClé))
+			$motClé = 'function';
+		if($motClé == 'is')
+			$motClé = 'as';
+		// À FAIRE: uniquement si pas de ; entre le create et le as! (faire le tri lors d'un ;)
+		// À FAIRE: la fonction PostgreSQL (as $$) ne doit pas attendre de ;: faire la distinction entre as $$ ou as ', et as autre chose. Bref le $$ ou ', ĉ le ; doit annuler la spécificité du dernier bloc.
+		
 		if(!isset(Sqleur::$FINS[$motClé]))
 			throw new Exception("Bloc de découpe inattendu $motClé");
 		// Les faux-amis sont les end quelque chose, qu'on ne gère pas ainsi que leur balise de démarrage.
@@ -928,7 +990,27 @@ class Sqleur
 				|| $this->délimiteur(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1))
 			)
 		)
+		{
+			// Cas particulier du 'as' qui se combine avec un 'function' pour donner un nouveau mot-clé:
+			if($motClé == 'as')
+			{
+				if(($ptrBéguin = & $this->_ptrDernierBéguin()) && $ptrBéguin[0] == 'function')
+				{
+					$ptrBéguin[0] .= ' '.$motClé;
+					$ptrBéguin[1] .= ' … '.$découpes[$i][0];
+				}
+				// Et on retourne, soit l'ayant intégré au précédent, soit l'ignorant.
+				return;
+			}
+			// Un begin dans une fonction prend la suite de la fonction.
+			if
+			(
+				$motClé == 'begin'
+				&& ($ptrBéguin = & $this->_ptrDernierBéguin()) && $ptrBéguin[0] == 'function as'
+			)
+				return;
 			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne ];
+		}
 	}
 	
 	/**
