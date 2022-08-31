@@ -928,7 +928,7 @@ class Sqleur
 				|| $this->délimiteur(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1))
 			)
 		)
-			$this->_béguinsPotentiels[] = $motClé;
+			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne ];
 	}
 	
 	public function délimiteur($car)
@@ -944,8 +944,8 @@ class Sqleur
 	 */
 	protected function _entérinerBéguins()
 	{
-		foreach($this->_béguinsPotentiels as $motClé)
-			switch($motClé)
+		foreach($this->_béguinsPotentiels as $béguin)
+			switch($motClé = $béguin[0])
 			{
 				case 'end if':
 				case 'end loop':
@@ -955,14 +955,16 @@ class Sqleur
 					if(!count($this->_béguins))
 						throw $this->exception("Problème d'imbrication: $motClé sans début correspondant");
 					$début = array_pop($this->_béguins);
+					$débutOrig = $début[1];
+					$début = $début[0];
 					if(!isset(Sqleur::$FINS[$début]))
-						throw $this->exception("Problème d'imbrication: $début (remonté comme mot-clé de début de bloc) non référencé");
+						throw $this->exception("Problème d'imbrication: $débutOrig (remonté comme mot-clé de début de bloc) non référencé");
 					if($motClé != Sqleur::$FINS[$début])
-						throw $this->exception("Problème d'imbrication: $motClé n'est pas censé fermer ".Sqleur::$FINS[$début]);
+						throw $this->exception("Problème d'imbrication: {$béguin[1]} n'est pas censé fermer ".Sqleur::$FINS[$début]);
 					$this->_dernierBéguinBouclé = $début;
 					break;
 				default:
-					$this->_béguins[] = $motClé;
+					$this->_béguins[] = $béguin;
 					break;
 			}
 		$this->_béguinsPotentiels = array();
