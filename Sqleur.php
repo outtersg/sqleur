@@ -495,6 +495,8 @@ class Sqleur
 				++$this->_ligne;
 			}
 			// Les chaînes à dollars sont parsemables d'instructions préproc. Cela permet de définir des fonctions SQL avec des fragments dépendants du préproc.
+			/* À FAIRE: détecter aussi si entre \n et # on n'a que des espaces / tabulations (et une option posée: en effet il ne faudrait pas qu'un # dans une chaîne soit interprété comme du prépro). */
+			/* À FAIRE: les instructions prépro émettant un pseudo \n en fin d'instruction, devraient manger celui les introduisant plutôt que de le restituer. */
 			else if($decoupes[$i][0] == '#'&& $chaineNouvelleDecoupe == '$' && $dernierRetour == $decoupes[$i][1])
 			{
 				$chaineNouvelleDecoupe = "\n"; // Notre tunnel a masqué tout ce qu'il s'est passé dans notre mangeage; exposons au moins la découpe de juste avant la sortie.
