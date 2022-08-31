@@ -33,3 +33,25 @@ begin youpla; begin youpi; end;end  ;
 begin begin youpi; end;end ;
 
 for machin in truc loop coucou; end loop;
+
+-- Là ça devient chaud: on teste les différentes façon de déclarer des fonctions:
+-- À la Oracle:
+create function bla() return integer as begin select 1 from dual order by case when 1 = 1 then 1 end; end;
+-- Idem, avec des variables *et leur point-virgule* avant le begin:
+create function bla() return integer as maVar integer; begin select 1 from dual order by case when 1 = 1 then 1 end; end;
+create function bla() return integer
+as
+	maVar integer;
+begin
+	select 1 from dual order by case when 1 = 1 then 1 end;
+end;
+-- À la PostgreSQL: là par contre pas besoin de end:
+create function bla() return integer as $$ select 1; $$;
+create function bla() return integer as
+$$
+	select 1;
+$$;
+-- Mais attention à ne pas confondre avec un create table qui n'attend pas non plus de end!:
+create table bla as select 1;
+-- Allez pour la forme:
+create package machin as function bla() as maVar integer; begin coucou; end; end machin;
