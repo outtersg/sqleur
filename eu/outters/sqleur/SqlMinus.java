@@ -212,7 +212,11 @@ public class SqlMinus
 					: new CSVWriter(fileName, sepCsv, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END)
 			)
 			{
-			ResultSet rs = stmt.executeQuery(req);
+				// Merci https://datubaze.files.wordpress.com/2015/11/r_menon_expert_ora_jdbc_programming_2005_gram.pdf pour comment jouer aussi bien du select que du DDL!
+				boolean estUneReq = stmt.execute(req);
+				if(estUneReq)
+				{
+					ResultSet rs = stmt.getResultSet();
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
             ResultSetHelperService.RESULT_FETCH_SIZE=50000;
             //Define MAX extract rows, -1 means unlimited.
@@ -222,6 +226,13 @@ public class SqlMinus
             //return result - 1;
 				if(fileName != null)
             System.out.println("Result: " + (result - 1));
+				}
+				else
+				{
+					// À FAIRE: exploiter stmt.getUpdateCount()?
+					//int n = stmt.getUpdateCount();
+					writer.writeNext(null);
+				}
 			}
 		}
 		catch(Exception ex)
