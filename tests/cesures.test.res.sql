@@ -6,4 +6,4 @@ begin transaction;
 commit;
 
 select remplissage pour le plaisir;
-begin toto; end;
+begin toto; end;;
