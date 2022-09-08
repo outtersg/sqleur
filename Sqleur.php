@@ -1144,6 +1144,8 @@ class Sqleur
 				($posMoi = $découpes[$i][1]) == ($posFinPréc = $découpes[$i - 1][1] + strlen($découpes[$i - 1][0]))
 				|| !($espace = trim(substr($this->_chaîneEnCours, $posFinPréc, $posMoi - $posFinPréc)))
 				|| (($this->_mode & Sqleur::MODE_SQLPLUS) && $espace == '/')
+				// Grumf, certains (Oracle) tolèrent un mot entre le end et le point-virgule (le nom de la fonction définie).
+				|| preg_match('#^[a-zA-Z0-9_]+#', $espace)
 			)
 		;
 	}
