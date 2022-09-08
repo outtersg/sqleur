@@ -1022,10 +1022,11 @@ class Sqleur
 		{
 			if(Sqleur::BEGIN_END_COMPLEXE)
 			{
-			// Cas particulier du 'as' qui se combine avec un 'function' pour donner un nouveau mot-clé:
+			// Cas particulier du 'as' qui se combine avec un 'function' pour donner un nouveau mot-clé,
+			// lorsque rien ne s'interpose entre eux (pas de begin entre le function et le as, pas de point-virgule, etc.).
 			if($motClé == 'as')
 			{
-				if(($ptrBéguin = & $this->_ptrDernierBéguin()) && $ptrBéguin[0] == 'function')
+				if(($ptrBéguin = & $this->_ptrDernierBéguin()) && $ptrBéguin[0] == 'function' && $this->_functionAs($ptrBéguin, $chaîne, $découpes, $i))
 				{
 					$ptrBéguin[0] .= ' '.$motClé;
 					$ptrBéguin[1] .= ' … '.$découpes[$i][0];
@@ -1041,7 +1042,7 @@ class Sqleur
 			)
 				return;
 			}
-			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne ];
+			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne, $i ];
 		}
 	}
 	
@@ -1145,6 +1146,31 @@ class Sqleur
 				|| (($this->_mode & Sqleur::MODE_SQLPLUS) && $espace == '/')
 			)
 		;
+	}
+	
+	/**
+	 * Valide qu'un 'as', arrivant en $découpes[$i], se raccroche bien à une function ou assimilé.
+	 */
+	protected function _functionAs($béguin, $chaîne, $découpes, $i)
+	{
+		/* NOTE: motivation
+		 * on cherche à distinguer un "create function machin() as" (qui devrait être suivi d'un begin) d'un as/is sans intérêt ("create trigger … when (a is not null)").
+		 * Les parenthèses semblent un bon moyen de distinguer un as "complément de fonction" d'un as "SQL".
+		 * Mais attention aux perfs! On ne peut pas s'amuser à instituer un décompte des ouvertures / fermetures de parenthèses sur l'ensemble du SQL (le $expr de découperBloc()), juste pour blinder le (très rare) cas du create function.
+		 * On fait donc de l'approximatif en réextrayant les caractères entre notre create et notre as (en espérant ne pas avoir perdu de contexte).
+		 */
+		// À FAIRE: robustesse: là si le create a été détecté sur la précédente passe, on a perdu trace du contenu exacte entre lui et nous (le 'as');
+		//          il faudrait alors, en cas de détection d'un create, avoir un mode spécial qui mémorise tout jusqu'à tomber sur le as (ou jusqu'à un ; marquant l'arrêt des recherches).
+		// Grrr SQLite autorise le create trigger when à NE PAS avoir de parenthèses! Ceci dit dans leur https://www.sqlite.org/lang_createtrigger.html le is et le as n'apparaissent jamais seuls (is null est traduit en isnull, as n'est explicite que dans cast(x as y) donc avec parenthèses explicites).
+		
+		if(($iDébut = $béguin[3]) >= $i)
+			$iDébut = 0;
+		if($iDébut >= $i) return true; // /!\ Approximation.
+		// À FAIRE?: si $découpes[$iDébut][0] != $béguin[1], throw?
+		
+		$entre = substr($chaîne, $posDébut = $découpes[$iDébut][1] + strlen($découpes[$iDébut][0]), $découpes[$i][1] - $posDébut);
+		// On est au même niveau que le create function tant qu'on n'est pas dans une parenthèse, donc tant que l'on a autant de parenthèses ouvrantes que de fermantes (… ou moins en cas de bloc mémoire ayant coupé un peu trop entre notre create et nous).
+		return substr_count($entre, ')') >= substr_count($entre, '(');
 	}
 }
 
