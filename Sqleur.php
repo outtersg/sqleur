@@ -281,7 +281,7 @@ class Sqleur
 			// mais aussi les faux-amis ("end" de "end loop" à ne pas confondre avec celui fermant un "begin").
 			// N.B.: un contrôle sur le point-virgule sera fait par ailleurs (pour distinguer un "begin" de bloc procédural, de celui synonyme de "begin transaction" en PostgreSQL par exemple).
 			$opEx .= 'i';
-			$this->_exprFonction = '(?:create(?: or replace)? )?(?:package|procedure|function)';
+			$this->_exprFonction = '(?:create(?: or replace)? )?(?:package|procedure|function)'; // Dans un package, seul ce dernier, qui est premier, est précédé d'un create; les autres sont en "procedure machin is" sans create.
 			$expr .= '|begin(?: transaction)?|case|end(?: if| loop)?|'.$this->_exprFonction.'|as|is';
 		}
 		preg_match_all("@$expr@$opEx", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
