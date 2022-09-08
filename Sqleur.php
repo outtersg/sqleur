@@ -941,10 +941,11 @@ class Sqleur
 					// donc le begin (et son end) sera à l'_intérieur_ de la chaîne,
 					// et donc le "as" n'a plus à se préoccuper de trouver l'end correspondant;
 					// on le fait sauter des "en attente":
-					if(($dern = count($this->_béguinsPotentiels)))
-						unset($this->_béguinsPotentiels[$dern - 1]);
+					// array_splice plutôt qu'unset, qui ne libère pas l'indice et laissera donc un tableau à trous lors du prochain [] =.
+					if(count($this->_béguinsPotentiels))
+						array_splice($this->_béguinsPotentiels, -1);
 					else
-						unset($this->_béguins[count($this->_béguins) - 1]);
+						array_splice($this->_béguins, -1);
 			}
 	}
 	
