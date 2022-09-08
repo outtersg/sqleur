@@ -1138,7 +1138,7 @@ class Sqleur
 		return
 			isset($this->_dernierBéguinBouclé)
 			&& in_array($this->_dernierBéguinBouclé, [ 'begin', 'function as' ])
-			&& $découpes[$i - 1][0] == 'end'
+			&& $this->_découpePrécédente($découpes, $i) == 'end'
 			&&
 			(
 				($posMoi = $découpes[$i][1]) == ($posFinPréc = $découpes[$i - 1][1] + strlen($découpes[$i - 1][0]))
@@ -1146,6 +1146,16 @@ class Sqleur
 				|| (($this->_mode & Sqleur::MODE_SQLPLUS) && $espace == '/')
 			)
 		;
+	}
+	
+	/**
+	 * Renvoie la dernière découpe significative avant celle demandée.
+	 */
+	protected function _découpePrécédente($découpes, $i)
+	{
+		while(isset($découpes[--$i]))
+			if(!in_array($découpes[$i][0], array("\n", '/', '--')))
+				return $découpes[$i][0];
 	}
 	
 	/**
