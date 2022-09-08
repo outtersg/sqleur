@@ -1084,7 +1084,7 @@ class Sqleur
 			$this->_dernièreLigne = $this->_béguins[0][2];
 			$béguins = array();
 			foreach($this->_béguins as $béguin)
-				$béguins[] = $béguin[1];
+				$béguins[] = $béguin[1].':'.$béguin[2];
 			$ex = $this->exception('blocs non terminés ('.implode(', ', $béguins).')');
 			$this->_dernièreLigne = $ligne;
 			throw $ex;
