@@ -1095,7 +1095,7 @@ class Sqleur
 	{
 		return
 			isset($this->_dernierBéguinBouclé)
-			&& $this->_dernierBéguinBouclé == 'begin'
+			&& in_array($this->_dernierBéguinBouclé, [ 'begin', 'function as' ])
 			&& $découpes[$i - 1][0] == 'end'
 			&&
 			(
