@@ -422,6 +422,7 @@ class Sqleur
 				case '\\':
 					break;
 				default:
+					if($this->dansUnSiÀLaTrappe()) break;
 					// Les mots-clés.
 					// Certains mots-clés changent de sens en fonction de leur complétude (ex.: "begin" (début de bloc, end attendu) / "begin transaction" (instruction isolée))
 					// Si un des mots-clés pouvant aussi être début d'un autre mot-clé arrive en fin de bloc, on demande un complément d'information (lecture du paquet d'octets suivant pour nous assurer qu'il n'a pas une queue qui change sa sémantique).
