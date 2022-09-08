@@ -336,6 +336,8 @@ class Sqleur
 					// DML: étant susceptibles de porter du \n, et $chaineDerniereDecoupe n'étant jamais comparée à simplement ';', on y entrepose la restitution exacte de ce qui nous a invoqués (plutôt que seulement le premier caractère).
 					$nLignes = substr_count($chaineDerniereDecoupe = $decoupes[$i][0], "\n");
 					if(($this->_mode & Sqleur::MODE_BEGIN_END))
+					{
+						$this->_écarterFauxBéguins();
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
 							$this->_ajouterBoutRequête($chaineDerniereDecoupe);
@@ -347,6 +349,7 @@ class Sqleur
 						// On ajoute donc sa fonction littérale (pour éviter l'erreur Oracle PLS-00103: end sans point-virgule).
 						else if($this->_vientDeTerminerUnBlocProcédural($decoupes, $i))
 							$this->_requeteEnCours .= ';';
+					}
 					$this->terminaison = $decoupes[$i][0];
 					$this->_sors($this->_requeteEnCours);
 					$this->terminaison = null;
@@ -976,7 +979,6 @@ class Sqleur
 		if($motClé == 'is')
 			$motClé = 'as';
 		// À FAIRE: uniquement si pas de ; entre le create et le as! (faire le tri lors d'un ;)
-		// À FAIRE: la fonction PostgreSQL (as $$) ne doit pas attendre de ;: faire la distinction entre as $$ ou as ', et as autre chose. Bref le $$ ou ', ĉ le ; doit annuler la spécificité du dernier bloc.
 		
 		if(!isset(Sqleur::$FINS[$motClé]))
 			throw new Exception("Bloc de découpe inattendu $motClé");
@@ -1090,6 +1092,18 @@ class Sqleur
 			$this->_dernièreLigne = $ligne;
 			throw $ex;
 		}
+	}
+	
+	/* À appeler sur point-virgule pour faire sauter les fonctions non transformées (non suivies de leur corps démarré par un as).
+	 * Ex.: simple déclaration sans définition, drop function, for each row execute procedure, etc.
+	 */
+	protected function _écarterFauxBéguins()
+	{
+		if(!($n = count($this->_béguins))) return;
+		
+		for($i = $n; --$i >= 0 && in_array($this->_béguins[$i][0], [ 'package', 'procedure', 'function' ]);) {}
+		if(++$i < $n)
+			array_splice($this->_béguins, $i);
 	}
 	
 	protected function _vientDeTerminerUnBlocProcédural($découpes, $i)
