@@ -114,6 +114,16 @@ class Sqleur
 	const MODE_COMM_TOUS       = 0x06; // MODE_COMM_MULTILIGNE|MODE_COMM_MONOLIGNE
 	const MODE_SQLPLUS         = 0x08; // Vraie bouse qui ne sachant pas compter ses imbrications de begin, end, demande un / après les commandes qui lui font peur.
 	
+	// L'implémentation de détection des begin end est complexifiée par deux considérations Oracle:
+	// - la nécessité de pousser _dans le SQL_ le ; suivant un end, _s'il est procédural_ (suivant un create function, et non dans le case end)
+	//   Pousser au JDBC Oracle un begin end sans son ; est une erreur de syntaxe (PLS-00103).
+	//   Pensant initialement que cela ne s'appliquait qu'aux blocs anonymes (sans create function, par exemple un simple begin exception end), je le voyais comme exigence de BEGIN_END_COMPLEXE;
+	//   cependant cela s'avère faux (TOUS les begin end requièrent leur ; sous Oracle), ne justifiant pas la complexité.
+	// - mais aussi: la déclaration de variables d'une fonction, au lieu de commencer dans un bloc declare comme dans d'autres dialectes, se fait directement après le as.
+	// Pour cette raison on est _obligés_ de traiter le create function / procedure / package as / is comme un begin, et d'y recourir à notre complexité, car ce create function et le begin _partagent leur end_ (1 end pour deux départs). … Sauf que dans PostgreSQL, si le as est suivi d'un $$, le corps de fonction est littéral et non en bloc. … Sauf que le as (et le is, synonyme sous Oracle) ajoutent à la charge processeur, car (outre les as inclus dans une chaîne plus longue, "drop table rase") le as et le is se trouvent dans du "select id as ac_id" et "is not null".
+	// La complexité ajoutée est cependant bien identifiée grâce à la constante suivante.
+	const BEGIN_END_COMPLEXE = true;
+	
 	public $tailleBloc = 0x20000;
 	
 	/**
@@ -123,6 +133,8 @@ class Sqleur
 	 */
 	public function __construct($sortie = null, $préprocesseurs = array())
 	{
+		if(Sqleur::BEGIN_END_COMPLEXE && !isset(Sqleur::$FINS['function'])) Sqleur::$FINS += Sqleur::$FINS_COMPLEXES;
+		
 		$this->avecDéfs(array());
 		$this->_mode = Sqleur::MODE_COMM_TOUS | Sqleur::MODE_BEGIN_END; // SQLite et Oracle ont besoin de MODE_BEGIN_END, PostgreSQL >= 14 aussi: on le met d'office.
 		$this->_fichier = null;
@@ -229,15 +241,19 @@ class Sqleur
 		// Ceux ouvrant un bloc, avec leur mot-clé de fin:
 		'begin' => 'end',
 		'case' => 'end',
-		'function as' => 'end',
 		// Les autres:
 		'end' => true,
-		'function' => true,
-		'as' => true,
 		// Les faux-amis (similaires à un "vrai" mot-clé, remontés en tant que tel afin que, mis sur pied d'égalité, on puisse décider duquel il s'agit):
 		'begin transaction' => false,
 		'end if' => false,
 		'end loop' => false,
+	);
+	
+	static $FINS_COMPLEXES = array
+	(
+		'function as' => 'end',
+		'function' => true,
+		'as' => true,
 	);
 	
 	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false)
@@ -281,8 +297,12 @@ class Sqleur
 			// mais aussi les faux-amis ("end" de "end loop" à ne pas confondre avec celui fermant un "begin").
 			// N.B.: un contrôle sur le point-virgule sera fait par ailleurs (pour distinguer un "begin" de bloc procédural, de celui synonyme de "begin transaction" en PostgreSQL par exemple).
 			$opEx .= 'i';
-			$this->_exprFonction = '(?:create(?: or replace)? )?(?:package|procedure|function)'; // Dans un package, seul ce dernier, qui est premier, est précédé d'un create; les autres sont en "procedure machin is" sans create.
-			$expr .= '|begin(?: transaction)?|case|end(?: if| loop)?|'.$this->_exprFonction.'|as|is';
+			$expr .= '|begin(?: transaction)?|case|end(?: if| loop)?';
+			if(Sqleur::BEGIN_END_COMPLEXE)
+			{
+				$this->_exprFonction = '(?:create(?: or replace)? )?(?:package|procedure|function|trigger)'; // Dans un package, seul ce dernier, qui est premier, est précédé d'un create; les autres sont en "procedure machin is" sans create.
+				$expr .= '|'.$this->_exprFonction.'|as|is';
+			}
 		}
 		preg_match_all("@$expr@$opEx", $chaine, $decoupes, PREG_OFFSET_CAPTURE);
 		
@@ -337,6 +357,7 @@ class Sqleur
 					$nLignes = substr_count($chaineDerniereDecoupe = $decoupes[$i][0], "\n");
 					if(($this->_mode & Sqleur::MODE_BEGIN_END))
 					{
+						if(Sqleur::BEGIN_END_COMPLEXE)
 						$this->_écarterFauxBéguins();
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
@@ -487,6 +508,7 @@ class Sqleur
 		}
 		else // C'est la découpe courante qui nous fait entrer dans la chaîne
 		{
+			if(Sqleur::BEGIN_END_COMPLEXE)
 			$this->_entreEnChaîne($chaine, $decoupes, $i);
 			$fin = $decoupes[$i][0];
 			$débutIntérieur = strlen($fin);
@@ -963,12 +985,15 @@ class Sqleur
 		// Un synonyme PostgreSQL prêtant à confusion.
 		if($motClé == 'begin' && isset($découpes[$i + 1]) && $découpes[$i + 1][1] == $découpes[$i][1] + strlen($motClé) && $découpes[$i + 1][0] == ';')
 			$motClé = 'begin transaction';
+		if(Sqleur::BEGIN_END_COMPLEXE)
+		{
 		// Pour Oracle, les "create quelque chose as" sont des pré-begin (mais on ne doit pas attendre le begin pour prendre littéralement les ; car on peut avoir du "create … as ma_var integer; begin …; end;" (le ; avant le begin fait partie du bloc, et non pas sépare une instruction "create" d'une "begin")).
 		if(preg_match('#^'.$this->_exprFonction.'$#', $motClé))
 			$motClé = 'function';
 		if($motClé == 'is')
 			$motClé = 'as';
 		// À FAIRE: uniquement si pas de ; entre le create et le as! (faire le tri lors d'un ;)
+		}
 		
 		if(!isset(Sqleur::$FINS[$motClé]))
 			throw new Exception("Bloc de découpe inattendu $motClé");
@@ -995,6 +1020,8 @@ class Sqleur
 			)
 		)
 		{
+			if(Sqleur::BEGIN_END_COMPLEXE)
+			{
 			// Cas particulier du 'as' qui se combine avec un 'function' pour donner un nouveau mot-clé:
 			if($motClé == 'as')
 			{
@@ -1013,6 +1040,7 @@ class Sqleur
 				&& ($ptrBéguin = & $this->_ptrDernierBéguin()) && $ptrBéguin[0] == 'function as'
 			)
 				return;
+			}
 			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne ];
 		}
 	}
