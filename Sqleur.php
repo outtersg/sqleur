@@ -960,16 +960,6 @@ class Sqleur
 	protected function _motClé($chaîne, $taille, $laFinEstVraimentLaFin, $découpes, $dernierRetour, $dernierArrêt, $i)
 	{
 		$motClé = strtolower($découpes[$i][0]);
-		// Attention aux mots-clés en limite de bloc de lecture, qui peuvent en cacher un autre;
-		// mieux vaut alors sortir, et ne revenir qu'une fois assurés que rien ne le suit qui en ferait changer le sens (ex.: begin / begin transaction).
-		if($i == count($découpes) - 1 && !$laFinEstVraimentLaFin)
-			switch($motClé)
-			{
-				case 'begin':
-				case 'end':
-					// N.B.: fait double emploi avec le gros if() plus bas. Mais c'est plus prudent.
-					return Sqleur::CHAÎNE_COUPÉE;
-			}
 		// Un synonyme PostgreSQL prêtant à confusion.
 		if($motClé == 'begin' && isset($découpes[$i + 1]) && $découpes[$i + 1][1] == $découpes[$i][1] + strlen($motClé) && $découpes[$i + 1][0] == ';')
 			$motClé = 'begin transaction';
@@ -985,6 +975,14 @@ class Sqleur
 		// Les faux-amis sont les end quelque chose, qu'on ne gère pas ainsi que leur balise de démarrage.
 		if(!Sqleur::$FINS[$motClé])
 			return;
+		
+		// Attention aux mots-clés en limite de bloc de lecture, qui peuvent en cacher un autre;
+		// mieux vaut alors sortir, et ne revenir qu'une fois assurés que rien ne le suit qui en ferait changer le sens (ex.: begin / begin transaction),
+		// et inversement que nous ne sommes pas utiles au mot-clé qui nous suivra (ex.: as est content de savoir qu'il suit un creation function plutôt qu'un select colonne).
+		// À FAIRE: en fait non pas le dernier, mais "le dernier après avoir écarté les lignes vides". En effet parfois un ; serait bien aise de trouver un end devant lui; s'ils ne sont séparés que par une limite de bloc ça va, mais si en plus s'ajoutent des \n, alors la clause suivante se satisfait du \n comme successeur au end et exploite ce dernier avant de le poubelliser: le ; ne le retrouvera plus.
+		if($i == count($découpes) - 1 && !$laFinEstVraimentLaFin)
+					// N.B.: fait double emploi avec le gros if() plus bas. Mais c'est plus prudent.
+					return Sqleur::CHAÎNE_COUPÉE;
 		
 		if
 		(
