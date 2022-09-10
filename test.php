@@ -62,19 +62,26 @@ class PréproBdd
 	}
 }
 
-function faire($chemin)
+function parfaire($chemin)
 {
-	if(!file_exists(($cheminRés = strtr($chemin, array('.sql' => '.res.sql'))))) $cheminRés = null;
-	$GLOBALS['rés'] = isset($cheminRés) ? '' : null;
+	foreach(array('', null) as $suffixeRés)
+		if(!isset($suffixeRés) || file_exists(($cheminRés = strtr($chemin, array('.sql' => ".res$suffixeRés.sql")))))
+			break;
+	if(isset($suffixeRés))
+	{
+		$GLOBALS['rés'] = '';
+		$GLOBALS['résAttendu'] = file_get_contents($cheminRés);
+	}
 	
 	if($GLOBALS['aff'] >= 2)
 		echo "[36m=== $chemin ===[0m\n";
 	
-	faireSimple($chemin);
+	$fonction = 'faire'.$suffixeRés;
+	$fonction($chemin);
 	
 	$rés = null;
-	if(isset($cheminRés))
-		$rés = comp(file_get_contents($cheminRés), $GLOBALS['rés']);
+	if(isset($suffixeRés))
+		$rés = comp($GLOBALS['résAttendu'], $GLOBALS['rés']);
 	if($GLOBALS['aff'] >= 1)
 	{
 		if(!isset($rés))
@@ -87,8 +94,9 @@ function faire($chemin)
 	return $rés;
 }
 
-function faireSimple($chemin)
+function faire($chemin)
 {
+	// À FAIRE: isolation de processus pour ne pas tout planter en cas de vautrage: lancer un processus fils php sur moi-même.
 	$prépros = array();
 	$options = array();
 	$mode = 0;
@@ -176,7 +184,7 @@ ini_set('display_errors', 1);
 				break;
 			default:
 				++$faits;
-				faire($argv[0]);
+				parfaire($argv[0]);
 				break;
 		}
 		
@@ -184,7 +192,7 @@ ini_set('display_errors', 1);
 	}
 	if(!$faits)
 		foreach(glob(dirname(__FILE__).'/tests/*.test.sql') as $chemin)
-	faire($chemin);
+			parfaire($chemin);
 }
 
 tourner($argv);
