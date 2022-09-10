@@ -64,7 +64,7 @@ class PréproBdd
 
 function parfaire($chemin)
 {
-	foreach(array('', null) as $suffixeRés)
+	foreach(array('', '0', null) as $suffixeRés)
 		if(!isset($suffixeRés) || file_exists(($cheminRés = strtr($chemin, array('.sql' => ".res$suffixeRés.sql")))))
 			break;
 	if(isset($suffixeRés))
@@ -128,6 +128,20 @@ function faire($chemin)
 	$rempl = new Rempl();
 	$s->avecDéfs(array('#{{([^}]+|}[^}]+)+}}#' => array($rempl, 'r')));
 	$s->decoupeFichier($chemin);
+}
+
+function faire0($chemin)
+{
+	exec("php sql2csv.php -E -0 $chemin", $rés, $err);
+	$rés = strtr(implode("\n", $rés), array(chr(0) => "--#\n"));
+	$GLOBALS['rés'] = sansCommentaireLigne($rés);
+	$GLOBALS['résAttendu'] = sansCommentaireLigne($GLOBALS['résAttendu']);
+}
+
+function sansCommentaireLigne($contenu)
+{
+	$contenu = preg_replace('#(?:^|\n)--.*#', '', $contenu);
+	return $contenu;
 }
 
 function comp($attendu, $obtenu)
