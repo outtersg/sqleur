@@ -131,15 +131,31 @@ function _const($nom)
 	return $consts[$nom];
 }
 
+function tourner($argv)
+{
+	$faits = 0;
+	
 error_reporting(-1);
 ini_set('display_errors', 1);
 
-if(count($argv) > 1)
-{
-	foreach(array_slice($argv, 1) as $chemin)
-		faire($chemin);
-}
-else foreach(glob(dirname(__FILE__).'/tests/*.test.sql') as $chemin)
+	array_shift($argv);
+	while(count($argv))
+	{
+		switch($argv[0])
+		{
+			default:
+				++$faits;
+				faire($argv[0]);
+				break;
+		}
+		
+		array_shift($argv);
+	}
+	if(!$faits)
+		foreach(glob(dirname(__FILE__).'/tests/*.test.sql') as $chemin)
 	faire($chemin);
+}
+
+tourner($argv);
 
 ?>
