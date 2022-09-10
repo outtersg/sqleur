@@ -66,6 +66,14 @@ function faire($chemin)
 	if(!file_exists(($cheminRés = strtr($chemin, array('.sql' => '.res.sql'))))) $cheminRés = null;
 	$GLOBALS['rés'] = isset($cheminRés) ? '' : null;
 	
+	faireSimple($chemin);
+	
+	if(isset($cheminRés))
+		comp(file_get_contents($cheminRés), $GLOBALS['rés']);
+}
+
+function faireSimple($chemin)
+{
 	$prépros = array();
 	$options = array();
 	$mode = 0;
@@ -97,9 +105,6 @@ function faire($chemin)
 	$rempl = new Rempl();
 	$s->avecDéfs(array('#{{([^}]+|}[^}]+)+}}#' => array($rempl, 'r')));
 	$s->decoupeFichier($chemin);
-	
-	if(isset($cheminRés))
-		comp(file_get_contents($cheminRés), $GLOBALS['rés']);
 }
 
 function comp($attendu, $obtenu)
