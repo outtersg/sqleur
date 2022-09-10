@@ -117,11 +117,14 @@ function comp($attendu, $obtenu)
 		foreach($comp as $quoi => $contenu)
 			file_put_contents($tmp.'.'.$quoi.'.sql', $contenu);
 		system("diff -uw $tmp.attendu.sql $tmp.obtenu.sql > $tmp.diff");
-		echo preg_replace(array('/^(-.*)$/m', '/^(\+.*)$/m'), array('[32m\1[0m', '[31m\1[0m'), file_get_contents($tmp.'.diff'));
+		echo preg_replace(array('/^(-.*)$/m', '/^(\+.*)$/m'), array('[32m\1[0m', '[31m\1[0m'), $diff = file_get_contents($tmp.'.diff'));
 		unlink($tmp.'.attendu.sql');
 		unlink($tmp.'.obtenu.sql');
 		unlink($tmp.'.diff');
+		return empty($diff);
 	}
+	else
+		return true;
 }
 
 function _const($nom)
