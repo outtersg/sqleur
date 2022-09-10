@@ -137,6 +137,7 @@ function _const($nom)
 function tourner($argv)
 {
 	$faits = 0;
+	$GLOBALS['aff'] = 1;
 	
 error_reporting(-1);
 ini_set('display_errors', 1);
@@ -146,6 +147,13 @@ ini_set('display_errors', 1);
 	{
 		switch($argv[0])
 		{
+			case '-v':
+				$GLOBALS['aff'] = 2;
+				break;
+			case '-q':
+			case '-s':
+				$GLOBALS['aff'] = 0;
+				break;
 			default:
 				++$faits;
 				faire($argv[0]);
