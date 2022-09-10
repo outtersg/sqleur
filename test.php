@@ -5,6 +5,7 @@ function aff($req, $fermeture = false)
 	// Notre aff() pouvant être appelée par Sqleur.exécuter() qui désormais lui force un premier paramètre à false, on interprète ce dernier comme notre séparateur habituel.
 	if($fermeture === false) $fermeture = ';';
 	if(isset($GLOBALS['rés'])) $GLOBALS['rés'] .= $req.$fermeture."\n";
+	if($GLOBALS['aff'] >= 2)
 	echo "[90m$req[0m\n";
 }
 
@@ -66,10 +67,24 @@ function faire($chemin)
 	if(!file_exists(($cheminRés = strtr($chemin, array('.sql' => '.res.sql'))))) $cheminRés = null;
 	$GLOBALS['rés'] = isset($cheminRés) ? '' : null;
 	
+	if($GLOBALS['aff'] >= 2)
+		echo "[36m=== $chemin ===[0m\n";
+	
 	faireSimple($chemin);
 	
+	$rés = null;
 	if(isset($cheminRés))
-		comp(file_get_contents($cheminRés), $GLOBALS['rés']);
+		$rés = comp(file_get_contents($cheminRés), $GLOBALS['rés']);
+	if($GLOBALS['aff'] >= 1)
+	{
+		if(!isset($rés))
+			$affRés = '[90mfait';
+		else
+			$affRés = $rés ? '[32moui ' : '[31mnon ';
+		echo "$affRés [36m$chemin[0m\n";
+	}
+	
+	return $rés;
 }
 
 function faireSimple($chemin)
