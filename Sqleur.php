@@ -661,6 +661,21 @@ class Sqleur
 		$motCle = $posEspace === false ? $directive : substr($directive, 0, $posEspace);
 		switch($motCle)
 		{
+			case '#ifdef':
+			case '#ifndef':
+			case '#elifdef':
+			case '#elifndef':
+				// Les composites sont transcrits en leur équivalent.
+				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace + 1);
+				$texteCondition = 'defined('.$texteCondition.')';
+				if(substr($motCle, ($posEspace = strpos($motCle, 'def')) - 1, 1) == 'n')
+				{
+					--$posEspace;
+					$texteCondition = '!'.$texteCondition;
+				}
+				$motCle = substr($motCle, 0, $posEspace);
+				$directive = $motCle.' '.$texteCondition;
+				/* Et pas de break, on continue avec notre motCle recomposé. */
 			case '#else':
 			case '#elif':
 			case '#while':
