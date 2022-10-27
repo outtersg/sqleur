@@ -667,6 +667,7 @@ class Sqleur
 			case '#elifndef':
 				// Les composites sont transcrits en leur équivalent.
 				$texteCondition = $posEspace === false ? '' : substr($directive, $posEspace + 1);
+				$texteCondition = preg_replace('#/\*.*\*/#', '', $texteCondition); /* À FAIRE: en fait ça on devrait le proposer en standard à toutes les instructions prépro, non? */
 				$texteCondition = 'defined('.$texteCondition.')';
 				if(substr($motCle, ($posEspace = strpos($motCle, 'def')) - 1, 1) == 'n')
 				{
