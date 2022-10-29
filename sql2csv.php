@@ -312,7 +312,7 @@ class SPP extends JoueurSql
 			:
 			(
 				isset($this->terminaison)
-				? $this->terminaison.(substr($this->terminaison, -1) == "\n" ? '' : "\n")
+				? $this->terminaison
 				: ";\n"
 			)
 		;
