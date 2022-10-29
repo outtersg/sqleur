@@ -372,6 +372,11 @@ class Sqleur
 							$this->_requeteEnCours .= ';';
 					}
 					$this->terminaison = $decoupes[$i][0];
+					// On prend aussi dans la terminaison tous les retours à la ligne qui suivent, pour restituer le plus fidèlement possible.
+					/* À FAIRE: mais si on atteint la fin de tampon, il faudrait attendre le prochain tampon voir si on a encore du retour ensuite. */
+					/* À FAIRE: prendre aussi les commentaires sur la même ligne ("requête; -- Ce commentaire est attaché à cette requête."). Mais là pour le moment ils font partie de la requête suivante. */
+					if(preg_match("/[ \n\r\t]+/", substr($chaine, $decoupes[$i][1] + strlen($decoupes[$i][0])), $rEspace))
+						$this->terminaison .= $rEspace[0];
 					$this->_sors($this->_requeteEnCours);
 					$this->terminaison = null;
 					$this->_requeteEnCours = '';
@@ -602,7 +607,9 @@ class Sqleur
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
 		if($appliquerDéfs)
 			$requete = $this->_appliquerDéfs($requete);
-		if(strlen($requete = trim($requete)) && !$this->_queDuVent)
+		if(($t1 = strlen($r1 = rtrim($requete))) < ($t0 = strlen($requete)) && isset($this->terminaison))
+			$this->terminaison = substr($requete, $t1 - $t0).$this->terminaison;
+		if(strlen($requete = ltrim($r1)) && !$this->_queDuVent)
 		{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
