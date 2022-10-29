@@ -353,6 +353,7 @@ class Sqleur
 			{
 				case ';':
 					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
+					$arrêtJusteAvant = $dernierArret;
 					$dernierArret += strlen($decoupes[$i][0]);
 					// DML: étant susceptibles de porter du \n, et $chaineDerniereDecoupe n'étant jamais comparée à simplement ';', on y entrepose la restitution exacte de ce qui nous a invoqués (plutôt que seulement le premier caractère).
 					$nLignes = substr_count($chaineDerniereDecoupe = $decoupes[$i][0], "\n");
@@ -374,10 +375,16 @@ class Sqleur
 					}
 					$this->terminaison = $decoupes[$i][0];
 					// On prend aussi dans la terminaison tous les retours à la ligne qui suivent, pour restituer le plus fidèlement possible.
-					/* À FAIRE: mais si on atteint la fin de tampon, il faudrait attendre le prochain tampon voir si on a encore du retour ensuite. */
 					/* À FAIRE: prendre aussi les commentaires sur la même ligne ("requête; -- Ce commentaire est attaché à cette requête."). Mais là pour le moment ils font partie de la requête suivante. */
 					if(preg_match("/^[ \n\r\t;]+/", substr($chaine, $decoupes[$i][1] + strlen($decoupes[$i][0])), $rEspace))
 						$this->terminaison .= $rEspace[0];
+					// Si on soupçonne en fin de bloc que la suite pourrait apporter un retour à la ligne qui nous est dû, on réclame cette suite histoire de pouvoir exercer notre droit de regard.
+					if($decoupes[$i][1] + strlen($this->terminaison) == strlen($chaine) && !$laFinEstVraimentLaFin && !count($this->_débouclages))
+					{
+						$n = $i; // Hop, comme si on n'avait jamais vu ce point-virgule.
+						$dernierArret = $arrêtJusteAvant;
+						break;
+					}
 					$this->_sors($this->_requeteEnCours);
 					$this->terminaison = null;
 					$this->_requeteEnCours = '';
