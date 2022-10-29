@@ -375,7 +375,7 @@ class Sqleur
 					// On prend aussi dans la terminaison tous les retours à la ligne qui suivent, pour restituer le plus fidèlement possible.
 					/* À FAIRE: mais si on atteint la fin de tampon, il faudrait attendre le prochain tampon voir si on a encore du retour ensuite. */
 					/* À FAIRE: prendre aussi les commentaires sur la même ligne ("requête; -- Ce commentaire est attaché à cette requête."). Mais là pour le moment ils font partie de la requête suivante. */
-					if(preg_match("/[ \n\r\t]+/", substr($chaine, $decoupes[$i][1] + strlen($decoupes[$i][0])), $rEspace))
+					if(preg_match("/^[ \n\r\t;]+/", substr($chaine, $decoupes[$i][1] + strlen($decoupes[$i][0])), $rEspace))
 						$this->terminaison .= $rEspace[0];
 					$this->_sors($this->_requeteEnCours);
 					$this->terminaison = null;
