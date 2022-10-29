@@ -113,7 +113,9 @@ class SqleurCond
 			$this->_sqleur->_resteEnCours = null; /* À FAIRE: ne risque-t-on pas d'écraser quelque chose que le précédent tour de boucle souhaitait nous voir compléter? */
 			$this->_défSiVar();
 			$this->_sqleur->_ligne = $this->ligne + 1;
+			$this->_sqleur->_débouclages[] = $this;
 			$this->_sqleur->découperBloc($corps, false);
+			array_pop($this->_sqleur->_débouclages);
 		}
 		$this->_sqleur->restaurerÉtat();
 		$this->_sqleur->_chaineDerniereDecoupe = $dernièreDécoupe;

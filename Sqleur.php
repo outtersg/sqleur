@@ -140,7 +140,8 @@ class Sqleur
 		$this->_fichier = null;
 		$this->_ligne = null;
 		$this->_dernièreLigne = null;
-		$this->_boucles = array();
+		$this->_boucles = array(); // Indique qu'une boucle est en cours de constitution (et d'exécution de son premier tour de boucle).
+		$this->_débouclages = array(); // Indique qu'une boucle est en cours de restitution (second tour et suivants).
 		$this->_fonctions = array();
 		foreach(static::$FonctionsPréproc as $f)
 		{
