@@ -289,7 +289,7 @@ class Sqleur
 		// Tous le code gérant cet enquiquinante suite ";\n+/\n*" sera marqué de l'étiquette DML (Découpe Multi-Lignes):
 		// À FAIRE: DML dissocier $onEnFaitPlusPourSqlMoins du ; et ne vérifier leur séquence que dans le traitement DML? Là ça complique beaucoup de choses… Par contre en effet on gagne en perfs car on ne lit pas chaque / isolé, et on évite aussi de manger ceux de // ou /**/; sinon laisser l'expr comme ça, mais après preg_match_all traduire la suite en deux découpes successives. /!\ Bien traiter le cas où le ; était dans un bloc, et le \n/ dans le suivant. /!\ Attention aussi, là j'ai l'impression qu'on mange le / si on a un commentaire juste après le ;, de type ";//".
 		$onEnFaitPlusPourSqlMoins = $this->_mode & Sqleur::MODE_SQLPLUS ? '(?:\s*\n/(?:\n|$))?' : '';
-		$expr = '#|\\\\|;'.$onEnFaitPlusPourSqlMoins.'|--|'."\n".'|/\*|\*/|\'|\\\\\'|\$[a-zA-Z0-9_]*\$';
+		$expr = '[#\\\\\'"]|\\\\[\'"]|;'.$onEnFaitPlusPourSqlMoins.'|--|'."\n".'|/\*|\*/|\$[a-zA-Z0-9_]*\$';
 		$opEx = ''; // OPtions sur l'EXpression.
 		if($this->_mode & Sqleur::MODE_BEGIN_END)
 		{
@@ -443,6 +443,7 @@ class Sqleur
 				case '/':
 					$this->_mangerCommentaire($chaine, $decoupes, $n, /*&*/ $i, /*&*/ $dernierArret, $laFinEstVraimentLaFin, $chaineNouvelleDecoupe == '-' ? Sqleur::MODE_COMM_MONOLIGNE : Sqleur::MODE_COMM_MULTILIGNE);
 					break;
+				case '"':
 				case "'":
 				case '$':
 					if(!$this->dansUnSiÀLaTrappe())
