@@ -48,9 +48,7 @@ class SqleurPreproPrepro
 				if($p instanceof $classe)
 					continue;
 			
-			$p = new $classe;
-			$p->_sqleur = $this->_sqleur;
-			$this->_sqleur->_préprocesseurs[] = $p;
+			$this->_sqleur->attacherPréprocesseur(new $classe);
 		}
 	}
 }

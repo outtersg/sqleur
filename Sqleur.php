@@ -157,9 +157,15 @@ class Sqleur
 		else
 			$this->_sortie = $sortie;
 		
+		$this->_préprocesseurs = array();
 		foreach($préprocesseurs as $préprocesseur)
-			$préprocesseur->_sqleur = $this;
-		$this->_préprocesseurs = $préprocesseurs;
+			$this->attacherPréprocesseur($préprocesseur);
+	}
+	
+	public function attacherPréprocesseur($préprocesseur)
+	{
+		$préprocesseur->_sqleur = $this;
+		$this->_préprocesseurs[] = $préprocesseur;
 	}
 	
 	protected function _accumule($requete)
