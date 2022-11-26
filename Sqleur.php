@@ -392,7 +392,7 @@ class Sqleur
 					if(preg_match("/^[ \n\r\t;]+/", substr($chaine, $decoupes[$i][1] + strlen($decoupes[$i][0])), $rEspace))
 						$this->terminaison .= $rEspace[0];
 					// Si on soupçonne en fin de bloc que la suite pourrait apporter un retour à la ligne qui nous est dû, on réclame cette suite histoire de pouvoir exercer notre droit de regard.
-					if($decoupes[$i][1] + strlen($this->terminaison) == strlen($chaine) && !$laFinEstVraimentLaFin && !count($this->_débouclages))
+					if($decoupes[$i][1] + strlen($this->terminaison) == strlen($chaine) && $laFinEstVraimentLaFin === Sqleur::FIN_SUITE && !count($this->_débouclages))
 					{
 						$n = $i; // Hop, comme si on n'avait jamais vu ce point-virgule.
 						$dernierArret = $arrêtJusteAvant;
@@ -820,6 +820,12 @@ class Sqleur
 	
 	public function restaurerÉtat($avecDéfs = false)
 	{
+		/* À FAIRE: gérer les instructions multi-fichiers.
+		 * À l'heure actuelle sur changement de fichier tout est restauré (_resteEnCours, etc.),
+		 * donc une instruction *ne peut pas* commencer en fin de fichier inclus et continuer en suite de fichier incluant par exemple
+		 * (sauf dans une chaîne de caractères, où le contenu inclus s'assucumule avec ce qu'on avait déjà, avant d'être sorti; tandis que sur des instructions, on a parfois besoin de revenir en arrière (ex.: voir où se situait le dernier ;), or la frontière de fichier empêche cela).
+		 * Idéalement la constante FIN_FICHIER n'existerait pas (une suite incluants / inclus serait vue comme un seul long fichier).
+		 */
 		list
 		(
 			$défs,
