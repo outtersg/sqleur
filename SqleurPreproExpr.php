@@ -698,6 +698,12 @@ class NœudPrepro
 						: $ls[0]
 					;
 				}
+				else if(is_string($rés) || is_int($rés))
+					return $rés;
+				/* À FAIRE: gérer le null.
+				 * Problème: on souhaite continuer à distinguer le null "j'ai oublié de gérer le cas où je dois renvoyer mon résultat de requête plutôt que de le pondre dans le flux destination, et donc par défaut PHP me fait renvoyer null",
+				 * du null "j'ai bien conscience que je devais renvoyer le résultat de requête mais je n'y peux rien c'est ce que me renvoie la base".
+				 */
 				else
 					throw new ErreurExpr("Résultat inattendu à l'exécution de `{$this->f}`");
 				return $rés;
