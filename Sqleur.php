@@ -124,6 +124,10 @@ class Sqleur
 	// La complexité ajoutée est cependant bien identifiée grâce à la constante suivante.
 	const BEGIN_END_COMPLEXE = true;
 	
+	const FIN_SUITE = false;
+	const FIN_FICHIER = 0; // /!\ == FIN_SUITE mais !== FIN_SUITE, pour compatibilité avec les usages if(!$laFinEstVraimentLaFin)
+	const FIN_FIN = true;
+	
 	public $tailleBloc = 0x20000;
 	
 	/**
@@ -189,7 +193,7 @@ class Sqleur
 		return $this->_découpeFichier($fichier, true);
 	}
 	
-	public function _découpeFichier($fichier, $laFinEstVraimentLaFin = false)
+	public function _découpeFichier($fichier, $laFinEstVraimentLaFin = Sqleur::FIN_FICHIER)
 	{
 		if(!file_exists($fichier))
 			throw $this->exception($fichier.' inexistant');
@@ -223,7 +227,10 @@ class Sqleur
 		$this->_ligne = 1;
 		while(strlen($bloc = fread($f, $this->tailleBloc)))
 			$this->_decoupeBloc($bloc, false);
-		$r = $laFinEstVraimentLaFin ? $this->_decoupeBloc('', true) : null;
+		$r = $laFinEstVraimentLaFin !== Sqleur::FIN_SUITE
+		   ? $this->_decoupeBloc('', $laFinEstVraimentLaFin)
+		   : null
+		;
 		if(($nConditionsImbriquées -= count($this->_conditions)))
 			throw $this->exception($nConditionsImbriquées > 0 ? $nConditionsImbriquées.' #endif sans #if' : (-$nConditionsImbriquées).' #if sans #endif');
 		return $r;
