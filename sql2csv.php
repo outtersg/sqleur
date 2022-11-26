@@ -300,6 +300,9 @@ class SPP extends JoueurSql
 	
 	public function exécuter($sql, $appliquerDéfs = false, $interne = false)
 	{
+		if($interne && isset($this->_scénario))
+			return $this->_déroulerScénario($sql, $appliquerDéfs);
+		
 		// Si la dernière ligne est susceptible de masquer notre point-virgule (commentaire, ou autre), on rajoute un retour, que le point-virgule ait sa ligne à part.
 		if(preg_match("#(--|\n/)[^\n]*\$#", $sql))
 			$sql .= "\n";
@@ -325,6 +328,13 @@ class SPP extends JoueurSql
 			$sép = substr($sép, 1);
 		
 		echo $sql.$sép;
+	}
+	
+	protected function _déroulerScénario($sql, $appliquerDéfs = false)
+	{
+		if(($attendu = array_shift($this->_scénario)) != $sql)
+			throw new Exception("Erreur de scénario:\n attendu:\n  $attendu\n reçu:\n  $sql");
+		return array_shift($this->_scénario);
 	}
 }
 
@@ -386,6 +396,14 @@ class Sql2Csv
 				case '-o':
 					++$i;
 					$sortie = $argv[$i];
+					break;
+				case '--scenario':
+					$scénario = file_get_contents($argv[++$i]);
+					$scénario = strtr($scénario, array("[\n" => '[', ",\n" => ','));
+					if(substr($scénario, -1) != ']') $scénario .= ']';
+					$scénario = strtr($scénario, array(",]" => ']'));
+					$scénario = json_decode($scénario);
+					$j->_scénario = $scénario;
 					break;
 				default:
 					if(preg_match('/^(:?[_a-zA-Z0-9]*)=(.*)$/', $argv[$i], $allumettes))
