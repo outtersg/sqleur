@@ -369,14 +369,14 @@ class Sqleur
 					$arrêtJusteAvant = $dernierArret;
 					$dernierArret += strlen($decoupes[$i][0]);
 					// DML: étant susceptibles de porter du \n, et $chaineDerniereDecoupe n'étant jamais comparée à simplement ';', on y entrepose la restitution exacte de ce qui nous a invoqués (plutôt que seulement le premier caractère).
-					$nLignes = substr_count($chaineDerniereDecoupe = $decoupes[$i][0], "\n");
+					$nLignes = substr_count($chaineNouvelleDecoupe = $decoupes[$i][0], "\n");
 					if(($this->_mode & Sqleur::MODE_BEGIN_END))
 					{
 						if(Sqleur::BEGIN_END_COMPLEXE)
 						$this->_écarterFauxBéguins();
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
-							$this->_ajouterBoutRequête($chaineDerniereDecoupe);
+							$this->_ajouterBoutRequête($chaineNouvelleDecoupe);
 							$this->_ligne += $nLignes;
 							break;
 						}
@@ -396,6 +396,7 @@ class Sqleur
 					{
 						$n = $i; // Hop, comme si on n'avait jamais vu ce point-virgule.
 						$dernierArret = $arrêtJusteAvant;
+						$chaineNouvelleDecoupe = $chaineDerniereDecoupe;
 						break;
 					}
 					$this->_sors($this->_requeteEnCours);
