@@ -1,0 +1,126 @@
+#!/bin/sh
+
+#- À personnaliser -------------------------------------------------------------
+
+listercorpus()
+{
+	# Listez ici les .sql qui constituent votre corpus sur lequel valider la non-régression du Sqleur.
+	find /dev/null -name "*.sql"
+}
+
+sql2csvcorpus()
+{
+	# Collez après le -E toutes les définitions de variables nécessaires à votre SQL:
+	# - les #if TOTO == 1 qui vont planter si vous n'avez pas un TOTO=0 ou TOTO=1 ici
+	# - ou tout simplement les valeurs que vous voulez mettre pour faire passer dans certains #if même s'ils sont protégés contre le plantage
+	time php sql2csv.php -E
+}
+
+#- Moteur ----------------------------------------------------------------------
+
+simplifierSql()
+{
+	sed -e 's/ *--[^#].*//' -e '/^$/d'
+}
+
+simples()
+{
+	php test.php
+}
+
+res0()
+{
+	local entree="$1" attendu="$2" sortie="$3"
+}
+
+res0s()
+{
+	local f fres
+	for f in tests/*.test.res0.sql
+	do
+		fres="`echo "$f" | sed -e 's#\.res0##'`"
+		res0 "$fres" "$f" /tmp/
+		esp="`printf '\100'`" &&
+		cat "$f" > /tmp/1 &&
+		php sql2csv.php -E -0 "$fres" | tr '\000' $esp | sed -e "s/$esp/--#$esp/g" | tr $esp '\012' > /tmp/2 &&
+		for f in 1 2
+		do
+			simplifierSql < /tmp/$f > /tmp/$f.propre
+		done &&
+		diff -uw /tmp/2.propre /tmp/1.propre
+	done
+}
+
+vraitrigger()
+{
+	rm /tmp/1.sqlite3
+	{
+		cat <<TERMINE
+create table toto (a int);
+create trigger plop before update on toto
+begin
+    update titi set a = 2;
+end;
+insert into toto values (4);
+create table titi (a int);
+insert into titi values (1);
+update toto set a = 5;
+
+select * from titi;
+TERMINE
+	} | bdd=sqlite:/tmp/1.sqlite3 php sql2csv.php
+	# Doit renvoyer 2.
+}
+
+telechVersion()
+{
+	local v="$1"
+	[ -e /tmp/sqleur.$v.tgz ] || curl -L -o /tmp/sqleur.$v.tgz https://github.com/outtersg/sqleur/archive/refs/tags/$v.tar.gz
+	( cd /tmp/ && tar xzf sqleur.$v.tgz )
+}
+
+# /!\ Ne teste pas le mécanisme d'#include (et donc les instructions à cheval sur deux fichiers).
+corpus()
+{
+	# Versions de référence successives (on comparera à la dernière non commentée).
+	v=1.5.220212
+	#v=1.5.220827 # Toute pourrie, achoppe assez rapidement.
+	v=1.6.220910.1
+	v=1.7.221126
+	(
+		listercorpus \
+		| sort | while read f
+		do
+			echo
+			sed -E -e 's#`[^`]*`#1#g' -e '/#include/d' -e 's/#while.*/#if 1/' -e '/#(copy|require|skip)/d' < "$f"
+		done > /tmp/0.sql # Fichier par fichier, de manière à ce que ceux sans retour final en ait un qui évite que sa dernière ligne soit concaténée avec la première du suivant, potentiellement un #if qui perdrait alors son côté prépro en n'étant plus en début de ligne.
+	)
+	
+	local sortie
+	n=0
+	for d in /tmp/sqleur-$v .
+	do
+		n=$((n+1))
+		case "$d" in
+			/tmp/*)
+				sortie="$d.sql"
+				[ ! -f "$sortie" ] || continue
+				;;
+			*) sortie=/tmp/$n.sql ;;
+		esac
+		echo "=== Test de la version $d ==="
+		[ -d "$d" ] || telechVersion "$v"
+		( cd "$d" && sql2csvcorpus < /tmp/0.sql > "$sortie" )
+	done
+	diff -uw /tmp/sqleur-$v.sql "$sortie" > /tmp/3 ; vi /tmp/3
+}
+
+if [ -z "$1" ]
+then
+	#simples
+	#res0s
+	#vraitrigger
+	corpus
+else
+	"$@"
+fi
