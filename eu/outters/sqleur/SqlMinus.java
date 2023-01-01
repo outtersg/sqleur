@@ -274,6 +274,7 @@ public class SqlMinus
 class EcrivainVerbeux extends CSVWriter
 {
 	protected SqlMinus appelant;
+	protected int pos = -9999; // En deçà du premier numéro de ligne qu'on peut recevoir (-1 pour une erreur, 0 pour un déroulé normal).
 	protected double t0;
 	
 	public EcrivainVerbeux(String chemin, char sep, SqlMinus appelant) throws IOException
@@ -292,7 +293,15 @@ class EcrivainVerbeux extends CSVWriter
 	
 	protected void writeLog(int nLignes)
 	{
+		// On ne notifie que si une progression a eu lieu.
+		// En effet on peut avoir double notification de la ligne 0:
+		// - par le CSVWriter en cas de masquage des en-têtes, car alors il force un appel pour nous signaler l'entrée en résultats (d'habitude calée sur l'obtention de la ligne d'en-têtes)
+		// - par SqlMinus qui nous invoquer un dernier writeNext() pour être sûr qu'on a toute l'info.
+		if(nLignes > this.pos)
+		{
 		appelant.notif(nLignes, System.currentTimeMillis() - t0);
+			this.pos = nLignes;
+		}
 		super.writeLog(nLignes);
 	}
 }
