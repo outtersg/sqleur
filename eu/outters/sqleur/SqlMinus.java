@@ -73,29 +73,7 @@ public class SqlMinus
 			}
 			else if(args[posParam].equals("-s"))
 			{
-				String param = args[++posParam];
-				if(param.charAt(0) == '\\' && param.length() > 1)
-				{
-					if(param.equals("\\t"))
-						sepCsv = '\t';
-					else if(param.length() == 4)
-					{
-						int n = 0;
-						char c;
-						for(int i = 0; ++i <= 3;)
-							if((c = param.charAt(i)) >= '0' && c <= '9')
-								n = n * 8 + (c - '0');
-							else
-								throw new Exception("Séparateur non reconnu: "+param);
-						sepCsv = (char)n;
-					}
-					else
-						throw new Exception("Séparateur non reconnu: "+param);
-				}
-				else if(param.length() == 1)
-					sepCsv = param.charAt(0);
-				else
-					throw new Exception("Séparateur non reconnu: "+param);
+				sepCsv = _paramSep(args[++posParam]);
 				sepCsvChoisi = true;
 			}
 			else if(args[posParam].equals("--ss"))
@@ -183,6 +161,32 @@ public class SqlMinus
 		
 		con.close();
     }
+	
+	protected char _paramSep(String param) throws Exception
+	{
+		if(param.charAt(0) == '\\' && param.length() > 1)
+		{
+			if(param.equals("\\t"))
+				return '\t';
+			else if(param.length() == 4)
+			{
+				int n = 0;
+				char c;
+				for(int i = 0; ++i <= 3;)
+					if((c = param.charAt(i)) >= '0' && c <= '9')
+						n = n * 8 + (c - '0');
+					else
+						throw new Exception("Séparateur non reconnu: "+param);
+				return (char)n;
+			}
+			else
+				throw new Exception("Séparateur non reconnu: "+param);
+		}
+		else if(param.length() == 1)
+			return param.charAt(0);
+		else
+			throw new Exception("Séparateur non reconnu: "+param);
+	}
 	
 	public void exec(String req) throws SQLException, IOException, Exception
 	{
