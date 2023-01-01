@@ -76,6 +76,8 @@ public class SqlMinus
 				sepCsv = _paramSep(args[++posParam]);
 				sepCsvChoisi = true;
 			}
+			else if(args[posParam].equals("--sans-entete"))
+				avecNomsColonne = false;
 			else if(args[posParam].equals("--ss"))
 				// Séparation Sorties: millisecondes intercalées entre le retour sur une requête (stderr) et l'affichage du résultat (stdout).
 				/* N.B.: À travers un SSH, rien n'y fait: OpenSSH privilégiant stdout sur stderr, lorsque l'on affiche la séquence suivante (entre parenthèses: moment de l'événement, puis sortie concernée):
