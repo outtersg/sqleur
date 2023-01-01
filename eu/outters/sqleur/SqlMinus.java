@@ -33,6 +33,7 @@ public class SqlMinus
 	
 	protected boolean avecNomsColonne = true;
 	protected char sepCsv = ';';
+	protected char guillemet = CSVParser.DEFAULT_QUOTE_CHARACTER;
 	protected String invite = null;
 	protected int delaiEntreSortiesStandard = 0;
 	protected Pattern exprSpe = null;
@@ -71,10 +72,16 @@ public class SqlMinus
 				if(diag < 0) diag = 0;
 				if(invite == null) invite = "> ";
 			}
-			else if(args[posParam].equals("-s"))
+			else if(args[posParam].equals("-s") || args[posParam].equals("-g"))
 			{
-				sepCsv = _paramSep(args[++posParam]);
+				char sep = _paramSep(args[++posParam]);
+				if(args[posParam - 1].equals("-s"))
+				{
+					sepCsv = sep;
 				sepCsvChoisi = true;
+				}
+				else if(args[posParam - 1].equals("-g"))
+					guillemet = sep;
 			}
 			else if(args[posParam].equals("--sans-entete"))
 				avecNomsColonne = false;
@@ -131,7 +138,6 @@ public class SqlMinus
 
 
 		/* À FAIRE: ne pas échapper les retours à la ligne si en mode séparateur \003 */
-		/* À FAIRE: déguillemetter les noms de colonne */
 		
 		for(--posParam; ++posParam < args.length;)
 		{
@@ -214,8 +220,8 @@ public class SqlMinus
 			(
 				CSVWriter writer =
 					diag > 0
-					? new EcrivainVerbeux(fileName, sepCsv, this)
-					: new CSVWriter(fileName, sepCsv, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END)
+					? new EcrivainVerbeux(fileName, sepCsv, guillemet, this)
+					: new CSVWriter(fileName, sepCsv, guillemet, guillemet, CSVWriter.DEFAULT_LINE_END)
 			)
 			{
 				// Merci https://datubaze.files.wordpress.com/2015/11/r_menon_expert_ora_jdbc_programming_2005_gram.pdf pour comment jouer aussi bien du select que du DDL!
@@ -279,9 +285,9 @@ class EcrivainVerbeux extends CSVWriter
 	protected int pos = -9999; // En deçà du premier numéro de ligne qu'on peut recevoir (-1 pour une erreur, 0 pour un déroulé normal).
 	protected double t0;
 	
-	public EcrivainVerbeux(String chemin, char sep, SqlMinus appelant) throws IOException
+	public EcrivainVerbeux(String chemin, char sep, char guillemet, SqlMinus appelant) throws IOException
 	{
-		super(chemin, sep, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
+		super(chemin, sep, guillemet, guillemet, CSVWriter.DEFAULT_LINE_END);
 		this.appelant = appelant;
 		t0 = System.currentTimeMillis();
 	}
