@@ -1234,7 +1234,14 @@ class Sqleur
 		
 		$entre = substr($chaîne, $posDébut = $découpes[$iDébut][1] + strlen($découpes[$iDébut][0]), $découpes[$i][1] - $posDébut);
 		// On est au même niveau que le create function tant qu'on n'est pas dans une parenthèse, donc tant que l'on a autant de parenthèses ouvrantes que de fermantes (… ou moins en cas de bloc mémoire ayant coupé un peu trop entre notre create et nous).
-		return substr_count($entre, ')') >= substr_count($entre, '(');
+		if(substr_count($entre, ')') < substr_count($entre, '(')) return false;
+		
+		// Seconde condition: être un vrai mot-clé isolé… Genre pas le is de function windows_iis() ou function is_acceptable().
+		// Notons que le CHAÎNE_COUPÉE renvoyé par _motClé() nous GARANTIT que maintenant nous avons dans $chaîne les caractères suivant notre prétendu mot-clé.
+		if(strlen(trim(substr($entre, -1))) > 0) return false;
+		if(strlen(trim(substr($chaîne, $découpes[$i][1] + strlen($découpes[$i][0]), 1))) > 0) return false;
+		
+		return true;
 	}
 }
 
