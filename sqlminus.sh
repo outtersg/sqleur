@@ -2,7 +2,7 @@
 
 sqlm()
 {
-	local fichiers=
+	local fichiers= sep="`printf '\036'`"
 	case "$* " in
 		*".sql "|*=*)
 			# /!\ Repose sur le repapa des scripts de Guillaume.
@@ -22,7 +22,7 @@ sqlm()
 						unset IFS
 						;;
 				esac
-				case "$r" in 1) fichiers="$fichiers$param " ; return 1 ;; esac
+				case "$r" in 1) fichiers="$fichiers$param$sep" ; return 1 ;; esac
 			}
 			repapa exfifi "$@" ; eval "$repapa"
 	esac
@@ -35,9 +35,11 @@ sqlm()
 	then
 		_sqlm "$@"
 	else
-		php "$SQLEUR/sql2csv.php" -E -print0 $fichiers | _sqlm -0 "$@"
+		( IFS="$sep" ; tifs php "$SQLEUR/sql2csv.php" -E -print0 $fichiers ) | _sqlm -0 "$@"
 	fi
 }
+
+tifs() { unset IFS ; "$@" ; }
 
 _deuxMotsSeSuivent()
 {
