@@ -406,7 +406,7 @@ class Sql2Csv
 					$j->_scénario = $scénario;
 					break;
 				default:
-					if(preg_match('/^(:?[_a-zA-Z0-9]*)=(.*)$/', $argv[$i], $allumettes))
+					if(preg_match('/^([@:]?[_a-zA-Z0-9]*[@:]?)=(.*)$/', $argv[$i], $allumettes))
 						$défs[$allumettes[1]] = $allumettes[2];
 					else
 					$entrées[] = $argv[$i] === '-' ? Flux::STDIN : $argv[$i];
