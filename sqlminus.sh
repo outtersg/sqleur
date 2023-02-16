@@ -9,19 +9,20 @@ sqlm()
 			_exfifi_param() { case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
 			exfifi() # exfifi = EXFIltre les FIchiers.
 			{
+				local r=0 # 0: on laisse passer; 1: on prend pour nous.
 				case "$param" in
-					*.sql) fichiers="$fichiers$param " ; false ;;
+					*.sql) r=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
 					# Cependant on doit ruser pour:
 					# - ne pas y prendre les = SQL ("select 1 from t where c = 2")
 					# - … sauf si le = SQL est inclus dans un VAR="SQL contenant un =", donc on ne doit tester que le premier =
 					*=*)
 						IFS='='
-						_exfifi_param $param && fichiers="$fichiers$param " && r=1 || r=0
+						_exfifi_param $param && r=1 || r=0
 						unset IFS
-						return $r
 						;;
 				esac
+				case "$r" in 1) fichiers="$fichiers$param " ; return 1 ;; esac
 			}
 			repapa exfifi "$@" ; eval "$repapa"
 	esac
