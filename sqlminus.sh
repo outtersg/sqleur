@@ -6,7 +6,7 @@ sqlm()
 	case "$* " in
 		*".sql "|*=*)
 			# /!\ Repose sur le repapa des scripts de Guillaume.
-			_exfifi_param() { case "$1" in *[^A-Za-z0-9_]*) false ;; esac ; }
+			_exfifi_param() { case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
 			exfifi() # exfifi = EXFIltre les FIchiers.
 			{
 				case "$param" in
