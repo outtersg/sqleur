@@ -214,6 +214,7 @@ public class SqlMinus
 		try
 		{
 		Statement stmt = con.createStatement();
+			ResultSet rs = null;
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
 			try
@@ -228,7 +229,7 @@ public class SqlMinus
 				boolean estUneReq = stmt.execute(req);
 				if(estUneReq)
 				{
-					ResultSet rs = stmt.getResultSet();
+					rs = stmt.getResultSet();
             //Define fetch size(default as 30000 rows), higher to be faster performance but takes more memory
             ResultSetHelperService.RESULT_FETCH_SIZE=50000;
             //Define MAX extract rows, -1 means unlimited.
@@ -245,6 +246,11 @@ public class SqlMinus
 					//int n = stmt.getUpdateCount();
 					writer.writeNext(null);
 				}
+			}
+			finally
+			{
+				if(rs != null) rs.close();
+				if(stmt != null) stmt.close();
 			}
 		}
 		catch(Exception ex)
