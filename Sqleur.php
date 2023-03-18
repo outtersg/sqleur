@@ -1119,7 +1119,12 @@ class Sqleur
 	{
 		// On inclut les caractères de contrôle, dont la tabulation.
 		// On s'arrête en 0x80, de peur de voir comme délimiteur des caractères UTF-8.
-		return ($car >= "\0" && $car < '0') || ($car > '9' && $car < 'A') || ($car > 'Z' && $car < 'a') || ($car > 'z' && $car <= chr(0x7F));
+		return
+		!in_array($car, [ '_' ])
+		&&
+		(
+			($car >= "\0" && $car < '0') || ($car > '9' && $car < 'A') || ($car > 'Z' && $car < 'a') || ($car > 'z' && $car <= chr(0x7F))
+		);
 	}
 	
 	/**
