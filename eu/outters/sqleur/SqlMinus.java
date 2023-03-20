@@ -37,6 +37,7 @@ public class SqlMinus
 	protected String invite = null;
 	protected int delaiEntreSortiesStandard = 0;
 	protected Pattern exprSpe = null;
+	protected Pattern exprVide = null;
 	
 	public static String GRIS = "[90m";
 	public static String VERT = "[32m";
@@ -49,6 +50,7 @@ public class SqlMinus
 		/* Initialisation. */
 		
 		exprSpe = Pattern.compile("^ *set +(?<p0>(?<head>hea(?:d(?:ing)?)?)) (?<v0>on|off) *$", Pattern.CASE_INSENSITIVE);
+		exprVide = Pattern.compile("^(?:[ \t\r\n]+|--[^\n]*)*$");
 		
 		/* Lecture des paramètres. */
 		
@@ -198,6 +200,9 @@ public class SqlMinus
 	
 	public void exec(String req) throws SQLException, IOException, Exception
 	{
+		Matcher vide = exprVide.matcher(req);
+		if(vide.find()) return;
+		
 		Matcher spe = exprSpe.matcher(req);
 		if(spe.find())
 		{
