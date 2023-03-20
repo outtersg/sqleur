@@ -174,28 +174,48 @@ public class SqlMinus
 	
 	protected char _paramSep(String param) throws Exception
 	{
-		if(param.charAt(0) == '\\' && param.length() > 1)
-		{
-			if(param.equals("\\t"))
-				return '\t';
-			else if(param.length() == 4)
-			{
-				int n = 0;
-				char c;
-				for(int i = 0; ++i <= 3;)
-					if((c = param.charAt(i)) >= '0' && c <= '9')
-						n = n * 8 + (c - '0');
-					else
-						throw new Exception("Séparateur non reconnu: "+param);
-				return (char)n;
-			}
-			else
-				throw new Exception("Séparateur non reconnu: "+param);
-		}
-		else if(param.length() == 1)
-			return param.charAt(0);
+		String r = _paramSeps(param);
+		if(r.length() == 1)
+			return r.charAt(0);
 		else
 			throw new Exception("Séparateur non reconnu: "+param);
+	}
+	
+	protected String _paramSeps(String param) throws Exception
+	{
+		int i;
+		if((i = param.indexOf('\\')) < 0) return param;
+		String res = param.substring(0, i);
+		while(i < param.length())
+		{
+			if(param.charAt(i) == '\\')
+			{
+				++i;
+				if(i < param.length() && param.charAt(i) == 't')
+				{
+					res += '\t';
+					++i;
+				}
+				else if(i < param.length() && param.charAt(i) >= '0' && param.charAt(i) <= '7')
+				{
+				int n = 0;
+				char c;
+					for(; i < param.length() && (c = param.charAt(i)) >= '0' && c <= '9'; ++i)
+						n = n * 8 + (c - '0');
+					res += (char)n;
+				}
+				else
+					res += '\\';
+			}
+			else
+			{
+				int j = param.indexOf('\\', i);
+				if(j < 0) j = param.length();
+				res += param.substring(i, j);
+				i = j;
+			}
+		}
+		return res;
 	}
 	
 	public void exec(String req) throws SQLException, IOException, Exception
