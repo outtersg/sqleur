@@ -34,6 +34,7 @@ public class SqlMinus
 	protected boolean avecNomsColonne = true;
 	protected char sepCsv = ';';
 	protected char guillemet = CSVParser.DEFAULT_QUOTE_CHARACTER;
+	protected String nulls = null;
 	protected String invite = null;
 	protected int delaiEntreSortiesStandard = 0;
 	protected Pattern exprSpe = null;
@@ -85,6 +86,8 @@ public class SqlMinus
 				else if(args[posParam - 1].equals("-g"))
 					guillemet = sep;
 			}
+			else if(args[posParam].equals("--null"))
+				nulls = _paramSeps(args[++posParam]);
 			else if(args[posParam].equals("--sans-entete"))
 				avecNomsColonne = false;
 			else if(args[posParam].equals("--ss"))
@@ -250,6 +253,7 @@ public class SqlMinus
 					: new CSVWriter(fileName, sepCsv, guillemet, guillemet, CSVWriter.DEFAULT_LINE_END)
 			)
 			{
+				if(nulls != null) writer.setNullString(nulls);
 				// Merci https://datubaze.files.wordpress.com/2015/11/r_menon_expert_ora_jdbc_programming_2005_gram.pdf pour comment jouer aussi bien du select que du DDL!
 				boolean estUneReq = stmt.execute(req);
 				if(estUneReq)
