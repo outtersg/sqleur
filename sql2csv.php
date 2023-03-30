@@ -145,11 +145,13 @@ class JoueurSql extends Sqleur
 				'pgsql' => array
 				(
 					'AUTOPRIMARY' => 'serial primary key',
+					'BIGAUTOPRIMARY' => 'bigserial primary key',
 					'T_TEXT' => 'text',
 				),
 				'sqlite' => array
 				(
 					'AUTOPRIMARY' => 'integer primary key',
+					'BIGAUTOPRIMARY' => 'integer primary key', // https://sqlite.org/forum/info/2dfa968a702e1506e885cb06d92157d492108b22bf39459506ab9f7125bca7fd
 					'T_TEXT' => 'text',
 				),
 			);
