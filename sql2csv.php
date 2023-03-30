@@ -145,10 +145,12 @@ class JoueurSql extends Sqleur
 				'pgsql' => array
 				(
 					'AUTOPRIMARY' => 'serial primary key',
+					'T_TEXT' => 'text',
 				),
 				'sqlite' => array
 				(
 					'AUTOPRIMARY' => 'integer primary key',
+					'T_TEXT' => 'text',
 				),
 			);
 			if(isset($définitionsParPilote[$pilote]))
