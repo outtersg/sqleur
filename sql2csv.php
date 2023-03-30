@@ -129,6 +129,33 @@ class JoueurSql extends Sqleur
 			$this->bdd->pgsqlSetNoticeCallback(array($this, 'notifDiag'));
 	}
 	
+	public function autoDéfs()
+	{
+		foreach(array(':pilote', ':driver') as $clé)
+			if(isset($this->_defs['stat'][$clé]))
+			{
+				$pilote = $this->_defs['stat'][$clé];
+				break;
+			}
+		if(isset($pilote))
+		{
+			/* COPIE: MajeurJoueurPdo */
+			$définitionsParPilote = array
+			(
+				'pgsql' => array
+				(
+					'AUTOPRIMARY' => 'serial primary key',
+				),
+				'sqlite' => array
+				(
+					'AUTOPRIMARY' => 'integer primary key',
+				),
+			);
+			if(isset($définitionsParPilote[$pilote]))
+				$this->ajouterDéfs($définitionsParPilote[$pilote]);
+		}
+	}
+	
 	public function préprocesse($instr, $ligne)
 	{
 		$ligne = preg_split('/[ \t]+/', $ligne);
@@ -441,6 +468,7 @@ class Sql2Csv
 		$j->format = $formatSortie;
 		$j->sépChamps = $sépChamps;
 		$j->ajouterDéfs($défs);
+		$j->autoDéfs();
 		$j->sortie($sortie);
 		foreach($entrées as $entrée)
 			$j->jouer($entrée);
