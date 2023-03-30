@@ -344,6 +344,16 @@ class JoueurSqlPdo extends JoueurSql
 	{
 		$this->bdd = $bdd;
 		$this->bdd();
+		$pilote = $this->bdd->getAttribute(PDO::ATTR_DRIVER_NAME);
+		$this->ajouterDéfs
+		(
+			array
+			(
+				':pilote' => $pilote,
+				':driver' => $pilote,
+			)
+		);
+		
 		parent::__construct();
 	}
 	
