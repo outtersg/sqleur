@@ -156,7 +156,17 @@ class JoueurSql extends Sqleur
 				),
 			);
 			if(isset($définitionsParPilote[$pilote]))
-				$this->ajouterDéfs($définitionsParPilote[$pilote]);
+			{
+				$défs = $définitionsParPilote[$pilote];
+				$dyns = array();
+				foreach($définitionsParPilote[$pilote] as $clé => $val)
+					if(strpos($clé, '(') !== false)
+						$dyns[$clé] = '#define '.$clé.' '.$val;
+				$défs = array_diff_key($défs, $dyns);
+				$this->ajouterDéfs($défs);
+				foreach($dyns as $dyn)
+					$this->_préproDéf->préprocesse('#define', $dyn);
+			}
 		}
 	}
 	
