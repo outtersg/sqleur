@@ -131,52 +131,10 @@ class JoueurSql extends Sqleur
 	
 	public function autoDéfs()
 	{
-		foreach(array(':pilote', ':driver') as $clé)
-			if(isset($this->_defs['stat'][$clé]))
-			{
-				$pilote = $this->_defs['stat'][$clé];
-				break;
-			}
-		if(isset($pilote))
-		{
-			/* COPIE: MajeurJoueurPdo */
-			$définitionsParPilote = array
-			(
-				'pgsql' => array
-				(
-					'AUTOPRIMARY' => 'serial primary key',
-					'AUTOPRIMARY_INIT(t, c)' => '',
-					'BIGAUTOPRIMARY' => 'bigserial primary key',
-					'T_TEXT' => 'text',
-					'T_TEXT(x)' => 'varchar(x)',
-				),
-				'sqlite' => array
-				(
-					'AUTOPRIMARY' => 'integer primary key',
-					'AUTOPRIMARY_INIT(t, c)' => '',
-					'BIGAUTOPRIMARY' => 'integer primary key', // https://sqlite.org/forum/info/2dfa968a702e1506e885cb06d92157d492108b22bf39459506ab9f7125bca7fd
-					'T_TEXT' => 'text',
-					'T_TEXT(x)' => 'varchar(x)',
-				),
-				'oracle' => array
-				(
-					'AUTOPRIMARY' => 'integer primary key',
-					'AUTOPRIMARY_INIT(t, c)' => <<<TERMINE
-create sequence t##_##c##_seq start with 1;
-create or replace trigger t##_id
-before insert on t
-for each row
-begin
-	select t##_##c##_seq.nextval into :new.c from dual;
-end;
-/
-TERMINE
-					,
-					'BIGAUTOPRIMARY' => 'integer primary key',
-					'T_TEXT' => 'varchar2(4000)',
-					'T_TEXT(x)' => 'varchar2(x)',
-				),
-			);
+		/* À FAIRE: réutiliser dans l'interprétation des paramètres.
+		 *          Cette fonction est intéressante, car elle permet des définitions dynamiques;
+		 *          utilisée initialement à la place de l'autodefs.sql, elle n'a plus cet usage, mais aurait son utilité dans le traitement des paramètres.
+		 */
 			if(isset($définitionsParPilote[$pilote]))
 			{
 				$défs = $définitionsParPilote[$pilote];
@@ -188,7 +146,6 @@ TERMINE
 				$this->ajouterDéfs($défs);
 				foreach($dyns as $dyn)
 					$this->_préproDéf->préprocesse('#define', $dyn);
-			}
 		}
 	}
 	
@@ -505,8 +462,9 @@ class Sql2Csv
 		$j->sépChamps = $sépChamps;
 		$défs = $this->tradDéfs($défs);
 		$j->ajouterDéfs($défs);
-		$j->autoDéfs();
 		$j->sortie($sortie);
+		if(file_exists($autoDéfs = dirname(__FILE__).'/sql2csv.autodefs.sql'))
+			array_unshift($entrées, $autoDéfs);
 		foreach($entrées as $entrée)
 			$j->jouer($entrée);
 	}
