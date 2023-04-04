@@ -41,4 +41,14 @@ end;\
 #define T_TEXT(x) varchar(x)
 #endif
 
+-- Fonctions -------------------------------------------------------------------
+
+#if :pilote = "pgsql"
+#define MAINTENANT() clock_timestamp()
+#elif :pilote = "oracle"
+#define MAINTENANT() sysdate
+#else
+#define MAINTENANT() current_timestamp
+#endif
+
 #endif
