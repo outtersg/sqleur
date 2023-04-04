@@ -503,11 +503,27 @@ class Sql2Csv
 		$j->conversions = isset($conversions) && count($conversions) ? $conversions : null;
 		$j->format = $formatSortie;
 		$j->sépChamps = $sépChamps;
+		$défs = $this->tradDéfs($défs);
 		$j->ajouterDéfs($défs);
 		$j->autoDéfs();
 		$j->sortie($sortie);
 		foreach($entrées as $entrée)
 			$j->jouer($entrée);
+	}
+	
+	function tradDéfs($défs)
+	{
+		$éqs = array
+		(
+			array(':pilote', ':driver'),
+		);
+		foreach($éqs as $éq)
+		{
+			if(count($trous = array_diff_key($cléq = array_flip($éq), $défs))) // Si toutes les clés équivalentes ne sont pas définies.
+				if(count($prems = array_intersect_key($défs, $cléq)))
+					$défs += array_fill_keys(array_keys($trous), array_shift($prems));
+		}
+		return $défs;
 	}
 }
 
