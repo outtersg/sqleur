@@ -147,12 +147,14 @@ class JoueurSql extends Sqleur
 					'AUTOPRIMARY' => 'serial primary key',
 					'BIGAUTOPRIMARY' => 'bigserial primary key',
 					'T_TEXT' => 'text',
+					'T_TEXT(x)' => 'varchar(x)',
 				),
 				'sqlite' => array
 				(
 					'AUTOPRIMARY' => 'integer primary key',
 					'BIGAUTOPRIMARY' => 'integer primary key', // https://sqlite.org/forum/info/2dfa968a702e1506e885cb06d92157d492108b22bf39459506ab9f7125bca7fd
 					'T_TEXT' => 'text',
+					'T_TEXT(x)' => 'varchar(x)',
 				),
 			);
 			if(isset($définitionsParPilote[$pilote]))
