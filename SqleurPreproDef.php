@@ -96,6 +96,11 @@ class SqleurPreproDef
 				$lu = $fin;
 			}
 		$déroulé[] = substr($val, $lu);
+		for($i = 0; $i < count($déroulé); $i += 2)
+		{
+			if(substr($déroulé[$i], 0, 2) == '##') $déroulé[$i] = substr($déroulé[$i], 2);
+			if(substr($déroulé[$i], -2) == '##') $déroulé[$i] = substr($déroulé[$i], 0, -2);
+		}
 		
 		// Entreposage et retour.
 		
