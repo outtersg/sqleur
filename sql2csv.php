@@ -120,7 +120,7 @@ class JoueurSql extends Sqleur
 		$prépros = array
 		(
 			new SqleurPreproIncl(),
-			new SqleurPreproDef(),
+			$this->_préproDéf = new SqleurPreproDef(),
 			new SqleurPreproPrepro(),
 			$this,
 		);
