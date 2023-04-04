@@ -222,6 +222,14 @@ class JoueurSql extends Sqleur
 	
 	public function jouer($chemin)
 	{
+		$this->ajouterDéfs
+		(
+			array
+			(
+				':SCRIPT_FILENAME' => $chemin,
+				':SCRIPT_NAME' => basename($chemin),
+			)
+		);
 		$fluxEntrée = new Flux($chemin, false);
 		$this->_fichier = is_int($chemin) ? getcwd().'/-' : $chemin;
 		$requêtes = $this->decoupeFlux($fluxEntrée->ouvrir());
