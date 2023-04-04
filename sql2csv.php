@@ -145,6 +145,7 @@ class JoueurSql extends Sqleur
 				'pgsql' => array
 				(
 					'AUTOPRIMARY' => 'serial primary key',
+					'AUTOPRIMARY_INIT(t, c)' => '',
 					'BIGAUTOPRIMARY' => 'bigserial primary key',
 					'T_TEXT' => 'text',
 					'T_TEXT(x)' => 'varchar(x)',
@@ -152,9 +153,28 @@ class JoueurSql extends Sqleur
 				'sqlite' => array
 				(
 					'AUTOPRIMARY' => 'integer primary key',
+					'AUTOPRIMARY_INIT(t, c)' => '',
 					'BIGAUTOPRIMARY' => 'integer primary key', // https://sqlite.org/forum/info/2dfa968a702e1506e885cb06d92157d492108b22bf39459506ab9f7125bca7fd
 					'T_TEXT' => 'text',
 					'T_TEXT(x)' => 'varchar(x)',
+				),
+				'oracle' => array
+				(
+					'AUTOPRIMARY' => 'integer primary key',
+					'AUTOPRIMARY_INIT(t, c)' => <<<TERMINE
+create sequence t##_##c##_seq start with 1;
+create or replace trigger t##_id
+before insert on t
+for each row
+begin
+	select t##_##c##_seq.nextval into :new.c from dual;
+end;
+/
+TERMINE
+					,
+					'BIGAUTOPRIMARY' => 'integer primary key',
+					'T_TEXT' => 'varchar2(4000)',
+					'T_TEXT(x)' => 'varchar2(x)',
 				),
 			);
 			if(isset($définitionsParPilote[$pilote]))
