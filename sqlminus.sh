@@ -14,6 +14,7 @@ sqlm()
 					1) exfifi_prochainPourMinus= ; return 0 ;;
 				esac
 				case "$param" in
+					-o) exfifi_prochainPourMinus=1 ;;
 					*.sql) r=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
 					# Cependant on doit ruser pour:
