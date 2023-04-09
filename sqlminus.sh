@@ -10,6 +10,9 @@ sqlm()
 			exfifi() # exfifi = EXFIltre les FIchiers.
 			{
 				local r=0 # 0: on laisse passer; 1: on prend pour nous.
+				case "$exfifi_prochainPourMinus" in
+					1) exfifi_prochainPourMinus= ; return 0 ;;
+				esac
 				case "$param" in
 					*.sql) r=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
