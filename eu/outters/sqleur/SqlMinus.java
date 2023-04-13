@@ -51,7 +51,25 @@ public class SqlMinus
 		/* Initialisation. */
 		
 		exprSpe = Pattern.compile("^ *set +(?<p0>(?<head>hea(?:d(?:ing)?)?)) (?<v0>on|off) *$", Pattern.CASE_INSENSITIVE);
-		exprVide = Pattern.compile("^(?:[ \t\r\n]+|--[^\n]*)*$");
+		/* NOTE: expression non bornée
+		 * Mouarf… Sur l'expression "^(?:[ \t\r\n]+|--[^\n]*)*$", avec en entrée un:
+		   --------------------------------
+		   select bidule;
+		 * notre Matcher part en exponentiel, parce que ne trouvant pas le $ au bout des --.*, il retente toutes les découpes possibles de combinaisons de --
+		 * en lui supprimant le $ (et en lui demandant un .end() pour savoir jusqu'où il est allé), magnifique, à la première (plus longue) combinaison, l'affaire est entendue il nous renvoie le résultat immédiatement.
+		 * En fonction du nombre de tirets:
+		 * 32 - 1 s
+		 * 33 - 2 s
+		 * 34 - 3 s
+		 * 35 - 4 s
+		 * 36 - 8 s
+		 * 37 - 11 s
+		 * 38 - 19 s
+		 * 39 - 27 s
+		 * 40 - 47 s
+		 * 41 - 1 mn 20
+		 */
+		exprVide = Pattern.compile("^(?:[ \t\r\n]+|--[^\n]*)*");
 		
 		/* Lecture des paramètres. */
 		
@@ -224,7 +242,7 @@ public class SqlMinus
 	public void exec(String req) throws SQLException, IOException, Exception
 	{
 		Matcher vide = exprVide.matcher(req);
-		if(vide.find()) return;
+		if(vide.find() && vide.end() == req.length()) return;
 		
 		Matcher spe = exprSpe.matcher(req);
 		if(spe.find())
