@@ -14,6 +14,7 @@ package eu.outters.sqleur;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVWriter;
 import com.opencsv.ResultSetHelperService;
+import com.opencsv.SQLWriter;
 
 import java.io.IOException;
 import java.sql.*;
@@ -23,6 +24,8 @@ import java.util.regex.Pattern;
 
 public class SqlMinus
 {
+	enum Format { CSV, SQL };
+	
     public static void main(String[] args) throws Exception {
 		new SqlMinus(args);
 	}
@@ -261,14 +264,22 @@ public class SqlMinus
 		{
 		Statement stmt = con.createStatement();
 			ResultSet rs = null;
+			Format format = Format.CSV;
+			if(fileName != null && fileName.endsWith(".sql"))
+				format = Format.SQL;
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
 			try
 			(
 				CSVWriter writer =
+					format == Format.SQL
+					? new SQLWriter(fileName)
+					:
+					(
 					diag > 0
 					? new EcrivainVerbeux(fileName, sepCsv, guillemet, this)
 					: new CSVWriter(fileName, sepCsv, guillemet, guillemet, CSVWriter.DEFAULT_LINE_END)
+					)
 			)
 			{
 				if(nulls != null) writer.setNullString(nulls);
@@ -282,7 +293,11 @@ public class SqlMinus
             //Define MAX extract rows, -1 means unlimited.
             ResultSetHelperService.MAX_FETCH_ROWS=-1;
 				writer.setAsyncMode(fileName != null);
-            int result = writer.writeAll(rs, avecNomsColonne);
+            int result =
+				format == Format.SQL
+				? ((SQLWriter)writer).writeAll2SQL(rs)
+				: writer.writeAll(rs, avecNomsColonne)
+			;
             //return result - 1;
 				if(fileName != null)
             System.out.println("Result: " + (result - 1));
