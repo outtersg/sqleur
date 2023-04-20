@@ -297,7 +297,10 @@ class Sqleur
 	public function découperBloc($chaine, $laFinEstVraimentLaFin = true)
 	{
 		if(isset($this->_resteEnCours))
+		{
 			$chaine = $this->_resteEnCours.$chaine;
+			unset($this->_resteEnCours);
+		}
 		$this->_chaîneEnCours = $chaine;
 		
 		// Tous le code gérant cet enquiquinante suite ";\n+/\n*" sera marqué de l'étiquette DML (Découpe Multi-Lignes):
