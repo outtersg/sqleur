@@ -84,7 +84,10 @@ class SqleurPreproDef
 		// Cependant dans la regex qui suit, on ne vérifie que l'avant, et non l'après, car celui-ci doit pouvoir servir d'avant à une potentielle variable suivante
 		// (ex.: "#define TOTO(x, y) x+y" recherche <sép>x et <sép>y dans x+y: si on cherchait <sép>x<sép>, on boufferait le <sép> d'y et on ne trouverait donc pas ce dernier).
 		// La vérification de l'après sera faite hors regex.
+		if(count($params))
 		preg_match_all('/(^|[^_a-zA-Z0-9])('.implode('|', $params).')/', $val, $rers, PREG_OFFSET_CAPTURE|PREG_SET_ORDER);
+		else
+			$rers = array();
 		$params = array_flip($params);
 		$lu = 0;
 		$déroulé = array();
