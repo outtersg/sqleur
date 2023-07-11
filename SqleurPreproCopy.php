@@ -97,7 +97,7 @@ class SqleurPreproCopyPousseurPg
 		
 		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
-		preg_match_all("/^\\s+(?:$expr)\$/i", $r['p'], $rpss, PREG_SET_ORDER);
+		preg_match_all("/\\s+(?:$expr)/i", $r['p'], $rpss, PREG_SET_ORDER);
 		$rp = array();
 		foreach($rpss as $rps)
 			foreach($rps as $clé => $val)
