@@ -368,6 +368,7 @@ class Sqleur
 			switch($chaineNouvelleDecoupe)
 			{
 				case ';':
+					if($this->dansUnSiÀLaTrappe()) break;
 					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
 					$arrêtJusteAvant = $dernierArret;
 					$dernierArret += strlen($decoupes[$i][0]);
