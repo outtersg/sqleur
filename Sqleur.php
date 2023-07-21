@@ -270,7 +270,7 @@ class Sqleur
 		'as' => true,
 	);
 	
-	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false)
+	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false, $numDernierArrêt = null)
 	{
 		/* À FAIRE: Ouille, on applique les définitions ici, après découpe, ce qui veut dire que si notre définition contient plusieurs instructions on finira avec une seule instruction contenant un point-virgule! */
 		/* À FAIRE: si on fait le point précédent (repasser par un découperBloc), adapter le calcul des lignes aux lignes originales (un remplacement peut contenir un multi-lignes). */
@@ -290,7 +290,7 @@ class Sqleur
 			$this->_queDuVent = false;
 		if($appliquerDéfs)
 			$this->_requêteRemplacée = $this->_requeteEnCours;
-		$this->_entérinerBéguins();
+		$this->_entérinerBéguins($numDernierArrêt);
 	}
 	
 	protected function _decoupeBloc($chaîne, $laFinEstVraimentLaFin = true) { return $this->découperBloc($chaîne, $laFinEstVraimentLaFin); }
@@ -369,7 +369,7 @@ class Sqleur
 			{
 				case ';':
 					if($this->dansUnSiÀLaTrappe()) break;
-					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1]);
+					$this->_mangerBout($chaine, /*&*/ $dernierArret, $decoupes[$i][1], false, $i);
 					$arrêtJusteAvant = $dernierArret;
 					$dernierArret += strlen($decoupes[$i][0]);
 					// DML: étant susceptibles de porter du \n, et $chaineDerniereDecoupe n'étant jamais comparée à simplement ';', on y entrepose la restitution exacte de ce qui nous a invoqués (plutôt que seulement le premier caractère).
@@ -380,7 +380,7 @@ class Sqleur
 						$this->_écarterFauxBéguins();
 						if(count($this->_béguins) > 0) // Point-virgule à l'intérieur d'un begin, à la trigger SQLite: ce n'est pas une fin d'instruction.
 						{
-							$this->_ajouterBoutRequête($chaineNouvelleDecoupe);
+							$this->_ajouterBoutRequête($chaineNouvelleDecoupe, true, false, $i);
 							$this->_ligne += $nLignes;
 							break;
 						}
@@ -419,7 +419,7 @@ class Sqleur
 					 * - Mais un besoin de le faire, au cas où l'instruction suivante est un prépro qui re#define: le SQL qui nous précède doit avoir l'ancienne valeur.
 					 */
 					/* À FAIRE: optim: faire le remplacement sur toute suite contiguë de lignes banales (non interrompue par une instruction prépro), et non ligne par ligne. */
-					$this->_mangerBout($chaine, /*&*/ $dernierArret, $dernierRetour);
+					$this->_mangerBout($chaine, /*&*/ $dernierArret, $dernierRetour, false, $i);
 					break;
 				case '#':
 					if
@@ -445,7 +445,7 @@ class Sqleur
 							$chaineNouvelleDecoupe = $chaineDerniereDecoupe;
 							break;
 						}
-						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$j][1] - $dernierArret));
+						$this->_ajouterBoutRequête(substr($chaine, $dernierArret, $decoupes[$j][1] - $dernierArret), true, false, $i);
 							if($this->_dansChaîne)
 								$this->_dansChaîne[static::DANS_CHAÎNE_CAUSE] = static::CHAÎNE_JETON_CONSOMMÉ;
 							$dernierArret = $decoupes[$i][1];
@@ -503,6 +503,7 @@ class Sqleur
 			}
 			$this->_resteEnCours = substr($chaine, $dernierArret);
 			$this->_chaineDerniereDecoupe = $chaineDerniereDecoupe;
+			$this->_béguinsPotentiels = array(); // Tous les béguins identifiés mais non consommés se retrouvent dans le _resteEnCours et seront donc réidentifiés au tour de boucle suivant.
 		if($laFinEstVraimentLaFin)
 		{
 			$this->_ajouterBoutRequête($this->_resteEnCours);
@@ -520,9 +521,9 @@ class Sqleur
 		}
 	}
 	
-	protected function _mangerBout($chaîne, & $dernierArret, $jusquÀ, $duVent = false)
+	protected function _mangerBout($chaîne, & $dernierArret, $jusquÀ, $duVent = false, $numDernierArrêt = null)
 	{
-		$this->_ajouterBoutRequête(substr($chaîne, $dernierArret, $jusquÀ - $dernierArret), true, $duVent);
+		$this->_ajouterBoutRequête(substr($chaîne, $dernierArret, $jusquÀ - $dernierArret), true, $duVent, $numDernierArrêt);
 		$dernierArret = $jusquÀ;
 	}
 	
@@ -595,7 +596,7 @@ class Sqleur
 		 * Mais dans ce cas, nous passons la main à l'instruction de préproc dont la première action sera d'_ajouterBoutRequête(true).
 		 * Inutile donc que nous le fassions.
 		 */
-		$this->_ajouterBoutRequête($fragment, false);
+		$this->_ajouterBoutRequête($fragment, false, false, $i);
 		$dernierArret = $nouvelArret;
 	}
 	
@@ -609,7 +610,7 @@ class Sqleur
 			case Sqleur::MODE_COMM_MULTILIGNE: $borne = "*/"; $etDélim = true; break;
 		}
 		
-		$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $découpes[$i][1]);
+		$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $découpes[$i][1], false, $i);
 		
 		while(++$i < $n && $découpes[$i][0] != $borne)
 			if($découpes[$i][0] == "\n") // Implicitement: && $mode != '-', car en ce cas, la condition d'arrêt nous a déjà fait sortir.
@@ -618,7 +619,7 @@ class Sqleur
 		{
 			$arrêt = $i >= $n ? strlen($chaîne) : $découpes[$i][1] + ($tÉpilogue = $etDélim ? strlen($découpes[$i][0]) : 0);
 			if($this->_mode & $mode) // Si le mode du Sqleur demande de sortir aussi ce type de commentaire, on s'exécute.
-				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $arrêt, true);
+				$this->_mangerBout($chaîne, /*&*/ $dernierArrêt, $arrêt, true, $i);
 			else // Sinon on ne fait qu'avancer le curseur sans signaler le commentaire lui-même.
 				$dernierArrêt = $arrêt;
 			if($mode == Sqleur::MODE_COMM_MONOLIGNE && $i < $n)
@@ -1061,6 +1062,9 @@ class Sqleur
 		// mieux vaut alors sortir, et ne revenir qu'une fois assurés que rien ne le suit qui en ferait changer le sens (ex.: begin / begin transaction),
 		// et inversement que nous ne sommes pas utiles au mot-clé qui nous suivra (ex.: as est content de savoir qu'il suit un creation function plutôt qu'un select colonne).
 		// À FAIRE: en fait non pas le dernier, mais "le dernier après avoir écarté les lignes vides". En effet parfois un ; serait bien aise de trouver un end devant lui; s'ils ne sont séparés que par une limite de bloc ça va, mais si en plus s'ajoutent des \n, alors la clause suivante se satisfait du \n comme successeur au end et exploite ce dernier avant de le poubelliser: le ; ne le retrouvera plus.
+		// /!\ La ligne suivante est un raccourci, dans le cas le plus courant, pour sortir plus rapidement;
+		//     cependant dans d'autres cas (ex.: "case … histo … | … end" dont le histo contient un is vu ĉ une découpe, m̂ si + tard il sera écarté),
+		//     nous ne sommes pas dernière découpe, et donc seul le gros if derrière assurera le contrôle correct.
 		if($i == count($découpes) - 1 && !$laFinEstVraimentLaFin)
 					// N.B.: fait double emploi avec le gros if() plus bas. Mais c'est plus prudent.
 					return Sqleur::CHAÎNE_COUPÉE;
@@ -1134,10 +1138,18 @@ class Sqleur
 	/**
 	 * Enregistrer les begin / end qui jusque-là n'étaient que potentiels.
 	 * À appeler lorsque le bloc SQL les contenant est définitivement agrégé à $this->_requeteEnCours.
+	 * 
+	 * @param null|int Position du dernier arrêt. Si définie, seuls les béguins situés avant cet arrêt sont consommés.
 	 */
-	protected function _entérinerBéguins()
+	protected function _entérinerBéguins($numDernierArrêt = null)
 	{
-		foreach($this->_béguinsPotentiels as $béguin)
+		foreach($this->_béguinsPotentiels as $numBéguin => $béguin)
+		{
+			if(isset($numDernierArrêt) && $béguin[3] >= $numDernierArrêt)
+			{
+				$this->_béguinsPotentiels = array_slice($this->_béguinsPotentiels, $numBéguin);
+				return;
+			}
 			switch($motClé = $béguin[0])
 			{
 				case 'end if':
@@ -1160,6 +1172,7 @@ class Sqleur
 					$this->_béguins[] = $béguin;
 					break;
 			}
+		}
 		$this->_béguinsPotentiels = array();
 	}
 	
