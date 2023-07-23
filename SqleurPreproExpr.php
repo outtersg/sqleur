@@ -785,6 +785,14 @@ class NœudPrepro
 				$params = $this->f;
 				break;
 		}
+		
+		// Macros préprocesseur utilisateur.
+		
+		if(($r = $this->_exécuterDéfDyn($contexte, $nomFonction, $params)) !== null)
+			return $r;
+		
+		// Fonctions définies par le moteur.
+		
 		if(!isset($contexte->_fonctions[$nomFonction]) || !is_callable($contexte->_fonctions[$nomFonction]))
 			throw new ErreurExpr(print_r($nomFonction, true).": fonction inconnue", $this);
 		// Cas particulier des fonctions devant *ne pas* remplacer les variables préproc par leur contenu.
@@ -796,6 +804,36 @@ class NœudPrepro
 		}
 		$params = $this->_contenus($params, $contexte, false, isset($contexte->_fonctionsInternes[$nomFonction]));
 		return call_user_func_array($contexte->_fonctions[$nomFonction], $params);
+	}
+	
+	protected function _exécuterDéfDyn($contexte, $nomFonction, $params)
+	{
+		if(!isset($contexte->_defs['dyn'])) return;
+		
+		$lieutenants = array();
+		foreach($params as $numParam => $bah)
+			$lieutenants[] = "\002[".$numParam."]\003";
+		$expr = $nomFonction.'('.implode(', ', $lieutenants).')';
+		foreach($contexte->_defs['dyn'] as $déf => $val)
+			if(preg_match($déf, $expr))
+			{
+				$fonction = $val;
+				break;
+			}
+		if(!isset($fonction)) return;
+		
+		// Trouvé une fonction qui correspond! On invoque.
+		
+		$params = $this->_contenus($params, $contexte);
+		
+		array_splice($params, 0, 0, array('', $nomFonction));
+		$rés = call_user_func($fonction, $params);
+		
+		// … Mais le résultat lui-même est une chaîne de caractères à interpréter.
+		
+		$rés = $contexte->calculerExpr($rés);
+		
+		return $rés;
 	}
 	
 	protected function _contenu($chose, $contexte)
