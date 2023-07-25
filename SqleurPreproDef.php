@@ -33,9 +33,23 @@ class SqleurPreproDef
 			return false;
 		
 		$b = "[ \t]*";
+		
+		if(preg_match("@^#[a-z]+[ \t]+/((?:[^/]+|\\\\/)+(?:[^\\\\]|\\\\\\\\))/([a-z]*)[ \t]+@", $directiveComplète, $rer))
+		{
+			$rer[1] = strtr($rer[1], array('\/' => '/', '\\\\' => '\\'));
+			foreach(array('/', '#', '@', "\002", "\003", "\004") as $sépExpr)
+				if(strpos($rer[1], $sépExpr) === false)
+					break;
+			$var = $sépExpr.$rer[1].$sépExpr.$rer[2];
+			$mode = 2;
+		}
+		else
+		{
 		$mot = "[_a-zA-Z][_a-zA-Z0-9]*";
 		preg_match("/^#[a-z]+[ \t]+([^ \t(]+)($b\($b(|$mot(?:$b,$b$mot)*)$b\))?(?:[ \t\r\n]+|\$)/", $directiveComplète, $rer);
 		$var = $rer[1];
+			$mode = isset($rer[2]) ? 1 : 0;
+		}
 		$val = substr($directiveComplète, strlen($rer[0]));
 		
 		if(in_array($motClé, array('#undef')))
@@ -48,13 +62,19 @@ class SqleurPreproDef
 		else
 			$val = $this->_sqleur->appliquerDéfs($val);
 		
+		switch($mode)
+		{
+			case 1:
 		// Si on a des parenthèses, on transforme notre var en regex, car elle sera dynamique.
 		// À la différence des statiques (qui remplacent un peu n'importe quoi), nous nous rapprochons d'un préprocesseur C qui ne recherche que les mots.
 		// Ex.: "#define pied(x) (x+1)" remplacera pied(3) et casse-pied(3) mais pas cassepied(3) (le - étant un séparateur de mots, ça donnera casse-(3+1)).
-		if(!empty($rer[2]))
-		{
 			$var = $this->_préparerDéfParams($var, $rer[3], $val);
 			$val = array($this, '_remplacerDéfParams');
+				break;
+			case 2:
+				$moi = $this;
+				$val = function($rés) use($val, $moi) { return $moi->_remplacerRegEx($rés, $val); };
+				break;
 		}
 		
 		$this->_sqleur->ajouterDéfs(array($var => $val));
@@ -119,6 +139,15 @@ class SqleurPreproDef
 		foreach($déroulé as $bout)
 			$r .= (($texte = !$texte)) ? $bout : strtr($rés[$bout], array('\,' => ','));
 		return $r;
+	}
+	
+	public function _remplacerRegex($rés, $rempl)
+	{
+		$lieutenants = array();
+		for($n = count($rés); --$n > 0;) // On commence par les derniers, pour que \10 trouve ses occurrences sans se les être fait bouffer par \1.
+			$lieutenants['\\'.$n] = $rés[$n];
+		
+		return strtr($rempl, $lieutenants);
 	}
 }
 
