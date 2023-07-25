@@ -344,7 +344,7 @@ class Sqleur
 			switch(substr($chaineDerniereDecoupe, 0, 1))
 			{
 				case ';':
-					$decoupes[-1] = [ $chaineDerniereDecoupe, -strlen($chaineDerniereDecoupe) ];
+					$decoupes[-1] = array($chaineDerniereDecoupe, -strlen($chaineDerniereDecoupe));
 					$chaineDerniereDecoupe = substr($chaineDerniereDecoupe, 0, 1);
 					break;
 			}
@@ -1102,7 +1102,7 @@ class Sqleur
 			)
 				return;
 			}
-			$this->_béguinsPotentiels[] = [ $motClé, $découpes[$i][0], $this->_ligne, $i ];
+			$this->_béguinsPotentiels[] = array($motClé, $découpes[$i][0], $this->_ligne, $i);
 		}
 	}
 	
@@ -1128,7 +1128,7 @@ class Sqleur
 		// On inclut les caractères de contrôle, dont la tabulation.
 		// On s'arrête en 0x80, de peur de voir comme délimiteur des caractères UTF-8.
 		return
-		!in_array($car, [ '_' ])
+		!in_array($car, array('_'))
 		&&
 		(
 			($car >= "\0" && $car < '0') || ($car > '9' && $car < 'A') || ($car > 'Z' && $car < 'a') || ($car > 'z' && $car <= chr(0x7F))
@@ -1202,7 +1202,7 @@ class Sqleur
 	{
 		if(!($n = count($this->_béguins))) return;
 		
-		for($i = $n; --$i >= 0 && in_array($this->_béguins[$i][0], [ 'package', 'procedure', 'function' ]);) {}
+		for($i = $n; --$i >= 0 && in_array($this->_béguins[$i][0], array('package', 'procedure', 'function'));) {}
 		if(++$i < $n)
 			array_splice($this->_béguins, $i);
 	}
@@ -1211,7 +1211,7 @@ class Sqleur
 	{
 		return
 			isset($this->_dernierBéguinBouclé)
-			&& in_array($this->_dernierBéguinBouclé, [ 'begin', 'function as' ])
+			&& in_array($this->_dernierBéguinBouclé, array('begin', 'function as'))
 			&& $this->_découpePrécédente($découpes, $i) == 'end'
 			&&
 			(
