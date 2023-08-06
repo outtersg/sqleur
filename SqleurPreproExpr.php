@@ -32,6 +32,9 @@ class SqleurPreproExpr
 		'in',
 	);
 	
+	protected $_parenthèses;
+	protected $_source;
+	
 	public function decouper($expr)
 	{
 		$bouts = array();
@@ -597,6 +600,8 @@ class SqleurPreproExpr
 
 class ErreurExpr extends Exception
 {
+	public $pos;
+	
 	public function __construct($message, $posOuCorrPos = null, $num = null)
 	{
 		parent::__construct($message);
@@ -619,6 +624,10 @@ class ErreurExpr extends Exception
 
 class NœudPrepro
 {
+	public $t;
+	public $f;
+	public $pos;
+	
 	public function __construct($type, $fils = null, $pos = null)
 	{
 		$this->t = $type;

@@ -28,6 +28,9 @@ class SqleurPreproTestExpr extends SqleurPreproTest
 {
 	protected $_préfixes = array('#testexpr');
 	
+	protected $_expr;
+	protected $_accuErr;
+	
 	public function préprocesse($motClé, $directiveComplète)
 	{
 		if(!in_array($motClé, $this->_préfixes))

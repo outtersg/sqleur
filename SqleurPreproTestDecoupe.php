@@ -27,6 +27,8 @@ class SqleurPreproTestDecoupe extends SqleurPreproTestExpr
 {
 	protected $_préfixes = array('#testdecoupe');
 	
+	protected $_mode;
+	
 	protected function _teste($reqAttendue, $req)
 	{
 		$reqNormalisée = trim(preg_replace(array("/ *(?:--.*)?\n/", "/[ \t]+/"), ' ', $req));

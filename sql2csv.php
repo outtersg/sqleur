@@ -110,6 +110,7 @@ class JoueurSql extends Sqleur
 	public $sépChamps = ';';
 	
 	public $bdd;
+	public $_sqleur;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
 	public $bavard = 1;
@@ -202,7 +203,7 @@ class JoueurSql extends Sqleur
 				if(!isset($ligne[1]) || in_array($ligne[1], array('1', 'stdout')))
 					$sortie = Flux::STDOUT;
 				else
-					$sortie = $this->_sqleur->appliquerDéfs($ligne[1]);
+					$sortie = $this->appliquerDéfs($ligne[1]);
 				$this->sortie->basculer($sortie);
 				break;
 			default: return false;
@@ -318,6 +319,11 @@ class JoueurSql extends Sqleur
  */
 class SPP extends JoueurSql
 {
+	protected $_préproDéf;
+	public $sépRequêtes;
+	public $format;
+	public $sortie;
+	
 	public function __construct($sép = null)
 	{
 		parent::__construct();

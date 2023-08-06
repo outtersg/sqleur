@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+require_once __DIR__.'/SqleurPrepro.php';
 include_once "SqleurPreproExpr.php";
 
 /**
@@ -48,10 +49,19 @@ include_once "SqleurPreproExpr.php";
    #pif ]
  */
 // À FAIRE: introduire les accolades pour déclarer des blocs séquentiels (toujours joués d'affilée).
-class SqleurPreproPif
+class SqleurPreproPif extends SqleurPrepro
 {
 	protected $_préfixes = array('#pif', '#rand');
 	protected $_motsAprès = array('après', 'suit', 'after');
+	
+	protected $_sortieOriginelle;
+	protected $_pile;
+	protected $_idUnique;
+	protected $_expr;
+	protected $_magnéto;
+	protected $_magnétoId;
+	protected $_prochains;
+	protected $_dépsRegex;
 	
 	const TYPE = 0;
 	const VAL = 1;

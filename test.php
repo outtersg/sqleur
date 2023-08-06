@@ -19,6 +19,8 @@ class Rempl
 
 class JoueurPdo
 {
+	public $bdd;
+	
 	public function __construct($bdd)
 	{
 		$this->bdd = $bdd;
@@ -39,6 +41,8 @@ class JoueurPdo
 
 class PréproBdd
 {
+	public $_sqleur;
+	
 	public function préprocesse($instr, $ligne)
 	{
 		switch($instr)

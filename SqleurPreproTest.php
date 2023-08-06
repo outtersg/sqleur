@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+require_once __DIR__.'/SqleurPrepro.php';
+
 /**
  * Préprocesseur de tests.
  * La directive #test prend les deux requêtes qui suivent:
@@ -41,9 +43,12 @@
    2  -
    $$;
  */
-class SqleurPreproTest
+class SqleurPreproTest extends SqleurPrepro
 {
 	protected $_préfixes = array('#test');
+	
+	protected $_sortieOriginelle;
+	protected $_mode;
 	
 	const APPELANT = 0x01; // Masque des bits d'appelant.
 	const BRUT =     0x00;

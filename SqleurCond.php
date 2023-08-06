@@ -23,6 +23,20 @@
 
 class SqleurCond
 {
+	protected $_sqleur;
+	public $sortie;
+	public $défs;
+	public $requêteEnCours;
+	public $requêteRemplacée;
+	protected $ligne;
+	public $enCours;
+	public $cond;
+	public $var;
+	public $corps;
+	protected $boucle;
+	protected $_étêtage;
+	public $déjàFaite;
+	
 	public function __construct($sqleur, $cond, $boucle = false)
 	{
 		$this->_sqleur = $sqleur;

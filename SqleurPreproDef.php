@@ -23,9 +23,13 @@
 
 include_once 'SqleurPreproExpr.php';
 
-class SqleurPreproDef
+require_once __DIR__.'/SqleurPrepro.php';
+
+class SqleurPreproDef extends SqleurPrepro
 {
 	protected $_préfixes = array('#calc', '#set', '#setn', '#define', '#undef');
+	
+	protected $_défsParams;
 	
 	public function préprocesse($motClé, $directiveComplète)
 	{

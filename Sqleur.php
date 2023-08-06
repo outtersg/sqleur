@@ -130,6 +130,39 @@ class Sqleur
 	
 	public $tailleBloc = 0x20000;
 	
+	public $_defs = array();
+	
+	public $_mode;
+	public $_sortie;
+	public $_requeteEnCours;
+	public $_fichier;
+	public $_ligne;
+	public $_fonctions;
+	public $motsChaînes;
+	public $_boucles;
+	public $_débouclages;
+	public $_préprocesseurs;
+	public $_chaîneEnCours;
+	public $_chaineDerniereDecoupe;
+	public $_resteEnCours;
+	public $_queDuVent;
+	public $_posAvant;
+	public $_posAprès;
+	public $_requêteRemplacée;
+	protected $terminaison;
+	protected $_dernièreLigne;
+	protected $_fonctionsInternes;
+	protected $_retourDirect;
+	protected $_conditions;
+	protected $_dansChaîne;
+	protected $_états;
+	protected $_béguins;
+	protected $_béguinsPotentiels;
+	protected $_dernierBéguinBouclé;
+	protected $_exprFonction;
+	protected $IFS;
+	protected $_conv;
+	
 	/**
 	 * Constructeur.
 	 * 
@@ -1213,7 +1246,8 @@ class Sqleur
 		return
 			isset($this->_dernierBéguinBouclé)
 			&& in_array($this->_dernierBéguinBouclé, array('begin', 'function as'))
-			&& strtolower($this->_découpePrécédente($découpes, $i)) == 'end'
+			&& ($boutPréc = $this->_découpePrécédente($découpes, $i)) !== null
+			&& strtolower($boutPréc) == 'end'
 			&&
 			(
 				($posMoi = $découpes[$i][1]) == ($posFinPréc = $découpes[$i - 1][1] + strlen($découpes[$i - 1][0]))

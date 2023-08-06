@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-class SqleurPreproIncl
+require_once __DIR__.'/SqleurPrepro.php';
+
+class SqleurPreproIncl extends SqleurPrepro
 {
 	protected $_préfixes = array('#incl', '#inclure', '#include');
 	
