@@ -984,6 +984,12 @@ class Sqleur
 		return implode('', $args);
 	}
 	
+	public function _replace($params)
+	{
+		$args = func_get_args();
+		return strtr($args[0], [ $args[1] => $args[2] ]);
+	}
+	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr) { return $this->calculerExpr($expr); }
@@ -1016,6 +1022,7 @@ class Sqleur
 	(
 		'defined',
 		'concat',
+		'replace',
 	);
 	
 	/*- Intestins ------------------------------------------------------------*/
