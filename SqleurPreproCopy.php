@@ -39,11 +39,62 @@ class SqleurPreproCopy extends SqleurPrepro
 	{
 		$this->_pousseur();
 		
+		$this->_pousseur->init(substr($directiveComplète, 1));
+		
+		if(!isset($this->_pousseur->source))
+		{
 		$this->_sortieOriginelle = $this->_sqleur->_sortie;
 		/* À FAIRE: faire basculer le Sqleur dans un mode ligne à ligne plutôt qu'expression par expression, pour ne pas devoir charger tout le fichier en mémoire avant de l'injecter. */
 		$this->_sqleur->_sortie = array($this, '_chope');
-		
-		$this->_pousseur->init(substr($directiveComplète, 1));
+		}
+		else
+		{
+			$sépl = "\n";
+			$f = fopen($this->_pousseur->source, 'r');
+			$a = ''; // $accu
+			$b = true; // $bloc
+			while($b !== false)
+			{
+				$b = stream_get_line($f, 0x10000);
+				// Nom d'une pipe, n'y a-t-il pas moyen de préciser le dernier paramètre à stream_get_line
+				// mais qu'il nous permette de distinguer un retour sur séparateur d'un retour sur taille max de bloc?
+				// S'il nous renvoie une taille inférieure, très bien, on sait qu'il a trouvé notre fin de ligne{{","|transs->_pousseur->ligne(substr($a, $d, $e - $d));}}
+				// mais s'il renvoie pile la taille,
+				// ce peut être soit une fin de bloc (auquel cas on doit agréger le bloc suivant),
+				// soit un retour (auquel cas il ne faut surtout pas agréger avec la ligne suivante!).
+				// En attendant on se farcit le truc à la main :-\
+				// Sinon on pourrait optimiser en fgets lorsque $sépl est \n
+				if($b !== false)
+					if($a !== '')
+						$a .= $b;
+					else
+						$a = $b;
+				/* NOTE: Expérimentations sur les différentes techniques, par bloc de 0x10000 octets, en PHP 7.2
+				 * - 0,006 preg_split() + lignes()
+				 * - 0,2   preg_match_all("/\n/") + for substr() + lignes()
+				 * - 0,5   preg_match_all("/\n/") + for substr() + lignes()
+				 * - 0,6   preg_match_all("/\n/") + for ligne(substr())
+				 * - 0,8   for strpos() ligne(substr())
+				 * En conclusion le coûteux est l'invocation de petites fonctions dans une boucle for.
+				 * La combinaison preg_split() (qui prépare déjà le tableau de lignes) + lignes(), à deux appels, est imbattable.
+				 * preg_split() est à peine plus lent que preg_match_all("/\n/"),
+				 * mais renvoie directement les lignes tandis que le second demanderait derrière un coûteux substra l'avantage de préparer de façon + lignes() est 80 fois 80 fois plus rapide qu'une boucle de strpos.
+				 */
+				$rs = preg_split('/'.$sépl.'+/', $a);
+				if($b !== false)
+					$a = array_pop($rs);
+				else
+				{
+					if(count($rs) == 1 && strlen(trim($a, $sépl)) == 0)
+						$rs = [];
+					$a = '';
+				}
+				$this->_pousseur->lignes($rs);
+			}
+			fclose($f);
+			
+			$this->_pousseur->fin();
+		}
 	}
 	
 	protected function _pousseur()
@@ -90,6 +141,8 @@ class SqleurPreproCopy extends SqleurPrepro
 
 class SqleurPreproCopyPousseur
 {
+	public $source;
+	
 	public function __construct($bdd)
 	{
 		$this->_bdd = $bdd;
@@ -97,7 +150,7 @@ class SqleurPreproCopyPousseur
 	
 	public function init($req)
 	{
-		$expr = 'from (?<from>stdin)|delimiter \'(?<delim>[^\']+)\'';
+		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'';
 		
 		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
@@ -111,6 +164,7 @@ class SqleurPreproCopyPousseur
 		$this->_table = $r['t'];
 		$this->_champs = preg_split('/\s*,\s*/', $r['c']);
 		$this->_sép = empty($rp['delim']) ? "\t" : $rp['delim'];
+		$this->source = empty($rp['from']) || strcasecmp($rp['from'], 'stdin') == 0 ? null : substr($rp['from'], 1, -1);
 		
 		$this->_données = array();
 	}
