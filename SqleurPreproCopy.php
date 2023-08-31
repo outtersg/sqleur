@@ -75,9 +75,11 @@ class SqleurPreproCopy extends SqleurPrepro
 			throw new Exception('copy prend en entrée une chaîne délimitée par dollars et terminée de la même manière');
 		
 		$bazar = substr($req, strlen($rd[0]), -strlen($rf[0]));
+		$ls = [];
 		foreach(explode("\n", $bazar) as $l)
 			if($l) // Les lignes vides ne nous intéressent pas.
-			$this->_pousseur->ligne($l);
+				$ls[] = $l;
+		$this->_pousseur->lignes($ls);
 		
 		$this->_pousseur->fin();
 		
