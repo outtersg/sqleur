@@ -86,7 +86,7 @@ class SqleurPreproCopy extends SqleurPrepro
 	}
 }
 
-class SqleurPreproCopyPousseurPg
+class SqleurPreproCopyPousseur
 {
 	public function __construct($bdd)
 	{
@@ -122,7 +122,10 @@ class SqleurPreproCopyPousseurPg
 	{
 		$this->_données[] = $l;
 	}
-	
+}
+
+class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
+{
 	public function fin()
 	{
 		if(!count($this->_données)) return;
