@@ -113,6 +113,11 @@ class SqleurPreproCopyPousseurPg
 		$this->_données = array();
 	}
 	
+	public function lignes($ls)
+	{
+		$this->_données = array_merge($this->_données, $ls);
+	}
+	
 	public function ligne($l)
 	{
 		$this->_données[] = $l;
