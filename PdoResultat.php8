@@ -1,0 +1,21 @@
+<?php
+
+class PdoRésultat extends _PdoRésultat
+{
+	public function setFetchMode(int $mode, mixed ...$args)
+	{
+		return $this->_setFetchMode($mode);
+	}
+	
+	public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed
+	{
+		return $this->_fetch($mode, $cursorOrientation, $cursorOffset);
+	}
+	
+	public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
+	{
+		return $this->_fetchAll($mode);
+	}
+}
+
+?>

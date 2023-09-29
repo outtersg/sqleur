@@ -1,0 +1,21 @@
+<?php
+
+class PdoRésultat extends _PdoRésultat
+{
+	public function setFetchMode($mode, $params = NULL)
+	{
+		return $this->_setFetchMode($mode);
+	}
+	
+	public function fetch($mode = PDO::FETCH_DEFAULT, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0)
+	{
+		return $this->_fetch($mode, $cursorOrientation, $cursorOffset);
+	}
+	
+	public function fetchAll($mode = NULL, $class_name = NULL, $ctor_args = NULL)
+	{
+		return $this->_fetchAll($mode);
+	}
+}
+
+?>
