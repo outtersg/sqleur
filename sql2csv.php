@@ -272,6 +272,14 @@ class JoueurSql extends Sqleur
 	protected function _exéc($sql)
 	{
 		$r = $this->bdd->query($sql);
+		if(is_object($r) && !method_exists($r, 'setFetchMode'))
+		{
+			// Pour les alternatives, voir PdoResultat.php:
+			// - passer par de la Reflection
+			// - travailler non pas sur $this->bdd et sa couche traçante, mais lui demander poliment sa vraie BdD sous-jacente et ne traiter qu'avec cette dernière.
+			require_once __DIR__.'/PdoResultat.php';
+			$r = new \PdoRésultat($r);
+		}
 		return $r;
 	}
 	
