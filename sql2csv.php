@@ -245,7 +245,7 @@ class JoueurSql extends Sqleur
 		fprintf(STDERR, "  %s;\n", strtr($sql, array("\n" => "\n  ")));
 		try
 		{
-		$rés = $this->bdd->query($sql);
+			$rés = $this->_exéc($sql);
 		}
 		catch(Exception $ex)
 		{
@@ -267,6 +267,12 @@ class JoueurSql extends Sqleur
 			$this->exporter($rés, $colonnes);
 		}
 		return $rés;
+	}
+	
+	protected function _exéc($sql)
+	{
+		$r = $this->bdd->query($sql);
+		return $r;
 	}
 	
 	protected function exporter($résultat, $colonnes = null)
