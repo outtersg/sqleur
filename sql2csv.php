@@ -113,8 +113,11 @@ class JoueurSql extends Sqleur
 	public $_sqleur;
 	protected $sortiesDéjàUtilisées = array();
 	public $conversions;
+	public $format;
+	public $sortie;
 	public $bavard = 1;
 	protected $avecEnTêtes = true;
+	protected $_préproDéf;
 	
 	public function __construct()
 	{
@@ -333,7 +336,6 @@ class JoueurSql extends Sqleur
  */
 class SPP extends JoueurSql
 {
-	protected $_préproDéf;
 	public $sépRequêtes;
 	public $format;
 	public $sortie;
