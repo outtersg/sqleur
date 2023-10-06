@@ -56,7 +56,8 @@ class SqleurPreproDef extends SqleurPrepro
 		}
 		$val = substr($directiveComplète, strlen($rer[0]));
 		
-		$this->_définir($motClé, $var, $val, $mode, $mode == 1 ? $rer[3] : null);
+		$paramsDéfinir = [ $motClé, $var, $val, $mode, $mode == 1 ? $rer[3] : null ];
+		call_user_func_array([ $this, '_définir' ], $paramsDéfinir);
 	}
 	
 	public function _définir($motClé, $var, $val, $mode, $paramsDéf)
