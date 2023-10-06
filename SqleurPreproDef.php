@@ -57,6 +57,14 @@ class SqleurPreproDef extends SqleurPrepro
 		$val = substr($directiveComplète, strlen($rer[0]));
 		
 		$paramsDéfinir = [ $motClé, $var, $val, $mode, $mode == 1 ? $rer[3] : null ];
+		
+		if($val == '<<')
+		{
+			$this->_sortieOriginelle = $this->_sqleur->_sortie;
+			$this->_sqleur->_sortie = array($this, '_chope', $paramsDéfinir);
+			return;
+		}
+		
 		call_user_func_array([ $this, '_définir' ], $paramsDéfinir);
 	}
 	
@@ -158,6 +166,23 @@ class SqleurPreproDef extends SqleurPrepro
 			$lieutenants['\\'.$n] = $rés[$n];
 		
 		return strtr($rempl, $lieutenants);
+	}
+	
+	public function _chope($req, $false = false, $interne = null, $paramsDéfinir = null)
+	{
+		/* Pour le moment on ne gère qu'une grosse chaîne de caractères, délimiteur dollar. */
+		
+		if(!preg_match('/^[$]([^ $]*)[$]\n*/', $req, $rd))
+			throw new Exception('le heredoc prend en entrée une chaîne délimitée par dollars');
+		if(!preg_match('/\n[$]'.$rd[1].'[$]\n*$/', $req, $rf))
+			throw new Exception('le heredoc prend en entrée une chaîne délimitée par dollars et terminée de la même manière');
+		
+		$this->_sqleur->_sortie = $this->_sortieOriginelle;
+		unset($this->_sortieOriginelle);
+		
+		$val = substr($req, strlen($rd[0]), -strlen($rf[0]));
+		$paramsDéfinir[2] = $val;
+		call_user_func_array([ $this, '_définir' ], $paramsDéfinir);
 	}
 }
 
