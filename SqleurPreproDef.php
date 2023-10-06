@@ -56,6 +56,11 @@ class SqleurPreproDef extends SqleurPrepro
 		}
 		$val = substr($directiveComplète, strlen($rer[0]));
 		
+		$this->_définir($motClé, $var, $val, $mode, $mode == 1 ? $rer[3] : null);
+	}
+	
+	public function _définir($motClé, $var, $val, $mode, $paramsDéf)
+	{
 		if(in_array($motClé, array('#undef')))
 			$val = null;
 		else if(!in_array($motClé, array('#define')))
@@ -72,7 +77,7 @@ class SqleurPreproDef extends SqleurPrepro
 		// Si on a des parenthèses, on transforme notre var en regex, car elle sera dynamique.
 		// À la différence des statiques (qui remplacent un peu n'importe quoi), nous nous rapprochons d'un préprocesseur C qui ne recherche que les mots.
 		// Ex.: "#define pied(x) (x+1)" remplacera pied(3) et casse-pied(3) mais pas cassepied(3) (le - étant un séparateur de mots, ça donnera casse-(3+1)).
-			$var = $this->_préparerDéfParams($var, $rer[3], $val);
+			$var = $this->_préparerDéfParams($var, $paramsDéf, $val);
 			$val = array($this, '_remplacerDéfParams');
 				break;
 			case 2:
