@@ -172,6 +172,9 @@ class SqleurPreproDef extends SqleurPrepro
 	{
 		/* Pour le moment on ne gère qu'une grosse chaîne de caractères, délimiteur dollar. */
 		
+		// Les commentaires d'avant le #define sont, d'un point de vue SQL, ceux de la chaîne.
+		$req = preg_replace('/^(?:\s+|--.*)+/', '', $req);
+		
 		if(!preg_match('/^[$]([^ $]*)[$]\n*/', $req, $rd))
 			throw new Exception('le heredoc prend en entrée une chaîne délimitée par dollars');
 		if(!preg_match('/\n[$]'.$rd[1].'[$]\n*$/', $req, $rf))
