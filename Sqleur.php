@@ -675,7 +675,9 @@ class Sqleur
 		{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
-			return call_user_func($this->_sortie, $requete, false, $interne);
+			$sortie = $this->_sortie;
+			$paramsSortir = array_merge([ $requete, false, $interne ], array_splice($sortie, 2));
+			return call_user_func_array($sortie, $paramsSortir);
 		}
 	}
 	
