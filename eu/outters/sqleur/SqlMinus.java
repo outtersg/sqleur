@@ -267,6 +267,13 @@ public class SqlMinus
 			Format format = Format.CSV;
 			if(fileName != null && fileName.endsWith(".sql"))
 				format = Format.SQL;
+			String splitListSuffix = ".lst";
+			int splitLineCount = 0;
+			if(fileName != null && fileName.endsWith(splitListSuffix))
+			{
+				fileName = fileName.substring(0, fileName.length() - splitListSuffix.length()) + ".csv";
+				splitLineCount = 99999;
+			}
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
 			try
@@ -282,6 +289,7 @@ public class SqlMinus
 					)
 			)
 			{
+				if(splitLineCount > 0) writer.setSplit(splitLineCount, splitListSuffix);
 				if(nulls != null) writer.setNullString(nulls);
 				// Merci https://datubaze.files.wordpress.com/2015/11/r_menon_expert_ora_jdbc_programming_2005_gram.pdf pour comment jouer aussi bien du select que du DDL!
 				boolean estUneReq = stmt.execute(req);
