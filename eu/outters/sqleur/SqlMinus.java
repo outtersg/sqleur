@@ -271,8 +271,13 @@ public class SqlMinus
 			int splitLineCount = 0;
 			if(fileName != null && fileName.endsWith(splitListSuffix))
 			{
-				fileName = fileName.substring(0, fileName.length() - splitListSuffix.length()) + ".csv";
+				String basePath = fileName.substring(0, fileName.length() - splitListSuffix.length());
 				splitLineCount = 99999;
+				Pattern exprTaille = Pattern.compile("\\.([1-9][0-9]*)$");
+				Matcher taille = exprTaille.matcher(basePath);
+				if(taille.find())
+					splitLineCount = Integer.parseInt(taille.group(1));
+				fileName = basePath+".csv";
 			}
 		
 		// À FAIRE: si fileName == null (stdout), inutile de créer un nouveau CSVWriter?
