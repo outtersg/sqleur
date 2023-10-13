@@ -986,6 +986,11 @@ class Sqleur
 		return implode('', $args);
 	}
 	
+	public function _split($quoi, $parQuoi)
+	{
+		return explode($parQuoi, $quoi);
+	}
+	
 	public function _replace($params)
 	{
 		$args = func_get_args();
@@ -1024,6 +1029,7 @@ class Sqleur
 	(
 		'defined',
 		'concat',
+		'split',
 		'replace',
 	);
 	
