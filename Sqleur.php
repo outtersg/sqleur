@@ -994,6 +994,8 @@ class Sqleur
 	public function _replace($params)
 	{
 		$args = func_get_args();
+		if($args[1] instanceof NœudPrepro && $args[1]->t == '/')
+			return preg_replace($args[1]->f, $args[2], $args[0]);
 		return strtr($args[0], [ $args[1] => $args[2] ]);
 	}
 	
