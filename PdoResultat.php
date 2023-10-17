@@ -80,7 +80,7 @@ class _PdoRésultat extends PDOStatement
 	public function getColumnMeta($num)
 	{
 		if(!method_exists($this->rés, 'getColumnMeta'))
-			return $num; // Oui c'est dégueulasse mais que voulez-vous, Doctrine a décidé de tout bloquer.
+			return [ 'name' => 'col'.($num + 1) ]; // Oui c'est dégueulasse mais que voulez-vous, Doctrine a décidé de tout bloquer.
 		return $this->rés->getColumnMeta($num);
 	}
 }
