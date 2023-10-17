@@ -72,12 +72,12 @@ class _PdoRésultat extends PDOStatement
 		}
 	}
 	
-	public function columnCount()
+	protected function _columnCount()
 	{
 		return $this->rés->columnCount();
 	}
 	
-	public function getColumnMeta($num)
+	protected function _getColumnMeta($num)
 	{
 		if(!method_exists($this->rés, 'getColumnMeta'))
 			return [ 'name' => 'col'.($num + 1) ]; // Oui c'est dégueulasse mais que voulez-vous, Doctrine a décidé de tout bloquer.

@@ -16,6 +16,16 @@ class PdoRésultat extends _PdoRésultat
 	{
 		return $this->_fetchAll($mode);
 	}
+	
+	public function columnCount(): int
+	{
+		return $this->_columnCount();
+	}
+	
+	public function getColumnMeta(int $num): array|false
+	{
+		return $this->_getColumnMeta($num);
+	}
 }
 
 ?>
