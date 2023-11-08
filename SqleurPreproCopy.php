@@ -137,6 +137,9 @@ class SqleurPreproCopy extends SqleurPrepro
 		$this->_sqleur->_sortie = $this->_sortieOriginelle;
 		unset($this->_sortieOriginelle);
 	}
+	
+	protected $_pousseur;
+	protected $_sortieOriginelle;
 }
 
 class SqleurPreproCopyPousseur
@@ -178,6 +181,12 @@ class SqleurPreproCopyPousseur
 	{
 		$this->_données[] = $l;
 	}
+	
+	protected $_bdd;
+	protected $_table;
+	protected $_champs;
+	protected $_sép;
+	protected $_données;
 }
 
 class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
