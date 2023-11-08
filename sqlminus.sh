@@ -2,6 +2,11 @@
 
 sqlm()
 {
+	local bdd="$bdd" bddtunnel="$bddtunnel" bddtunnelbiblios="$bddtunnelbiblios"
+	case "$bdd:$BDD_CHAINE" in :?*) bdd="$BDD_CHAINE" ;; esac
+	case "$bddtunnel:$BDD_SSH" in :?*) bddtunnel="$BDD_SSH" ;; esac
+	case "$bddtunnelbiblios:$BDD_SSH_LIB" in :?*) bddtunnelbiblios="$BDD_SSH_LIB" ;; esac
+	
 	local fichiers= sep="`printf '\036'`"
 	case "$* " in
 		*".sql "|*=*)
