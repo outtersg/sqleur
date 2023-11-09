@@ -202,6 +202,9 @@ class Sqleur
 	
 	public function attacherPréprocesseur($préprocesseur)
 	{
+		if(method_exists($préprocesseur, 'grefferÀ'))
+			$préprocesseur->grefferÀ($this);
+		else
 		$préprocesseur->_sqleur = $this;
 		$this->_préprocesseurs[] = $préprocesseur;
 	}
