@@ -149,9 +149,9 @@ class Sqleur
 	public $_posAvant;
 	public $_posAprès;
 	public $_requêteRemplacée;
+	public $_fonctionsInternes;
 	protected $terminaison;
 	protected $_dernièreLigne;
-	protected $_fonctionsInternes;
 	protected $_retourDirect;
 	protected $_conditions;
 	protected $_dansChaîne;

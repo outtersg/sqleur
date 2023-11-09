@@ -852,7 +852,7 @@ class NœudPrepro
 		return $chose->exécuter($contexte);
 	}
 	
-	protected function _contenus($tableau, $contexte, $n = false)
+	protected function _contenus($tableau, $contexte, $n = false, $multi = false)
 	{
 		$fils = array();
 		if(!is_array($tableau))
@@ -861,7 +861,7 @@ class NœudPrepro
 			if(!($f instanceof NœudPrepro))
 				throw new Exception('Impossible d\'interpréter '.print_r($this, true));
 			else
-				$fils[] = $f->exécuter($contexte);
+				$fils[] = $f->exécuter($contexte, $multi ? $multi : null);
 		if($n !== false && count($fils) != $n)
 			throw new Exception($this->t.': '.$n.' nœuds fils attendus');
 		return $fils;
