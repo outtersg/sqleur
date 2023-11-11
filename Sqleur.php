@@ -150,7 +150,7 @@ class Sqleur
 	public $_posAprès;
 	public $_requêteRemplacée;
 	public $_fonctionsInternes;
-	protected $terminaison;
+	public $terminaison;
 	protected $_dernièreLigne;
 	protected $_retourDirect;
 	protected $_conditions;
