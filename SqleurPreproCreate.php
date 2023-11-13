@@ -150,6 +150,7 @@ class SqleurPreproCreate extends SqleurPrepro
 			$this->_params[self::SOURCE],
 			empty($this->_params[self::TEMP]) ? null : '-t',
 			$this->_params[self::TABLE].(isset($this->_sqleur->_defs['stat'][':pilote']) ? ':'.$this->_sqleur->_defs['stat'][':pilote'] : ''),
+			'-',
 		]);
 		$p = new ProcessusLignes($extracteur, [ $this, '_ligneRés']);
 		$r = $p->attendre(implode('', $this->_reqs));
