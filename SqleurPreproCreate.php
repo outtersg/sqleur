@@ -33,6 +33,8 @@ class SqleurPreproCreate extends SqleurPrepro
 	 * Nom de l'exécutable à invoquer pour lancer l'extraction; d'autres moyens d'action existent:
 	 * - définir la variable préproc #define LOMBRIC
 	 * - définir la variable d'environnement LOMBRIC
+	 * - laisser utiliser le lombric fourni avec Sqleur, mais définir la variable d'environnement LOMBRICRC qui désignera un fichier (shell) chargé par lombric
+	 * - laisser utiliser le lombric par défaut en ayant défini son paramétrage des différentes bases dans ~/.lombricrc
 	 */
 	public $lombric;
 	
@@ -169,6 +171,7 @@ class SqleurPreproCreate extends SqleurPrepro
 	{
 		if(isset($this->lombric)) return $this->lombric;
 		if(($lombric = getenv('LOMBRIC'))) return $lombric;
+		return __DIR__.'/lombric';
 		throw new Exception("Impossible de lancer l'extraction, aucun lombric n'est défini (veuillez fournir son chemin dans une variable d'environnement LOMBRIC)");
 	}
 	
