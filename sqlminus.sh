@@ -9,7 +9,7 @@ sqlm()
 	
 	local fichiers= sep="`printf '\036'`"
 	case "$* " in
-		*".sql "|*=*)
+		*".sql "|*=*|"- "*|*" - "*)
 			# /!\ Repose sur le repapa des scripts de Guillaume.
 			_exfifi_param() { case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
 			exfifi() # exfifi = EXFIltre les FIchiers.
@@ -19,6 +19,7 @@ sqlm()
 					1) exfifi_prochainPourMinus= ; return 0 ;;
 				esac
 				case "$param" in
+					-) return 1 ;; # Celui-là ne sert à personne: il signifie "chope stdin", mais c'est déjà la signification de ne rien nous passer du tout.
 					-o) exfifi_prochainPourMinus=1 ;;
 					*.sql) r=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
