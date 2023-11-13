@@ -31,6 +31,7 @@ class SqleurPreproCreate extends SqleurPrepro
 {
 	/**
 	 * Nom de l'exécutable à invoquer pour lancer l'extraction; d'autres moyens d'action existent:
+	 * - définir la variable préproc #define LOMBRIC
 	 * - définir la variable d'environnement LOMBRIC
 	 */
 	public $lombric;
