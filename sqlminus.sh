@@ -91,4 +91,37 @@ _sqlm_init()
 	done
 }
 
+#--- repapa ---
+# COPIE de gui/src/scripts/shrc.sh
+
+# RÉPArtir les PAramètres.
+# Utilisation à l'intérieur d'une fonction (ex. pour faire sauter le second paramètre):
+#   montest() { [ $i -ne 2 ] ; } ; repapa montest "$@" ; eval "$repapa"
+repapa()
+{
+	local param= i=0 test="$1" ; shift
+	repapa=
+	for param in "$@"
+	do
+		i=$((i+1))
+		if $test ; then repapa="$repapa \"\$$i\"" ; fi
+	done
+	repapa="set --$repapa"
+}
+repapa0()
+{
+	local param= i=0 test="$1" ; shift
+	repapa=
+	for param in "$@"
+	do
+		case $i in 0) set -- ;; esac
+		i=$((i+1))
+		if $test ; then set -- "$@" "$param" ; fi
+	done
+	IFS=\; # À FAIRE: s'assurer un IFS qui ne figure pas dans les paramètres.
+	repapa_="$*"
+	unset IFS
+	repapa='IFS=\; ; set -- $repapa_ ; unset IFS'
+}
+
 _sqlm_init
