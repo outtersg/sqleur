@@ -152,6 +152,7 @@ class Sqleur
 	public $_fonctionsInternes;
 	public $terminaison;
 	protected $_dernièreLigne;
+	protected $_retour;
 	protected $_retourDirect;
 	protected $_conditions;
 	protected $_dansChaîne;
