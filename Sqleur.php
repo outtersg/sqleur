@@ -320,7 +320,7 @@ class Sqleur
 			$bout = $this->_appliquerDéfs($bout);
 		}
 		$this->_requeteEnCours .= $bout;
-		if($this->_queDuVent && !$duVent && trim($bout))
+		if($this->_queDuVent && !$duVent && trim($bout) && !$this->dansUnSiÀLaTrappe())
 			$this->_queDuVent = false;
 		if($appliquerDéfs)
 			$this->_requêteRemplacée = $this->_requeteEnCours;
