@@ -161,10 +161,13 @@ class SqleurPreproCreate extends SqleurPrepro
 		
 		fclose($this->_temp);
 		
-		/* À FAIRE: inclure le fichier généré */
-		throw new Exception("Pour le moment je ne sais pas encore prendre en compte le fichier généré");
-		
-		unlink($this->_cheminTemp);
+		$this->_sqleur->éphéméride[] = [ $this, '_injecte', $this->_cheminTemp ];
+	}
+	
+	public function _injecte($fichierTemp)
+	{
+		$this->_sqleur->_découpeFichier($fichierTemp);
+		unlink($fichierTemp);
 	}
 	
 	public function lombric()
