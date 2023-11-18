@@ -1,7 +1,7 @@
 {
 	"name": "gui/sqleur",
 	"description": "Préprocesseur & découpeur de SQL",
-	"version": "1.8.x-dev",
+	"version": "1.9.x-dev",
 	"require":
 	{
 		"php": ">= 5.3.0"
