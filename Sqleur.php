@@ -130,6 +130,12 @@ class Sqleur
 	
 	public $tailleBloc = 0x20000;
 	
+	/**
+	 * L'éphéméride permet aux préprocesseurs d'insérer du SQL généré à faire jouer avant la prochaine instruction.
+	 */
+	/* À FAIRE: savoir les rattacher à l'instruction qui les a générées, à des fins de diagnostic. */
+	public $éphéméride = [];
+	
 	public $_defs = array();
 	
 	public $_mode;
@@ -531,6 +537,8 @@ class Sqleur
 					break;
 			}
 			$chaineDerniereDecoupe = $chaineNouvelleDecoupe;
+			
+			$this->_effeuillerÉphéméride();
 		}
 		
 			if(count($this->_boucles))
@@ -841,6 +849,18 @@ class Sqleur
 		}
 		
 		$this->_requeteEnCours = $requeteEnCours;
+	}
+	
+	protected function _effeuillerÉphéméride()
+	{
+		while(($feuille = array_shift($this->éphéméride)))
+		{
+			if(is_array($feuille) && count($feuille) > 2)
+				$params = array_splice($feuille, 2);
+			else
+				$params = [];
+			return call_user_func_array($feuille, $params);
+		}
 	}
 	
 	/*- États ----------------------------------------------------------------*/
