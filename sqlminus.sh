@@ -87,7 +87,21 @@ _sqlm()
 	then
 		java -cp "$SQLEUR/sqlminus.jar:$SQLEUR/opencsv.jar:$SQLEUR/ojdbc8.jar" eu.outters.sqleur.SqlMinus "$bdd" "$@"
 	else
-		IFS="`printf '\003'`"
+		local sep sepaff # SÉParateur AFFichable (ou plutôt printfable).
+		for sepaff in '\003' '\004' '\034' '\035' '\037' ""
+		do
+			sep="`printf "$sepaff"`"
+			case "$sepaff" in "")
+				unset IFS
+				echo "# Tous les séparateurs potentiels sont déjà utilisés dans la ligne de commande." >&2
+				return 1
+				;;
+			esac
+			case "$*" in *"$sep"*) continue ;; esac
+			break
+		done
+		IFS="$sep"
+		
 		local options="$bdd$IFS$*"
 		options="--ss${IFS}200$IFS$options" # À FAIRE: rendre le --ss 200 paramétrable (dépend de la latence de sshd à inspecter tous ses entrants: si élevée, on s'aligne, sans quoi il lit en même temps un stderr sorti "bien" avant et un stdout de maintenant, les entremêlant salement.
 		unset IFS
@@ -99,7 +113,7 @@ _sqlm()
 		done
 		export LC_ALL=fr_FR.UTF-8
 		options="'"$options"'"
-		IFS="`printf '\''\003'\''`"
+		IFS="`printf '\'"$sepaff"\''`"
 		java -cp "$d/sqlminus.jar:$d/opencsv.jar:$d/ojdbc8.jar" eu.outters.sqleur.SqlMinus $options'
 	fi
 }
