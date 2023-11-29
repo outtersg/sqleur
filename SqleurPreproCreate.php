@@ -150,6 +150,7 @@ class SqleurPreproCreate extends SqleurPrepro
 			'sql2table',
 			'-b',
 			$this->_params[self::SOURCE],
+			'-s', "\003",
 			empty($this->_params[self::TEMP]) ? '-c' : '-t', // -c en création, -t en create temporary
 			$this->_params[self::TABLE].(isset($this->_sqleur->_defs['stat'][':pilote']) ? ':'.$this->_sqleur->_defs['stat'][':pilote'] : ''),
 			'-',
