@@ -90,6 +90,7 @@ corpus()
 	v=1.7.230725
 	v=1.9.231118
 	
+	find /tmp/ -maxdepth 1 -name 0.sql -mtime -3d | grep -q . ||
 	(
 		listercorpus \
 		| sort | while read f
