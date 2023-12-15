@@ -736,7 +736,11 @@ class Sqleur
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
 			$sortie = $this->_sortie;
-			$paramsSortir = array_merge([ $requete, false, $interne ], array_splice($sortie, 2));
+			$paramsSortir = [ $requete, false, $interne ];
+			// Extraction des paramètres supplémentaires dans une sortie de type [ <objet>, <méthode>, <params supplémentaires> ].
+			if(is_array($sortie))
+				$paramsSortir = array_merge($paramsSortir, array_splice($sortie, 2));
+			
 			return call_user_func_array($sortie, $paramsSortir);
 		}
 	}
