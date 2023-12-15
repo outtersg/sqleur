@@ -28,6 +28,7 @@ class SqleurCond
 	public $défs;
 	public $requêteEnCours;
 	public $requêteRemplacée;
+	public $requêteÀRedécouper;
 	protected $ligne;
 	public $enCours;
 	public $cond;
@@ -44,6 +45,7 @@ class SqleurCond
 		$this->défs = $this->_sqleur->_defs;
 		$this->requêteEnCours = $this->_sqleur->_requeteEnCours;
 		$this->requêteRemplacée = isset($this->_sqleur->_requêteRemplacée) ? $this->_sqleur->_requêteRemplacée : null;
+		$this->requêteÀRedécouper = $this->_sqleur->_requêteÀRedécouper;
 		$this->ligne = $this->_sqleur->_ligne;
 		
 		$this->déjàFaite = false;

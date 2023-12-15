@@ -155,6 +155,11 @@ class Sqleur
 	public $_posAvant;
 	public $_posAprès;
 	public $_requêteRemplacée;
+	/**
+	 * La requête en cours de constitution comporte des ; introduits par remplacement d'un #define:
+	 * elle doit être réanalysée pour vérifier qu'il ne s'agit pas désormais de 2 requêtes.
+	 */
+	public $_requêteÀRedécouper;
 	public $_fonctionsInternes;
 	public $terminaison;
 	protected $_dernièreLigne;
@@ -227,6 +232,7 @@ class Sqleur
 		unset($this->_chaineDerniereDecoupe);
 		unset($this->_requeteEnCours);
 		unset($this->_requêteRemplacée);
+		$this->_requêteÀRedécouper = false;
 		unset($this->_resteEnCours);
 		if($complète)
 		$this->_dansChaîne = null;
@@ -334,8 +340,6 @@ class Sqleur
 	
 	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false, $numDernierArrêt = null)
 	{
-		/* À FAIRE: Ouille, on applique les définitions ici, après découpe, ce qui veut dire que si notre définition contient plusieurs instructions on finira avec une seule instruction contenant un point-virgule! */
-		/* À FAIRE: si on fait le point précédent (repasser par un découperBloc), adapter le calcul des lignes aux lignes originales (un remplacement peut contenir un multi-lignes). */
 		/* À FAIRE: appeler sur chaque fin de ligne (on ne peut avoir de symbole à remplacer à cheval sur une fin de ligne) pour permettre au COPY par exemple de consommer en flux tendu. */
 		if($appliquerDéfs)
 		{
@@ -470,6 +474,7 @@ class Sqleur
 					$this->_requeteEnCours = '';
 					$this->_queDuVent = true; /* À FAIRE: le gérer aussi dans les conditions (empiler et dépiler). */
 					unset($this->_requêteRemplacée);
+					$this->_requêteÀRedécouper = false;
 					unset($this->_dernierBéguinBouclé);
 					$this->_ligne += $nLignes;
 					break;
@@ -696,10 +701,20 @@ class Sqleur
 		$this->_dernièreLigne = $this->_ligne - substr_count(ltrim($requete), "\n");
 		if($appliquerDéfs)
 			$requete = $this->_appliquerDéfs($requete);
+		$this->_requeteEnCours = '';
+		unset($this->_requêteRemplacée);
 		if(($t1 = strlen($r1 = rtrim($requete))) < ($t0 = strlen($requete)) && isset($this->terminaison))
 			$this->terminaison = substr($requete, $t1 - $t0).$this->terminaison;
 		if(strlen($requete = ltrim($r1)) && !$this->_queDuVent)
 		{
+			if($this->_requêteÀRedécouper)
+			{
+				$this->_requêteÀRedécouper = false;
+				/* À FAIRE: vider temporairement les définitions, pour qu'une expr littérale résultant d'un rempl ne soit pas reremplacée (ex.: #define ma_table schéma.ma_table). */
+				$r = $this->découpeIncise($requete);
+				return $r;
+			}
+			
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
 			$sortie = $this->_sortie;
@@ -803,6 +818,7 @@ class Sqleur
 					$this->_sortie = $condition->sortie;
 					$this->_requeteEnCours = $condition->requêteEnCours;
 					$this->_requêteRemplacée = $condition->requêteRemplacée;
+					$this->_requêteÀRedécouper = $condition->requêteÀRedécouper;
 					$this->_defs = $condition->défs;
 					$condition->enCours(true);
 					$condition->déjàFaite = true;
@@ -814,6 +830,7 @@ class Sqleur
 					{
 						$condition->requêteEnCours = $requeteEnCours; // On mémorise.
 						$condition->requêteRemplacée = $this->_requêteRemplacée;
+						$condition->requêteÀRedécouper = $this->_requêteÀRedécouper;
 						$condition->défs = $this->_defs;
 						$condition->enCours(false);
 					}
@@ -829,6 +846,7 @@ class Sqleur
 				{
 					$this->_requeteEnCours = $condition->requêteEnCours; // On restaure.
 					$this->_requêteRemplacée = $condition->requêteRemplacée;
+					$this->_requêteÀRedécouper = $condition->requêteÀRedécouper;
 					$this->_defs = $condition->défs;
 				}
 				$condition->enCours(false);
@@ -991,11 +1009,17 @@ class Sqleur
 	protected function _appliquerDéfs($chaîne) { return $this->appliquerDéfs($chaîne); }
 	public function appliquerDéfs($chaîne)
 	{
+		/* À FAIRE: adapter le calcul des lignes aux lignes originales (un remplacement peut contenir un multi-lignes). */
 		if(is_array($chaîne)) $chaîne = $chaîne[0];
 		// La séparation statiques / dynamiques nous oblige à les passer dans un ordre différent de l'initial (qui mêlait statiques et dynamiques).
 		// On choisit les dynamiques d'abord, car, plus complexes, certaines de leurs parties peuvent être surchargées par des statiques.
 		foreach($this->_defs['dyn'] as $expr => $rempl)
-			$chaîne = preg_replace_callback($expr, $rempl, $chaîne);
+			if(($chaîne2 = preg_replace_callback($expr, $rempl, $chaîne)) !== $chaîne)
+			{
+				if(!$this->_dansChaîne && substr_count($chaîne2, ';') != substr_count($chaîne, ';'))
+					$this->_requêteÀRedécouper = true;
+				$chaîne = $chaîne2;
+			}
 		if(!isset($this->_defs['statr']) || $this->_defs['IFS'][''] != $this->IFS)
 		{
 			if(!isset($this->IFS))
@@ -1010,7 +1034,12 @@ class Sqleur
 			foreach($this->_defs['stat'] as $clé => $val)
 				$this->_defs['statr'][$clé] = is_array($val) ? implode($this->IFS, $val) : $val;
 		}
-		$chaîne = strtr($chaîne, $this->_defs['statr']);
+		if(($chaîne2 = strtr($chaîne, $this->_defs['statr'])) !== $chaîne)
+		{
+			if(!$this->_dansChaîne && substr_count($chaîne2, ';') != substr_count($chaîne, ';'))
+				$this->_requêteÀRedécouper = true;
+			$chaîne = $chaîne2;
+		}
 		return $chaîne;
 	}
 	
