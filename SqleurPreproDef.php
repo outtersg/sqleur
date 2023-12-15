@@ -187,6 +187,8 @@ class SqleurPreproDef extends SqleurPrepro
 		$paramsDéfinir[2] = $val;
 		call_user_func_array([ $this, '_définir' ], $paramsDéfinir);
 	}
+	
+	protected $_sortieOriginelle;
 }
 
 ?>
