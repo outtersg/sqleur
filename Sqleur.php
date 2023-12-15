@@ -711,7 +711,7 @@ class Sqleur
 			{
 				$this->_requêteÀRedécouper = false;
 				/* À FAIRE: vider temporairement les définitions, pour qu'une expr littérale résultant d'un rempl ne soit pas reremplacée (ex.: #define ma_table schéma.ma_table). */
-				$r = $this->découpeIncise($requete);
+				$r = $this->découpeIncise($requete.(isset($this->terminaison) ? $this->terminaison : ''));
 				return $r;
 			}
 			
