@@ -260,6 +260,22 @@ class Sqleur
 		}
 	}
 	
+	public function découpeIncise($incise)
+	{
+		$this->mémoriserÉtat(true); /* À FAIRE: $technique ou pas $technique? */
+		try
+		{
+			$r = $this->_decoupeBloc($incise, true);
+			$this->restaurerÉtat();
+			return $r;
+		}
+		catch(Exception $e)
+		{
+			$this->restaurerÉtat();
+			throw $e;
+		}
+	}
+	
 	public function decoupeFlux($f)
 	{
 		$this->_init();
