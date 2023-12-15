@@ -105,6 +105,17 @@ include_once 'SqleurPreproExpr.php';
  * L'autre solution consiste donc à trimballer une position de marqueur conjointement au bloc mémoire accumulé (ce qui est fait actuellement; avoir une chaîne de caractères plutôt qu'un simple entier permet de vérifier que ce qu'on croit être le "déjà traité" est bien le prélude du "déjà découpé": tant on a peu confiance en notre capacité à balader les deux ensemble.
  * Pour améliorer la situation, il serait donc bon de passer par une seule variable état (facile à trimballer / recopier atomiquement, sans risque d'oubli), à deux membres. Voire trois si on y cale le _resteEnCours (ce qui a du sens car ce qui a été découpé de _resteEnCours est censé se retrouvé dans _requeteEnCours. Les deux sont liés).
  */
+/* À FAIRE: suite de blocs typés
+ * Le besoin d'embarquer des séparateurs de requête dans des #define, qui donnent lieu à un redécoupage après expansion (pour éviter de balancer une seule requête à points-virgules, mais bien comprendre que finalement il s'agit de plusieurs requêtes, cf. tests/definemulti.test.sql),
+ * fait apparaître le souhait de distinguer blocs littéraux ('…' ou $$…$$) et blocs requête.
+ * En effet dans les blocs littéraux, l'apparition de ; ne remet pas en cause la découpe. Pour des raisons d'optim, on pourrait donc souhaiter ne déclencher la seconde découpe qu'en cas de #define sur la requête.
+ * Sauf que l'appliquerDéfs() se fait généralement sur la requête reconstituée: donc à ce moment on a perdu l'info de si le remplacement touche une partie littérale ou requête, donc on ne peut optimiser.
+ * On pourrait donc imaginer qu'au lieu d'un _requeteEnCours et _requêteRemplacée, on ait une liste chaînée de blocs, typés littéraux ou requête.
+ * Ce besoin pourrait rejoindre le précédent, "état de découpe".
+ * /!\ Certains #define (notamment ceux par regex) peuvent avoir besoin de manger à cheval sur deux blocs, il faut donc aussi ruser pour appliquer les défs ainsi.
+ * /!\ Encore pire, on peut avoir des #define n'ayant pas la même signification selon leur application: #define TRUC var_truc / #define TRUC(x) fonction_truc(x) / TRUC('coucou') -- Doit être interprété fonction_truc('coucou') mais risque d'être compris comme var_truc('coucou') si appliquerDéfs() traite séparément les blocs req et litt.
+ *     Finalement pour ce risque, le fonctionnement par marquage de zone reste peut-être préférable.
+ */
 
 class Sqleur
 {
