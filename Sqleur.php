@@ -285,7 +285,14 @@ class Sqleur
 			if($brut)
 				$this->_defs = [ 'stat' => [], 'dyn' => [] ]; // Seront de toute manière restaurées par restaurerÉtat().
 			$r = $this->_decoupeBloc($incise, true);
+			$défsÉcrites = $this->_defs;
 			$this->restaurerÉtat($brut);
+			// $brut vise à empêcher les définitions d'être _utilisées_, mais pas _définies_:
+			// on exploite donc les définitions faites par l'incise.
+			// Le principal (et seul?) exploitant de cette possibilité étant SqleurPreproDef.
+			if($brut)
+				foreach($défsÉcrites as $groupeDéfs => $défsGroupe)
+					$this->_defs[$groupeDéfs] = $défsGroupe + $this->_defs[$groupeDéfs];
 			return $r;
 		}
 		catch(Exception $e)
