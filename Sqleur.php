@@ -723,8 +723,13 @@ class Sqleur
 			if($this->_requêteÀRedécouper)
 			{
 				$this->_requêteÀRedécouper = false;
-				/* À FAIRE: vider temporairement les définitions, pour qu'une expr littérale résultant d'un rempl ne soit pas reremplacée (ex.: #define ma_table schéma.ma_table). */
-				$r = $this->découpeIncise($requete.(isset($this->terminaison) ? $this->terminaison : ''));
+				// La requête est à relire brute (découpeIncise(…, true)), sans reremplacement:
+				// - pour perfs
+				// - pour exactitude si un #define inclut l'expression littérale qu'il surcharge
+				//   ex.: #define ma_table schéma.ma_table résulterait en des schéma.schéma.ma_table en cas de double remplacement
+				// - pour éviter les boucles infinies
+				//   dans le cas extrême cumulant l'auto-surcharge comme ci-dessus + un ; dans le remplacement, qui redéclenche le _requêteÀRedécouper
+				$r = $this->découpeIncise($requete.(isset($this->terminaison) ? $this->terminaison : ''), true);
 				return $r;
 			}
 			
