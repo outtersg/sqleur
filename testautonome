@@ -87,6 +87,9 @@ corpus()
 	#v=1.5.220827 # Toute pourrie, achoppe assez rapidement.
 	v=1.6.220910.1
 	v=1.7.221126
+	v=1.7.230725
+	v=1.9.231118
+	
 	(
 		listercorpus \
 		| sort | while read f
