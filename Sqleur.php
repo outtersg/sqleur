@@ -277,18 +277,20 @@ class Sqleur
 		}
 	}
 	
-	public function découpeIncise($incise)
+	public function découpeIncise($incise, $brut = false)
 	{
 		$this->mémoriserÉtat(true); /* À FAIRE: $technique ou pas $technique? */
 		try
 		{
+			if($brut)
+				$this->_defs = [ 'stat' => [], 'dyn' => [] ]; // Seront de toute manière restaurées par restaurerÉtat().
 			$r = $this->_decoupeBloc($incise, true);
-			$this->restaurerÉtat();
+			$this->restaurerÉtat($brut);
 			return $r;
 		}
 		catch(Exception $e)
 		{
-			$this->restaurerÉtat();
+			$this->restaurerÉtat($brut);
 			throw $e;
 		}
 	}
