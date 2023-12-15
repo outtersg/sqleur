@@ -220,13 +220,15 @@ class Sqleur
 		$this->_retour[] = $requete;
 	}
 	
-	protected function _init()
+	protected function _init($complète = true)
 	{
+		if($complète)
 		$this->_conditions = array(); // Pile des conditions de préprocesseur.
 		unset($this->_chaineDerniereDecoupe);
 		unset($this->_requeteEnCours);
 		unset($this->_requêteRemplacée);
 		unset($this->_resteEnCours);
+		if($complète)
 		$this->_dansChaîne = null;
 	}
 	
@@ -554,10 +556,7 @@ class Sqleur
 		{
 			$this->_ajouterBoutRequête($this->_resteEnCours);
 			$this->_sors($this->_requeteEnCours);
-			unset($this->_chaineDerniereDecoupe);
-			unset($this->_requeteEnCours);
-			unset($this->_requêteRemplacée);
-			unset($this->_resteEnCours);
+			$this->_init(false);
 			if($this->_retourDirect)
 		{
 			$retour = $this->_retour;
