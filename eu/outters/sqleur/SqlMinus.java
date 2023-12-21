@@ -37,6 +37,8 @@ public class SqlMinus
 	protected boolean avecNomsColonne = true;
 	protected char sepCsv = ';';
 	protected char guillemet = CSVParser.DEFAULT_QUOTE_CHARACTER;
+	protected String finDeLigne = CSVWriter.DEFAULT_LINE_END;
+	protected String finDeResultat = null;
 	protected String nulls = null;
 	protected String invite = null;
 	protected int delaiEntreSortiesStandard = 0;
@@ -89,6 +91,14 @@ public class SqlMinus
 			{
 				sepReq = (char)0;
 				stdin = true;
+			}
+			else if(args[posParam].equals("--serie"))
+			{
+				sepCsv = '\037'; // Unit Separator.
+				finDeLigne = "\036"; // Record Separator.
+				finDeResultat = "\035"; // File Separator.
+				guillemet = '\000';
+				diag = 0;
 			}
 			else if(args[posParam].equals("-i"))
 			{
@@ -290,7 +300,7 @@ public class SqlMinus
 					(
 					diag > 0
 					? new EcrivainVerbeux(fileName, sepCsv, guillemet, this)
-					: new CSVWriter(fileName, sepCsv, guillemet, guillemet, CSVWriter.DEFAULT_LINE_END)
+					: new CSVWriter(fileName, sepCsv, guillemet, guillemet, finDeLigne, finDeResultat)
 					)
 			)
 			{
@@ -319,8 +329,8 @@ public class SqlMinus
 				{
 					// À FAIRE: exploiter stmt.getUpdateCount()?
 					//int n = stmt.getUpdateCount();
-					writer.writeNext(null);
 				}
+					writer.writeNext(null);
 			}
 			finally
 			{
