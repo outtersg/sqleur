@@ -122,8 +122,18 @@ _sqlm_init()
 {
 	for SQLEUR in "$SCRIPTS" "$HOME/src/projets/sqleur" "$HOME/lib/sqlminus"
 	do
-		[ ! -e "$SQLEUR/sqlminus.jar" ] || break
+		[ ! -e "$SQLEUR/sql2csv.php" ] || return 0
 	done
+	local d="vendor/gui/sqleur" n=0 r="$PWD"
+	while [ $n -lt 5 ]
+	do
+		SQLEUR="$r/$d"
+		[ -e "$SQLEUR/sql2csv.php" ] && return 0 || r="`dirname "$r"`"
+	done
+	# À FAIRE: on pourrait aussi explorer le LOMBRIC_PATH, qui peut nous avoir inclus.
+	# À FAIRE: taper $BASH_SOURCE ou équivalent sur les shells qui ont cette fonctionnalité.
+	echo "# Impossible de dénicher sql2csv.php" >&2
+	return 1
 }
 
 #--- repapa ---
