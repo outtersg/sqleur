@@ -129,6 +129,7 @@ _sqlm_init()
 	do
 		SQLEUR="$r/$d"
 		[ -e "$SQLEUR/sql2csv.php" ] && return 0 || r="`dirname "$r"`"
+			n=$((n+1))
 	done
 	# À FAIRE: on pourrait aussi explorer le LOMBRIC_PATH, qui peut nous avoir inclus.
 	# À FAIRE: taper $BASH_SOURCE ou équivalent sur les shells qui ont cette fonctionnalité.
