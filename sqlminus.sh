@@ -170,4 +170,4 @@ repapa0()
 	repapa='IFS=\; ; set -- $repapa_ ; unset IFS'
 }
 
-_sqlm_init
+_sqlm_init || true
