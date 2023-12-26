@@ -124,14 +124,29 @@ _sqlm_init()
 	do
 		[ ! -e "$SQLEUR/sql2csv.php" ] || return 0
 	done
-	local d="vendor/gui/sqleur" n=0 r="$PWD"
-	while [ $n -lt 5 ]
+	_sqlm_init_fournisseurde()
+	{
+	local d="vendor/gui/sqleur" n=0 r="$1"
+	while [ $n -lt 7 ]
 	do
 		SQLEUR="$r/$d"
 		[ -e "$SQLEUR/sql2csv.php" ] && return 0 || r="`dirname "$r"`"
 			n=$((n+1))
 	done
-	# À FAIRE: on pourrait aussi explorer le LOMBRIC_PATH, qui peut nous avoir inclus.
+		return 1
+	}
+	_sqlm_init_fournisseurde "$PWD" && return 0 || true
+	_sqlm_init_fournisseurde "$SCRIPTS" && return 0 || true
+	_sqlm_init_dossierde()
+	{
+		for SQLEUR in "$@"
+		do
+			SQLEUR="`dirname "$SQLEUR"`"
+			[ -e "$SQLEUR/sql2csv.php" ] && return 0 || continue
+		done
+	}
+	IFS=:
+	tifs _sqlm_init_dossierde $LOMBRICPATH
 	# À FAIRE: taper $BASH_SOURCE ou équivalent sur les shells qui ont cette fonctionnalité.
 	echo "# Impossible de dénicher sql2csv.php" >&2
 	return 1
