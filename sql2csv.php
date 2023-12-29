@@ -470,6 +470,85 @@ class JoueurSqlPdo extends JoueurSql
 	}
 }
 
+/**
+ * Joueur Asservi de Requêtes SQL
+ * aussi appelé JoueurSqlExéc
+ */
+class Jars extends JoueurSql
+{
+	public function __construct($commande)
+	{
+		require_once __DIR__.'/../util/processus.php';
+		
+		parent::__construct();
+		
+		$this->bdd = $this;
+		
+		$commande = explode(' ', $commande);
+		$this->_jars = new ProcessusLignes($commande, [ $this, 'engrangerLigne' ]);
+		$this->_jars->finDeLigne("#[\035\036]#"); # Group Separator et Record Separator.
+	}
+	
+	public function query($sql)
+	{
+		$this->_rés = new RésultatJars;
+		
+		$r = $this->_jars->attendreQuelqueChose($sql.chr(0));
+		if($r !== true && is_numeric($r) && $r != 0)
+			throw new Exception('le connecteur externe est sorti en erreur '.$r);
+		
+		/* À FAIRE: un mode où l'appelant fasse du fetch() sans attendreQuelqueChose()
+		 * Que ce soit l'engrangerLigne qui invoque directement le corps de boucle du fetch, plutôt que l'ordonnanceur qui attende qu'on renvoie quelque chose avant de commencer à tourner sur le fetch.
+		 * Soit par adaptation dédiée, soit par attendreQuelqueChose dans le fetch() plutôt que dans le query().
+		 * Mais alors attention à la gestion d'exceptions!
+		 */
+		return $this->_rés;
+	}
+	
+	public function engrangerLigne($ligne, $fd, $finDeLigne)
+	{
+		if($fd == 2)
+			fprintf(STDERR, "%s%s", $ligne, $finDeLigne);
+		else
+		switch($finDeLigne)
+		{
+			case "\036":
+				$ligne = explode("\037", $ligne);
+				$this->_rés->engrangerLigne($ligne);
+				break;
+			case "\035":
+				return true;
+		}
+	}
+	
+	protected $_jars;
+	protected $_rés;
+}
+
+class RésultatJars
+{
+	public function engrangerLigne($ligne)
+	{
+		if(!isset($this->colonnes))
+			$this->colonnes = $ligne;
+		else
+			$this->données[] = $ligne;
+	}
+	
+	public function setFetchMode() {}
+	public function columnCount() { return isset($this->colonnes) ? count($this->colonnes) : 0; }
+	public function getColumnMeta($numCol) { return [ 'name' => $this->colonnes[$numCol] ]; }
+	public function fetch()
+	{
+		if(!count($this->données)) return false;
+		
+		return array_combine($this->colonnes, array_shift($this->données));
+	}
+	
+	protected $colonnes;
+	protected $données;
+}
+
 class Sql2Csv
 {
 	public function __construct($argv, $j)
@@ -608,6 +687,11 @@ if(isset($argv) && isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRI
 			array_splice($argv, $pos, 1);
 		}
 		new Sql2Csv($argv, new SPP($sép));
+	}
+	else if(($pos = array_search('-e', $argv)) !== false)
+	{
+		$moinsE = array_splice($argv, $pos, 2);
+		new Sql2Csv($argv, new Jars($moinsE[1]));
 	}
 	else
 	new Sql2CsvPdo($argv);

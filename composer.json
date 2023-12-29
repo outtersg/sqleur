@@ -8,6 +8,7 @@
 	},
 	"suggest":
 	{
-		"gui/musqle": "pour le support du #create table from <autre base> (>= 2.2)"
+		"gui/musqle": "pour le support du #create table from <autre base> (>= 2.2)",
+		"gui/util": "pour le #create table from <autre base> (>= 1.1.231111) et le sql2csv.php -e <fournisseur ext> (>= 1.2)"
 	}
 }
