@@ -482,8 +482,28 @@ class Jars extends JoueurSql
 		
 		parent::__construct();
 		
+		$boutsCommande = explode(' ', $commande);
+		switch($boutsCommande[0])
+		{
+			case '@sqlite': // SQLite en ligne de commande, principalement pour test.
+				// echo "select 1 prems, 'miam' facon union select 2, 'ou'; select 3 deuz; selec 'flu';" | php sql2csv.php -e "@sqlite /tmp/0.sqlite3"
+				$bdd = isset($boutsCommande[1]) ? $boutsCommande[1] : getenv('bdd');
+				$commande =
+				[
+					'sh', '-c',
+					"
+						tr -u '\\000\\012' '\\012 ' | while read req
+						do
+							sqlite3 '$bdd' '.head on' '.mode tabs' \"\$req\" && printf '\\035' || kill \$\$
+						done | tr -u '\\012\\011' '\\036\\037'
+					"
+				];
+				break;
+		}
+		
 		$this->bdd = $this;
 		
+		if(is_string($commande))
 		$commande = explode(' ', $commande);
 		$this->_jars = new ProcessusLignes($commande, [ $this, 'engrangerLigne' ]);
 		$this->_jars->finDeLigne("#[\035\036]#"); # Group Separator et Record Separator.
