@@ -499,6 +499,12 @@ class Jars extends JoueurSql
 					"
 				];
 				break;
+			case '@sqlminus':
+				$d = __DIR__;
+				// echo "select 1 prems, 'miam' facon from dual union select 2, 'ou' from dual; select 3 deuz from dual; select 'flu' from dudu;" | bdd="<id>/<mdp>@localhost:1521:<bdd>" php sql2csv.php -e "@sqlminus"
+				/* À FAIRE: ne pas coder en dur Oracle. Par exemple via une syntaxe @sqlminus:ojdbc8.jar (avec une recherche des .jar dans le chemin courant, à défaut $d). */
+				$commande = "java -classpath $d/sqlminus.jar:$d/opencsv.jar:$d/ojdbc8.jar eu.outters.sqleur.SqlMinus -0 --serie ".getenv('bdd');
+				break;
 		}
 		
 		$this->bdd = $this;
