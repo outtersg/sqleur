@@ -120,7 +120,7 @@ _sqlm()
 
 _sqlm_init()
 {
-	for SQLEUR in "$SCRIPTS" "$HOME/src/projets/sqleur" "$HOME/lib/sqlminus"
+	for SQLEUR in "$SQLEUR" "$SCRIPTS" "$HOME/src/projets/sqleur" "$HOME/lib/sqlminus"
 	do
 		[ ! -e "$SQLEUR/sql2csv.php" ] || return 0
 	done
