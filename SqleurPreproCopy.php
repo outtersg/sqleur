@@ -153,7 +153,7 @@ class SqleurPreproCopyPousseur
 	
 	public function init($req)
 	{
-		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|(?<csv>csv)';
+		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|(?<csv>csv)|(?<sauf>header)';
 		
 		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
@@ -169,6 +169,7 @@ class SqleurPreproCopyPousseur
 		$this->_sép = empty($rp['delim']) ? "\t" : $rp['delim'];
 		$this->source = empty($rp['from']) || strcasecmp($rp['from'], 'stdin') == 0 ? null : substr($rp['from'], 1, -1);
 		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
+		$this->_sauf = empty($rp['sauf']) ? 0 : 1;
 		
 		$this->_données = array();
 	}
@@ -186,6 +187,9 @@ class SqleurPreproCopyPousseur
 	protected function données()
 	{
 		$données = $this->_données;
+		
+		if($this->_sauf)
+			$données = array_slice($données, $this->_sauf);
 		
 		if(!isset($this->_csv)) return $données;
 		
@@ -231,6 +235,7 @@ class SqleurPreproCopyPousseur
 	protected $_champs;
 	protected $_sép;
 	protected $_csv;
+	protected $_sauf = 0;
 	protected $_données;
 	protected $_sépi;
 	protected $_nGuili;
