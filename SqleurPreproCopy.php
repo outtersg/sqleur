@@ -153,7 +153,7 @@ class SqleurPreproCopyPousseur
 	
 	public function init($req)
 	{
-		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'';
+		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|(?<csv>csv)';
 		
 		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
@@ -168,6 +168,7 @@ class SqleurPreproCopyPousseur
 		$this->_champs = preg_split('/\s*,\s*/', $r['c']);
 		$this->_sép = empty($rp['delim']) ? "\t" : $rp['delim'];
 		$this->source = empty($rp['from']) || strcasecmp($rp['from'], 'stdin') == 0 ? null : substr($rp['from'], 1, -1);
+		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
 		
 		$this->_données = array();
 	}
@@ -182,11 +183,57 @@ class SqleurPreproCopyPousseur
 		$this->_données[] = $l;
 	}
 	
+	protected function données()
+	{
+		$données = $this->_données;
+		
+		if(!isset($this->_csv)) return $données;
+		
+		$d = [];
+		$résidu = null;
+		$this->_sépi = "\037"; // Séparateur Interne
+		$this->_nGuili = 0; // Nombre de guillemets internes.
+		foreach($données as $l)
+		{
+			/* À FAIRE: si on rencontre notre séparateur interne dans la chaîne, on reparcourt l'ensemble des données pour l'éjecter. */
+			if(strpos($l, '"') !== false)
+			{
+				$l = preg_replace_callback('#""|"|'.$this->_sép.'#', [ $this, '_remplCsv' ], $l);
+				/* À FAIRE: gérer les \n dans le CSV. */
+				$d[] = $l;
+				continue;
+			}
+			else if(!$this->_nGuili)
+				$l = strtr($l, [ $this->_sép => $this->_sépi ]);
+			
+			if(isset($résidu))
+				$l = $résidu."\n".$l;
+			
+			$d[] = $l;
+		}
+		$this->_sép = $this->_sépi;
+		
+		return $d;
+	}
+	
+	public function _remplCsv($r)
+	{
+		switch($r[0])
+		{
+			case '""': return '"';
+			case '"': $this->_nGuili = !$this->_nGuili; return '';
+			case $this->_sép: return $this->_nGuili ? $r[0] : $this->_sépi;
+		}
+	}
+	
 	protected $_bdd;
 	protected $_table;
 	protected $_champs;
 	protected $_sép;
+	protected $_csv;
 	protected $_données;
+	protected $_sépi;
+	protected $_nGuili;
 }
 
 class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
@@ -195,7 +242,7 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 	{
 		if(!count($this->_données)) return;
 		
-		if(!$this->_bdd->pgsqlCopyFromArray($this->_table, $this->_données, $this->_sép, 'NULL', isset($this->_champs) ? implode(',', $this->_champs) : null))
+		if(!$this->_bdd->pgsqlCopyFromArray($this->_table, $this->données(), $this->_sép, 'NULL', isset($this->_champs) ? implode(',', $this->_champs) : null))
 		{
 			$e = $this->_bdd->errorInfo();
 			throw new Exception('copy: '.$e[2]);
