@@ -124,12 +124,12 @@ _sqlm_init()
 	
 	_sqlm_init_fournisseurde()
 	{
-	local d="vendor/gui/sqleur" n=0 r="$1"
-	while [ $n -lt 7 ]
+		local d="vendor/gui/sqleur" n=7 r="$1"
+		while [ $n -gt 0 ]
 	do
 		SQLEUR="$r/$d"
 		[ -e "$SQLEUR/sql2csv.php" ] && return 0 || r="`dirname "$r"`"
-			n=$((n+1))
+			n=$((n-1))
 	done
 		return 1
 	}
