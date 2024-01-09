@@ -120,10 +120,8 @@ _sqlm()
 
 _sqlm_init()
 {
-	for SQLEUR in "$SQLEUR" "$SCRIPTS" "$HOME/src/projets/sqleur" "$HOME/lib/sqlminus"
-	do
-		[ ! -e "$SQLEUR/sql2csv.php" ] || return 0
-	done
+	# Fonctions utilitaires.
+	
 	_sqlm_init_fournisseurde()
 	{
 	local d="vendor/gui/sqleur" n=0 r="$1"
@@ -135,6 +133,13 @@ _sqlm_init()
 	done
 		return 1
 	}
+	
+	# Au boulot!
+	
+	for SQLEUR in "$SQLEUR" "$SCRIPTS" "$HOME/src/projets/sqleur" "$HOME/lib/sqlminus"
+	do
+		[ ! -e "$SQLEUR/sql2csv.php" ] || return 0
+	done
 	_sqlm_init_fournisseurde "$PWD" && return 0 || true
 	_sqlm_init_fournisseurde "$SCRIPTS" && return 0 || true
 	_sqlm_init_dossierde()
