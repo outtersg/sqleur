@@ -125,6 +125,7 @@ _sqlm_init()
 	_sqlm_init_fournisseurde()
 	{
 		local d="vendor/gui/sqleur" n=7 r="$1"
+		s="$r" ; rps ; case "$s" in ?*) r="$s" ;; esac # Certains dirname idiots considérant que .. est un nom de dossier comme un autre (et donc que dirname a/b/c/.. est c), on normalise auparavant le chemin (dans notre cas à a/b, pour que son dirname soit bien a). [constaté sur une CentOS 7, dans un sh lancé par cron]
 		while [ $n -gt 0 ]
 	do
 		SQLEUR="$r/$d"
@@ -134,6 +135,8 @@ _sqlm_init()
 	done
 		return 1
 	}
+	
+	command -v rps 2> /dev/null >&2 || rps() { s="`realpath "$s"`" ; } # rps: realpath de $s, cf. gui/scripts/sh/rp.sh
 	
 	# Au boulot!
 	
