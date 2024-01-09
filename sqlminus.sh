@@ -129,6 +129,7 @@ _sqlm_init()
 	do
 		SQLEUR="$r/$d"
 		[ -e "$SQLEUR/sql2csv.php" ] && return 0 || r="`dirname "$r"`"
+			case "$r:$n" in /:1) true ;; /:*) n=2 ;; esac # Si on atteint la racine, un dernier essai avant de sortir.
 			n=$((n-1))
 	done
 		return 1
