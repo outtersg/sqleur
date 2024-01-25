@@ -601,6 +601,7 @@ class SqleurPreproExpr
 class ErreurExpr extends Exception
 {
 	public $pos;
+	public $_dernierPassage;
 	
 	public function __construct($message, $posOuCorrPos = null, $num = null)
 	{
