@@ -344,6 +344,7 @@ class Sqleur
 		'case' => 'end',
 		// Les autres:
 		'end' => true,
+		'end case' => true, // Pour Oracle, un case SQL finit en end mais un case PL/SQL en end case.
 		// Les faux-amis (similaires à un "vrai" mot-clé, remontés en tant que tel afin que, mis sur pied d'égalité, on puisse décider duquel il s'agit):
 		'begin transaction' => false,
 		'end if' => false,
@@ -400,7 +401,7 @@ class Sqleur
 			// mais aussi les faux-amis ("end" de "end loop" à ne pas confondre avec celui fermant un "begin").
 			// N.B.: un contrôle sur le point-virgule sera fait par ailleurs (pour distinguer un "begin" de bloc procédural, de celui synonyme de "begin transaction" en PostgreSQL par exemple).
 			$opEx .= 'i';
-			$expr .= '|begin(?: transaction)?|case|end(?: if| loop)?';
+			$expr .= '|begin(?: transaction)?|case|end(?: if| loop| case)?';
 			if(Sqleur::BEGIN_END_COMPLEXE)
 			{
 				$this->_exprFonction = '(?:create(?: or replace)? )?(?:package|procedure|function|trigger)'; // Dans un package, seul ce dernier, qui est premier, est précédé d'un create; les autres sont en "procedure machin is" sans create.
@@ -1304,6 +1305,7 @@ class Sqleur
 				case 'end loop':
 				case 'begin transaction':
 					break;
+				case 'end case':
 				case 'end':
 					if(!count($this->_béguins))
 						throw $this->exception("Problème d'imbrication: $motClé sans début correspondant");
@@ -1312,6 +1314,7 @@ class Sqleur
 					$début = $début[0];
 					if(!isset(Sqleur::$FINS[$début]))
 						throw $this->exception("Problème d'imbrication: $débutOrig (remonté comme mot-clé de début de bloc) non référencé");
+					if($motClé == 'end case') $motClé = 'end';
 					if($motClé != Sqleur::$FINS[$début])
 						throw $this->exception("Problème d'imbrication: {$béguin[1]} n'est pas censé fermer ".$début);
 					$this->_dernierBéguinBouclé = $début;

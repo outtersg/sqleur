@@ -39,3 +39,4 @@ $$
 $$--#
 create table bla as select 1--#
 create package machin as function bla() as maVar integer; begin coucou; end; end machin;--#
+begin case when toto then select 1; end case; end;--#
