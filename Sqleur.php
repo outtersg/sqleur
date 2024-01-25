@@ -1313,7 +1313,7 @@ class Sqleur
 					if(!isset(Sqleur::$FINS[$début]))
 						throw $this->exception("Problème d'imbrication: $débutOrig (remonté comme mot-clé de début de bloc) non référencé");
 					if($motClé != Sqleur::$FINS[$début])
-						throw $this->exception("Problème d'imbrication: {$béguin[1]} n'est pas censé fermer ".Sqleur::$FINS[$début]);
+						throw $this->exception("Problème d'imbrication: {$béguin[1]} n'est pas censé fermer ".$début);
 					$this->_dernierBéguinBouclé = $début;
 					break;
 				default:
