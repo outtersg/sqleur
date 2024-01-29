@@ -83,6 +83,12 @@ _deuxMotsSeSuivent()
 
 _sqlm()
 {
+	local bdd="$bdd"
+	# Gestion par service_name (https://stackoverflow.com/a/4832116/1346819),
+	# si le nom de base est /<service> au lieu de <SID> (sans /).
+	case "$bdd" in *:/*)
+		bdd="`echo "$bdd" | sed -e 's#@\([^@]*\):/\([^:/]*\)$#@//\1/\2#'`" ;;
+	esac
 	if [ -z "$bddtunnel" ]
 	then
 		java -cp "$SQLEUR/sqlminus.jar:$SQLEUR/opencsv.jar:$SQLEUR/ojdbc8.jar" eu.outters.sqleur.SqlMinus "$bdd" "$@"
