@@ -1097,6 +1097,11 @@ class Sqleur
 		return strtr($args[0], [ $args[1] => $args[2] ]);
 	}
 	
+	public function _getenv($param)
+	{
+		return getenv($param);
+	}
+	
 	/*- Expressions du préprocesseur -----------------------------------------*/
 	
 	protected function _calculerPrepro($expr) { return $this->calculerExpr($expr); }
@@ -1131,6 +1136,7 @@ class Sqleur
 		'concat',
 		'split',
 		'replace',
+		'getenv',
 	);
 	
 	/*- Intestins ------------------------------------------------------------*/
