@@ -108,6 +108,7 @@ class JoueurSql extends Sqleur
 	const CSVBRUT = 'delim';
 	
 	public $sépChamps = ';';
+	public $sépLignes = "\n";
 	
 	public $bdd;
 	public $_sqleur;
@@ -373,7 +374,7 @@ TERMINE
 				fputcsv($this->sortie->f, $l, $this->sépChamps);
 				break;
 			case JoueurSql::CSVBRUT:
-				fwrite($this->sortie->f, implode($this->sépChamps, $l)."\n");
+				fwrite($this->sortie->f, implode($this->sépChamps, $l).$this->sépLignes);
 				break;
 		}
 	}
