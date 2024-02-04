@@ -71,6 +71,11 @@ class Flux
 			}
 			$this->état = Flux::PERMANENT;
 		}
+		else if(is_resource($descr))
+		{
+			$this->f = $descr;
+			$this->état = Flux::PERMANENT; // S'il nous est passé déjà ouvert, ce n'est pas à nous de le fermer.
+		}
 		else
 			$this->état = Flux::À_OUVRIR;
 		$this->descr = $descr;
