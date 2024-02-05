@@ -31,17 +31,22 @@ sqlm()
 	# - $reqs: requêtes SQL ou instructions préprocesseur (dont des #include pour les fichiers passés à sqlm) ou - pour stdin
 	# - $ppp: Params PréProcesseur
 	# - "$@": params joueur
-	local sep="`printf '\036'`" reqs= ppp=
+	local sep="`printf '\036'`" reqs= ppp= prereqs=
+	local ppq= # Prochain Pour Qui
 			# /!\ Repose sur le repapa des scripts de Guillaume.
 	_exfifi_param() { unset IFS ; case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
 			exfifi() # exfifi = EXFIltre les FIchiers.
 			{
+		case "$ppq" in
+			i) prereqs="$prereqs#include $param$sep" ; ppq= ; return 1 ;;
+		esac
 				case "$exfifi_prochainPourMinus" in
 					1) exfifi_prochainPourMinus= ; return 0 ;;
 				esac
 				case "$param" in
 			-) reqs="$reqs-$sep" ; return 1 ;;
 			*.sql) reqs="$reqs#include $param$sep" ; return 1 ;;
+			-i) ppq=i ; return 1 ;;
 					-o) exfifi_prochainPourMinus=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
 					# Cependant on doit ruser pour:
@@ -63,6 +68,7 @@ sqlm()
 			repapa exfifi "$@" ; eval "$repapa"
 	# Sans paramètre, on prend l'entrée standard.
 	case "$reqs" in "") reqs="-" ;; esac
+	case "$prereqs" in ?*) reqs="$prereqs$reqs" ;; esac
 	
 	# /!\ Même si le mélange de paramètres "requête" et de paramètres "fichier" est possible,
 	#     à l'exécution tous les fichiers seront joués avant les requêtes individuelles.
