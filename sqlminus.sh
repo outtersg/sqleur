@@ -75,7 +75,7 @@ _deuxMotsSeSuivent()
 {
 	while [ $# -gt 1 ]
 	do
-		case "$1" in [a-zA-Z]*) case "$2" in [a-zA-Z]*) return ;; esac ;; esac
+		case "$1" in [a-zA-Z]*) case "$2" in [a-zA-Z0-9]*) return ;; esac ;; esac
 		shift
 	done
 	false
