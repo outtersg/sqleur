@@ -122,6 +122,9 @@ class JoueurSql extends Sqleur
 	public $format;
 	public $sortie;
 	public $bavard = 1;
+	/** @var Si non nul, le Sqleur y consignera le type de chaque colonne de la prochaine requête. */
+	public $typeCols;
+	protected $_colsÀTailleVariable;
 	protected $avecEnTêtes = true;
 	protected $_préproDéf;
 	protected $_incises = [];
@@ -314,6 +317,12 @@ TERMINE
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
 		// À FAIRE: passer tout ça après le premier fetch(), sans quoi notice "> row number 0 is out of range 0..-1".
 		// Au cas où le fetch() renvoie effectivement false on aura toujours le message, mais sinon ça fera plus propre.
+		if(isset($this->typeCols) && !$interne)
+		{
+			$this->typeCols = [];
+			unset($this->_colsÀTailleVariable);
+			$colsÀTailleVariable = [];
+		}
 		if(!$interne && ($nCols = $rés->columnCount()) > 0)
 		{
 			$colonnes = array();
@@ -321,6 +330,8 @@ TERMINE
 			{
 				$descrCol = $rés->getColumnMeta($numCol);
 				$colonnes[] = $descrCol['name'];
+				if(isset($this->typeCols))
+					$this->typeCols[] = $descrCol;
 			}
 			$this->exporter($rés, $colonnes);
 		}
@@ -363,14 +374,34 @@ TERMINE
 		if(isset($colonnes) && $this->avecEnTêtes && $colonnes != array('?column?')) // À FAIRE: autres BdD que PostgreSQL.
 			$this->exporterLigne($colonnes);
 		
+		$this->_calculerColsÀTailleVariable(); // après la ponte des en-têtes, car la largeur du nom de la colonne n'est pas la largeur de la colonne.
+		
 		while(($l = $résultat->fetch()) !== false)
 			$this->exporterLigne($l);
+		
+		unset($this->_colsÀTailleVariable);
 		
 		$this->sortie->fermer();
 	}
 	
+	protected function _calculerColsÀTailleVariable()
+	{
+		if(isset($this->typeCols))
+			foreach($this->typeCols as $numCol => & $ptrDescrCol)
+				if(($ptrDescrCol['maxLen'] = $ptrDescrCol['len']) < 0)
+				{
+					$colsÀTailleVariable[$numCol] = $ptrDescrCol['name'];
+					$ptrDescrCol['maxLen'] = 1; // Minimum 1 pour éviter les déplorables tentatives de création de colonne de taille 0.
+				}
+		if(!empty($colsÀTailleVariable)) $this->_colsÀTailleVariable = $colsÀTailleVariable;
+	}
+	
 	protected function exporterLigne($l)
 	{
+		if(isset($this->_colsÀTailleVariable))
+			foreach($this->_colsÀTailleVariable as $numCol => $nomCol)
+				if(strlen($l[$nomCol]) > $this->typeCols[$numCol]['maxLen'])
+					$this->typeCols[$numCol]['maxLen'] = strlen($l[$nomCol]);
 		if(isset($this->conversions))
 			foreach($l as & $ptrChamp)
 				$ptrChamp = strtr($ptrChamp, $this->conversions);
