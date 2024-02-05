@@ -27,46 +27,59 @@ sqlm()
 	case "$bddtunnel:$BDD_SSH" in :?*) bddtunnel="$BDD_SSH" ;; esac
 	case "$bddtunnelbiblios:$BDD_SSH_LIB" in :?*) bddtunnelbiblios="$BDD_SSH_LIB" ;; esac
 	
-	local fichiers= sep="`printf '\036'`"
-	case "$* " in
-		*".sql "|*=*|"- "*|*" - "*)
+	# Répartition des paramètres entre:
+	# - $reqs: requêtes SQL ou instructions préprocesseur (dont des #include pour les fichiers passés à sqlm) ou - pour stdin
+	# - $ppp: Params PréProcesseur
+	# - "$@": params joueur
+	local sep="`printf '\036'`" reqs= ppp=
 			# /!\ Repose sur le repapa des scripts de Guillaume.
-			_exfifi_param() { case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
+	_exfifi_param() { unset IFS ; case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
 			exfifi() # exfifi = EXFIltre les FIchiers.
 			{
-				local r=0 # 0: on laisse passer; 1: on prend pour nous.
 				case "$exfifi_prochainPourMinus" in
 					1) exfifi_prochainPourMinus= ; return 0 ;;
 				esac
 				case "$param" in
-					-) return 1 ;; # Celui-là ne sert à personne: il signifie "chope stdin", mais c'est déjà la signification de ne rien nous passer du tout.
+			-) reqs="$reqs-$sep" ; return 1 ;;
+			*.sql) reqs="$reqs#include $param$sep" ; return 1 ;;
 					-o) exfifi_prochainPourMinus=1 ;;
-					*.sql) r=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
 					# Cependant on doit ruser pour:
 					# - ne pas y prendre les = SQL ("select 1 from t where c = 2")
 					# - … sauf si le = SQL est inclus dans un VAR="SQL contenant un =", donc on ne doit tester que le premier =
 					*=*)
 						IFS='='
-						_exfifi_param $param && r=1 || r=0
-						unset IFS
+				_exfifi_param $param && { ppp="$ppp$param$sep" ; return 1 ; }
+				# Sinon on laisse pisser jusqu'au test _deuxMotsSeSuivent.
 						;;
 				esac
-				case "$r" in 1) fichiers="$fichiers$param$sep" ; return 1 ;; esac
+		# Si deux des paramètres commencent par une lettre, il y a de fortes chances pour que ce soit une requête SQL ("from table", "update table", etc.).
+		if _deuxMotsSeSuivent $param
+		then
+			reqs="$reqs$param$sep"
+			return 1
+		fi
 			}
 			repapa exfifi "$@" ; eval "$repapa"
-	esac
+	# Sans paramètre, on prend l'entrée standard.
+	case "$reqs" in "") reqs="-" ;; esac
 	
-	# Si deux des paramètres commencent par une lettre, il y a de fortes chances pour que ce soit une requête SQL ("from table", "update table", etc.).
-	# Dans ce cas on lance la version bête qui joue une ou plusieurs requêtes.
-	# Si on n'a que des tirets (-i, etc.), ou des tirets suivis d'un alpha (-s A),
-	# alors l'entrée arrive par stdin ou par un fichier .sql, qui doivent être traités par sql2csv.
-	if _deuxMotsSeSuivent $*
-	then
-		_sqlm "$@"
-	else
-		( IFS="$sep" ; tifs php "$SQLEUR/sql2csv.php" -E -print0 $fichiers ) | _sqlm -0 "$@"
-	fi
+	# /!\ Même si le mélange de paramètres "requête" et de paramètres "fichier" est possible,
+	#     à l'exécution tous les fichiers seront joués avant les requêtes individuelles.
+	(
+		IFS="$sep"
+		{
+			for req in $reqs
+			do
+				case "$req" in
+					-) cat ;;
+					"#"*) echo "$req" ;;
+					*) echo "$req;" ;;
+				esac
+			done
+		} \
+		| tifs php "$SQLEUR/sql2csv.php" -E -print0 $ppp | _sqlm -0 "$@"
+	)
 }
 
 tifs() { unset IFS ; "$@" ; }
