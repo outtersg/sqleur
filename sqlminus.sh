@@ -88,6 +88,15 @@ sqlm()
 	)
 }
 
+# Si nous sommes chargés après musqle/util.sh ou musqle/util.oracle.sh, nous redéfinissons sqloracle avec laquelle nous sommes compatibles.
+sqloracle()
+{
+	# Un util.oracle.sql peut contenir certaines définitions en polyfill.
+	local opts
+	[ ! -f "$MUSQLE/util.oracle.sql" ] || opts="$opts -i $MUSQLE/util.oracle.sql"
+	sqlm $opts "$@"
+}
+
 tifs() { unset IFS ; "$@" ; }
 
 _deuxMotsSeSuivent()
