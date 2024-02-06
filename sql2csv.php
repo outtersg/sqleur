@@ -314,6 +314,7 @@ TERMINE
 			$u = new SqlUtils();
 			throw $u->jolieEx($ex, $sql);
 		}
+		/* À FAIRE: ne plus faire de l'ASSOC si on pond vers un CSV: ça décale les colonnes en cas de 2 colonnes identiquement nommées. */
 		$rés->setFetchMode(PDO::FETCH_ASSOC);
 		// À FAIRE: passer tout ça après le premier fetch(), sans quoi notice "> row number 0 is out of range 0..-1".
 		// Au cas où le fetch() renvoie effectivement false on aura toujours le message, mais sinon ça fera plus propre.

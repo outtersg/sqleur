@@ -47,7 +47,7 @@ class SqleurPreproCreate extends SqleurPrepro
 		$sqleur->_fonctionsInternes['oracle_in'] = true;
 		
 		/* À FAIRE: consommer aussi les commentaires en début de chaîne. */
-		$exprCreateFrom = 'create(?: (?<'.self::TEMP.'>temp|temporary))? table (?<'.self::TABLE.'>__) from (?<'.self::SOURCE.'>__) as(?: (?<n>[1-9][0-9]*))?(?: (?<'.self::REQ.'>[\s\S]*))?';
+		$exprCreateFrom = 'create(?: (?<'.self::TEMP.'>temp|temporary))? table (?<'.self::TABLE.'>__) (?<'.self::SENS.'>from|into) (?<'.self::SOURCE.'>__) as(?: (?<n>[1-9][0-9]*))?(?: (?<'.self::REQ.'>[\s\S]*))?';
 		$this->_exprCreateFrom = '/^'.strtr($exprCreateFrom, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+' ]).'$/i';
 		// N.B.: la définition suivante ne marche pas, car les expressions n'étant pas prévues pour être multilignes, notre expression est appelée au premier retour à la ligne: si le select est ligne suivante il ne nous est pas transmis.
 		// À FAIRE: dans le SQLeur, permettre à certaines expressions de se déclarer intéressées par une exécution tardive (sur ; plutôt que sur \n).
@@ -108,7 +108,7 @@ class SqleurPreproCreate extends SqleurPrepro
 			return false;
 		
 		if(!preg_match($this->_exprCreateFrom, ltrim($directiveComplète, '#'), $bouts))
-			throw $this->_sqleur->exception("'$directiveComplète' n'est pas une expression de create … from");
+			throw $this->_sqleur->exception("'$directiveComplète' n'est pas une expression de create … from / into");
 		
 		$this->traiterCreateFrom($bouts);
 	}
@@ -144,6 +144,14 @@ class SqleurPreproCreate extends SqleurPrepro
 		$this->_temp = fopen($this->_cheminTemp, 'w');
 		if(false === $this->_temp) throw new Exception('Impossible de créer un fichier temporaire '.$this->_cheminTemp);
 		
+		if(in_array(strtolower($this->_params[self::SENS]), [ 'into', 'to' ]))
+			$this->_pousse();
+		else
+			$this->_tire();
+	}
+	
+	protected function _tire()
+	{
 		$extracteur = array_filter
 		([
 			$this->lombric(),
@@ -169,6 +177,73 @@ class SqleurPreproCreate extends SqleurPrepro
 	{
 		$this->_sqleur->_découpeFichier($fichierTemp);
 		unlink($fichierTemp);
+	}
+	
+	protected function _pousse()
+	{
+		if(!class_exists('JoueurSql') || !$this->_sqleur instanceof JoueurSql) throw new Exception("Le create into n'est accessible que depuis un JoueurSql de sql2csv.php");
+		
+		$sortie = $this->_sqleur->sortie;
+		$this->_sqleur->commencerIncise($this->_cheminTemp, $this->_temp, JoueurSql::CSVBRUT, "\003", null, false);
+		$this->_sqleur->typeCols = [];
+		foreach($this->_reqs as $req)
+			$this->_sqleur->exécuter($req, false, false);
+		// À FAIRE: pondre un premier jet de la description des colonnes, afin que les pondeurs qui n'ont pas besoin du maxLen (ceux qui acceptent du text) puissent traiter le fichier sortie au fil de l'eau (à chaque exporterLigne()) plutôt que d'attendre la ponte de la description finale.
+		$typeCols = $this->_sqleur->typeCols;
+		$this->_sqleur->typeCols = null;
+		$this->_sqleur->terminerIncise();
+		fclose($this->_temp);
+		$this->_temp = STDOUT; // Pour si le processus invoqué en sous-jacent décide de nous causer.
+		
+		$descrCols = [];
+		foreach($typeCols as $numCol => $descrCol)
+		{
+			switch($descrCol['pdo_type'])
+			{
+				case PDO::PARAM_BOOL:
+					$descrType = 'boolean';
+					break;
+				case PDO::PARAM_INT:
+					$descrType = 'integer';
+					break;
+				case PDO::PARAM_STR:
+					$taille = -1;
+					if($taille <= 0 && isset($descrCol['maxLen'])) $taille = $descrCol['maxLen'];
+					if($taille <= 0 && isset($descrCol['len'])) $taille = $descrCol['len'];
+					$descrType = $taille > 0 ? 'varchar('.$taille.')' : 'text';
+					break;
+				case PDO::PARAM_LOB:
+					$descrType = 'clob';
+					break;
+				default:
+					throw new Exception('Je ne sais pas exprimer le type PDO '.$descrCol['pdo_type']);
+			}
+			$descrCols[] = $descrCol['name'].' '.$descrType;
+		}
+		$descrCols = implode(",\n", $descrCols)."\n";
+		file_put_contents($this->_cheminTemp.'.descr', $descrCols);
+		
+		/*- Lancement -*/
+		
+		$intracteur = array_filter
+		([
+			$this->lombric(),
+			'csv2table',
+			'-b',
+			$this->_params[self::SOURCE],
+			'-s', "\003",
+			'--drop',
+			$this->_params[self::TABLE],
+			$this->_cheminTemp.'.descr',
+			$this->_cheminTemp,
+		]);
+		$p = new ProcessusLignes($intracteur, [ $this, '_ligneRés']);
+		$r = $p->attendre(implode('', $this->_reqs));
+		if($r)
+			throw new Exception('Le fournisseur de données est sorti en erreur: '.implode(' ', $intracteur));
+		
+		unlink($this->_cheminTemp);
+		unlink($this->_cheminTemp.'.descr');
 	}
 	
 	public function lombric()
@@ -202,6 +277,7 @@ class SqleurPreproCreate extends SqleurPrepro
 	const TABLE = 'table';
 	const SOURCE = 'source';
 	const REQ = 'req';
+	const SENS = 'sens';
 }
 
 ?>
