@@ -1,14 +1,14 @@
 {
 	"name": "gui/sqleur",
 	"description": "Préprocesseur & découpeur de SQL",
-	"version": "1.10.x-dev",
+	"version": "1.11.x-dev",
 	"require":
 	{
 		"php": ">= 5.3.0"
 	},
 	"suggest":
 	{
-		"gui/musqle": "pour le support du #create table from <autre base> (>= 2.2)",
+		"gui/musqle": "pour le support du #create table from <autre base> (>= 2.2), du #create table into <autre base> (>= 2.3)",
 		"gui/util": "pour le #create table from <autre base> (>= 1.1.231111) et le sql2csv.php -e <fournisseur ext> (>= 1.2)"
 	}
 }
