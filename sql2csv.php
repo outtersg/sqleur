@@ -416,20 +416,23 @@ TERMINE
 		}
 	}
 	
-	public function commencerIncise($chemin, $f = null, $format = JoueurSql::CSV, $sépChamps = ';', $sépLignes = "\n")
+	public function commencerIncise($chemin, $f = null, $format = JoueurSql::CSV, $sépChamps = null, $sépLignes = null, $avecEnTêtes = null)
 	{
-		$incise = [ $this->sortie->descr, $this->sortie->f, $this->format, $this->sépChamps, $this->sépLignes ];
+		$incise = [ $this->sortie->descr, $this->sortie->f, $this->format, $this->sépChamps, $this->sépLignes, $this->avecEnTêtes ];
 		$this->_incises[] = $incise;
 		$this->sortie->descr = null; // Pour qu'il ne la ferme pas.
 		$this->sortie->basculer($f);
 		$this->sortie->descr = isset($chemin) ? $chemin : ''.$f;
-		$this->sépChamps = $sépChamps;
-		$this->sépLignes = $sépLignes;
+		$this->format = $format;
+		$this->sépChamps = isset($sépChamps) ? $sépChamps : ';';
+		$this->sépLignes = isset($sépLignes) ? $sépLignes : "\n";
+		if(isset($avecEnTêtes))
+			$this->avecEnTêtes = $avecEnTêtes;
 	}
 	
 	public function terminerIncise()
 	{
-		list($ancDescr, $ancF, $this->format, $this->sépChamps, $this->sépLignes) = array_pop($this->_incises);
+		list($ancDescr, $ancF, $this->format, $this->sépChamps, $this->sépLignes, $this->avecEnTêtes) = array_pop($this->_incises);
 		$this->sortie->descr = null;
 		$this->sortie->basculer($ancF);
 		$this->sortie->descr = $ancDescr;
