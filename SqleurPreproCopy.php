@@ -247,7 +247,10 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 	{
 		if(!count($this->_données)) return;
 		
-		if(!$this->_bdd->pgsqlCopyFromArray($this->_table, $this->données(), $this->_sép, 'NULL', isset($this->_champs) ? implode(',', $this->_champs) : null))
+		// Argh un CSV contenant des \ m'a fait rudement découvrir les cas aux limites de pgsqlCopyFromArray:
+		foreach(($données = $this->données()) as $pos => $l)
+			$données[$pos] = strtr($l, [ '\\' => '\\\\' ]);
+		if(!$this->_bdd->pgsqlCopyFromArray($this->_table, $données, $this->_sép, 'NULL', isset($this->_champs) ? implode(',', $this->_champs) : null))
 		{
 			$e = $this->_bdd->errorInfo();
 			throw new Exception('copy: '.$e[2]);
