@@ -167,6 +167,17 @@ class SqleurPreproCopy extends SqleurPrepro
 		
 		$this->_pousseur->fin();
 		
+		if($partiel || isset($this->_lignesEnCours))
+			/* À FAIRE: demander en plus au lanceur s'il est verbeux. */
+			if(function_exists('posix_isatty') && posix_isatty(STDERR))
+			{
+				if(!isset($this->_lignesEnCours)) $this->_lignesEnCours = 0;
+				$this->_lignesEnCours += count($ls);
+				fprintf(STDERR, "\rcopy %d%s", $this->_lignesEnCours, $partiel ? '' : "\n");
+				if(!$partiel)
+					unset($this->_lignesEnCours);
+			}
+		
 		if($partiel)
 			return;
 		
@@ -190,6 +201,7 @@ class SqleurPreproCopy extends SqleurPrepro
 	protected $_sortieOriginelle;
 	protected $_requêteEnCours;
 	protected $_terminator;
+	protected $_lignesEnCours;
 	
 	const DÉMARRAGE = '^\n*[$]([^ $]*)[$]\n*';
 }
