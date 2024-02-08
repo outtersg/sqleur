@@ -185,6 +185,9 @@ class Sqleur
 	protected $_exprFonction;
 	protected $IFS;
 	protected $_conv;
+	protected $_sortieActuelle;
+	protected $_sortieAnticipée;
+	protected $_aPonduEnAnticipé;
 	
 	/**
 	 * Constructeur.
@@ -361,7 +364,6 @@ class Sqleur
 	
 	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false, $numDernierArrêt = null)
 	{
-		/* À FAIRE: appeler sur chaque fin de ligne (on ne peut avoir de symbole à remplacer à cheval sur une fin de ligne) pour permettre au COPY par exemple de consommer en flux tendu. */
 		if($appliquerDéfs)
 		{
 			isset($this->_requêteRemplacée) || $this->_requêteRemplacée = '';
@@ -378,6 +380,33 @@ class Sqleur
 		if($appliquerDéfs)
 			$this->_requêteRemplacée = $this->_requeteEnCours;
 		$this->_entérinerBéguins($numDernierArrêt);
+		
+		// Notre sortie accepte-t-elle de travailler en anticipé?
+		
+		/* À FAIRE: uniquement dans certaines conditions (dans une chaîne de caractères, hors boucle #for, bref seulement si on peut continuer sans devoir revenir à ce qu'on est en train de travailler). */
+		if($this->_sortieActuelle != $this->_sortie)
+		{
+			// Si on a changé de sortie depuis la dernière fois, on recalcule.
+			$this->_sortieAnticipée =
+				isset($this->_sortie[0])
+				&& is_object($this->_sortie[0])
+				&& is_string($this->_sortie[1])
+				&& method_exists($this->_sortie[0], $this->_sortie[1].'Partiel')
+				? [ $this->_sortie[0], $this->_sortie[1].'Partiel' ]
+				: null
+			;
+			$this->_sortieActuelle = $this->_sortie;
+		}
+		if($this->_sortieAnticipée)
+		{
+			if(($nÉcrits = call_user_func($this->_sortieAnticipée, $this->_requeteEnCours)))
+			{
+				$this->_requeteEnCours = substr($this->_requeteEnCours, $nÉcrits);
+				if($appliquerDéfs)
+					$this->_requêteRemplacée = substr($this->_requêteRemplacée, $nÉcrits);
+				$this->_aPonduEnAnticipé = true;
+			}
+		}
 	}
 	
 	protected function _decoupeBloc($chaîne, $laFinEstVraimentLaFin = true) { return $this->découperBloc($chaîne, $laFinEstVraimentLaFin); }
@@ -726,8 +755,9 @@ class Sqleur
 		unset($this->_requêteRemplacée);
 		if(($t1 = strlen($r1 = rtrim($requete))) < ($t0 = strlen($requete)) && isset($this->terminaison))
 			$this->terminaison = substr($requete, $t1 - $t0).$this->terminaison;
-		if(strlen($requete = ltrim($r1)) && !$this->_queDuVent)
+		if((strlen($requete = ltrim($r1)) && !$this->_queDuVent) || $this->_aPonduEnAnticipé)
 		{
+			$this->_aPonduEnAnticipé = null;
 			if($this->_requêteÀRedécouper)
 			{
 				$this->_requêteÀRedécouper = false;
