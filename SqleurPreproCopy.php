@@ -25,6 +25,10 @@ require_once __DIR__.'/SqleurPrepro.php';
 
 class SqleurPreproCopy extends SqleurPrepro
 {
+	/* NOTE: #copy volumineux
+	 * Le SqleurPreproCopy se garde d'exploser en Memory exhausted, en jouant chaque paquet de 16 Mo individuellement plutôt que d'attendre la toute dernière ligne du CSV pour pousser.
+	 * Cela peut donc introduire un risque de transcription non fidèle (variables de préprocesseur tranchées en deux), ainsi qu'un risque d'explosion des contraintes si la première entrée requiert la présence de la dernière mais qu'elles sont envoyées dans deux lots différents.
+	 */
 	protected $_préfixes = array('#copy');
 	
 	public function préprocesse($motClé, $directiveComplète)
@@ -90,6 +94,7 @@ class SqleurPreproCopy extends SqleurPrepro
 					$a = '';
 				}
 				$this->_pousseur->lignes($rs);
+				/* À FAIRE: des fin() intermédiaires comme avec _chopePartiel(). */
 			}
 			fclose($f);
 			
@@ -116,16 +121,44 @@ class SqleurPreproCopy extends SqleurPrepro
 		return $this->_pousseur;
 	}
 	
-	public function _chope($req)
+	public function _chope($req, $partiel = false)
 	{
+		$sépl = "\n";
+		
+		if(($déjà = isset($this->_requêteEnCours)))
+			$req = $this->_requêteEnCours.$req;
+		if($partiel)
+		{
+			// On ne cherche pas le \n tout en bout de chaîne, mais on préserve le bout susceptible de contenir notre terminateur: il serait malencontreux qu'un \n s'y trouvant soit pris pour une fin d'enregistrement.
+			if(($tailleReste = strlen($req) - ($this->_terminator ? strlen($this->_terminator) : 8) - 3) < 0) $tailleReste = 0;
+			if(($fin = strrpos(substr($req, 0, $tailleReste), $sépl)) === false)
+			{
+				$this->_requêteEnCours = $req;
+				$req = '';
+			}
+			else
+			{
+				$this->_requêteEnCours = substr($req, $fin + 1);
+				$req = substr($req, 0, $fin);
+			}
+		}
+		else
+			unset($this->_requêteEnCours);
+		
 		/* Pour le moment on ne gère qu'une grosse chaîne de caractères, délimiteur dollar. */
 		
-		if(!preg_match('/^[$]([^ $]*)[$]\n*/', $req, $rd))
+		$rd = [ '', '' ];
+		if(!$déjà)
+		{
+			if(!preg_match('/'.self::DÉMARRAGE.'/', $req, $rd))
 			throw new Exception('copy prend en entrée une chaîne délimitée par dollars');
-		if(!preg_match('/\n[$]'.$rd[1].'[$]\n*$/', $req, $rf))
+			$this->_terminator = $rd[1];
+		}
+		if(!$partiel)
+			if(!preg_match('/\n[$]'.$this->_terminator.'[$]\n*$/', $req, $rf))
 			throw new Exception('copy prend en entrée une chaîne délimitée par dollars et terminée de la même manière');
 		
-		$bazar = substr($req, strlen($rd[0]), -strlen($rf[0]));
+		$bazar = isset($rf) ? substr($req, strlen($rd[0]), -strlen($rf[0])) : substr($req, strlen($rd[0]));
 		$ls = [];
 		foreach(explode("\n", $bazar) as $l)
 			if($l) // Les lignes vides ne nous intéressent pas.
@@ -134,12 +167,31 @@ class SqleurPreproCopy extends SqleurPrepro
 		
 		$this->_pousseur->fin();
 		
+		if($partiel)
+			return;
+		
 		$this->_sqleur->_sortie = $this->_sortieOriginelle;
 		unset($this->_sortieOriginelle);
 	}
 	
+	public function _chopePartiel($req)
+	{
+		// On ne démarre qu'une fois entrés dans le vif du sujet.
+		if(!isset($this->_requêteEnCours) && !preg_match('/'.self::DÉMARRAGE.'/', $req)) return;
+		
+		// Ne travaillons pas pour des clopinettes.
+		if(strlen($req) < 0x1000000) return;
+		
+		$this->_chope($req, true);
+		return strlen($req);
+	}
+	
 	protected $_pousseur;
 	protected $_sortieOriginelle;
+	protected $_requêteEnCours;
+	protected $_terminator;
+	
+	const DÉMARRAGE = '^\n*[$]([^ $]*)[$]\n*';
 }
 
 class SqleurPreproCopyPousseur
@@ -255,6 +307,7 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 			$e = $this->_bdd->errorInfo();
 			throw new Exception('copy: '.$e[2]);
 		}
+		$this->_données = [];
 	}
 }
 
