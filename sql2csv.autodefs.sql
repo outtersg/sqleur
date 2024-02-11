@@ -33,6 +33,7 @@ end;\
 
 -- Types simples ---------------------------------------------------------------
 
+-- COPIE: MajeurJoueurPdo
 #if :pilote = "oracle"
 #define T_TEXT varchar2(4000)
 #define T_TEXT(x) varchar2(x)
