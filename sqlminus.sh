@@ -45,7 +45,6 @@ sqlm()
 				esac
 				case "$param" in
 			-) reqs="$reqs-$sep" ; return 1 ;;
-			*.sql) reqs="$reqs#include $param$sep" ; return 1 ;;
 			-i) ppq=i ; return 1 ;;
 					-o) exfifi_prochainPourMinus=1 ;;
 					# Les affectations de type VAR=VAL sont passées au préprocesseur, au même titre que les fichiers.
@@ -58,6 +57,9 @@ sqlm()
 				# Sinon on laisse pisser jusqu'au test _deuxMotsSeSuivent.
 						;;
 				esac
+		case "$param" in
+			*.sql) reqs="$reqs#include $param$sep" ; return 1 ;;
+		esac
 		# Si deux des paramètres commencent par une lettre, il y a de fortes chances pour que ce soit une requête SQL ("from table", "update table", etc.).
 		if _deuxMotsSeSuivent $param
 		then
