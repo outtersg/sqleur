@@ -35,3 +35,7 @@ TOTO(,);
 --UN(a);
 --#testdecoupe UN(a,)
 --UN(a,);
+
+-- Le détecteur de nombre exact de paramètres se faisait à une époque par une regex à conso exponentielle.
+#testdecoupe toto(a,bbbbbbbbbbbbbbbbbbbbbb,)
+TOTO(a,bbbbbbbbbbbbbbbbbbbbbb,);
