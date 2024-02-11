@@ -39,3 +39,11 @@ TOTO(,);
 -- Le détecteur de nombre exact de paramètres se faisait à une époque par une regex à conso exponentielle.
 #testdecoupe toto(a,bbbbbbbbbbbbbbbbbbbbbb,)
 TOTO(a,bbbbbbbbbbbbbbbbbbbbbb,);
+
+-- On n'a pas à interpréter les mots dont nous sommes partie.
+-- (bon alors comme ceci ne s'applique qu'aux défs à paramètre, ici le TOTO sans paramètre joue quand même. Mais au moins on n'est pas en x + y + xy)
+#testdecoupe ROtoto(a, b)
+ROTOTO(a, b);
+-- Sans non plus nous interdire d'enchaîner les expressions.
+#testdecoupe a + b + xyc + d + xy
+TOTO(a,b)TOTO(c,d)

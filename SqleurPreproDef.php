@@ -113,7 +113,7 @@ class SqleurPreproDef extends SqleurPrepro
 		$eParams = "";
 		foreach($params as $num => $param)
 			$eParams .= ($num > 0 ? ",$b" : "").$eParam;
-		$eDéf = "/($déf)$b\($b$eParams\)/";
+		$eDéf = "/(?:^|\\b)($déf)$b\($b$eParams\)/";
 		
 		// Recherche des paramètres dans le corps, hachage de celui-ci.
 		// (sous forme d'une alternance texte brut / variable / text brut / etc.)
