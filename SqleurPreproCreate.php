@@ -107,6 +107,8 @@ class SqleurPreproCreate extends SqleurPrepro
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
 		
+		$directiveComplète = $this->_sqleur->appliquerDéfs($directiveComplète);
+		
 		if(!preg_match($this->_exprCreateFrom, ltrim($directiveComplète, '#'), $bouts))
 			throw $this->_sqleur->exception("'$directiveComplète' n'est pas une expression de create … from / into");
 		
