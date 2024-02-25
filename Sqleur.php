@@ -701,16 +701,21 @@ class Sqleur
 			$nouvelArret -= $nCarsÀRéserver;
 			$fragment = substr($fragment, 0, -$nCarsÀRéserver);
 		}
-		/* NOTE: ajout sans remplacement
-		 * On ajoute le bout lu sans effectuer les remplacements, pour éviter de couper un #define.
+		/* NOTE: ajout avec ou sans remplacement
+		 * Deux cas de figure à gérer totalement différemment:
+		 * 1. On ne coupe *surtout pas* après chaque bloc chaîne, pour éviter de couper un #define à paramètres.
 		 * Ex.:
 		 *   #define MACRO(x, y) …
 		 *   MACRO('a', 'b');
 		 * Si on effectue les remplacements à chaque fin de chaîne, ils seront appliqués à "MACRO('a'" puis ", 'b'", et enfin à ");" (remplacement de fin de requête).
 		 * La macro n'aura alors pas moyen de s'appliquer (il lui faut repérer ses parenthèses ouvrante et fermante dans le même bloc).
-		 * Le seul cas qui justifie le remplacement avant émission de l'instruction complète (hors cas du COPY où un remplacement ligne à ligne est bienvenu) est lorsque notre chaîne est coupée d'un #define ("problématique 2.").
-		 * Mais dans ce cas, nous passons la main à l'instruction de préproc dont la première action sera d'_ajouterBoutRequête(true).
-		 * Inutile donc que nous le fassions.
+		 # 2. On peut couper aux retours à la ligne, et on *doit* couper quand ils incluent des #define, des #for:
+		 #    - les macros sont censées être monoligne. En fin de ligne on ne risque donc pas de couper quoi que ce soit.
+		 #    - le #define, et surtout le #for, change la valeur d'une variable avant / après (ou à chaque tour de boucle).
+		 #      Si on attend la fin pour effectuer le remplacement, on utilise la *dernière* valeur de la variable et non celle au moment du parcours.
+		 #      Pour le #define à la rigueur on sait que le prépro _ajouterBoutRequête(true).
+		 #      Pour le #for on ajoute un blindage en début d'ajouterDéfs().
+		 #    - le #copy sera optimisable s'il peut pousser ligne à ligne (donc si à chaque fin de ligne elle est prête, remplacements inclus).
 		 */
 		$this->_ajouterBoutRequête($fragment, false, false, $i);
 		$dernierArret = $nouvelArret;
@@ -1055,6 +1060,10 @@ class Sqleur
 	
 	public function ajouterDéfs($défs)
 	{
+		// Si on a encore un bout de truc accumulé non remplacé, on lui applique les anciennes définitions.
+		if(isset($this->_requeteEnCours))
+			$this->_ajouterBoutRequête('', true, true);
+		
 		foreach($this->_defs as & $ptrEnsembleDéfs)
 			$ptrEnsembleDéfs = array_diff_key($ptrEnsembleDéfs, $défs);
 		foreach($défs as $id => $contenu)
