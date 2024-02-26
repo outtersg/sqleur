@@ -29,6 +29,10 @@ class SqleurPreproDef extends SqleurPrepro
 {
 	protected $_préfixes = array('#calc', '#set', '#setn', '#define', '#undef');
 	
+	const MODE_PLAT = 0;   // #define TOTO
+	const MODE_FONC = 1;   // #define TOTO(x)
+	const MODE_REGEX = 2;  // #define /TOTO +x/
+	
 	protected $_défsParams;
 	
 	public function préprocesse($motClé, $directiveComplète)
@@ -74,8 +78,13 @@ class SqleurPreproDef extends SqleurPrepro
 			$val = null;
 		else if(!in_array($motClé, array('#define')))
 		{
+			$multi = in_array($motClé, [ '#setn' ]);
+			// Si on est à la fois à paramètres et en langage prépro, la résolution ne pourra se faire qu'à l'exécution.
+			if($mode != self::MODE_FONC)
+			{
 			$e = new SqleurPreproExpr();
-			$val = $e->calculer($val, $this->_sqleur, false, in_array($motClé, array('#setn')));
+				$val = $e->calculer($val, $this->_sqleur, false, $multi);
+			}
 		}
 		else
 			$val = $this->_sqleur->appliquerDéfs($val);
@@ -87,6 +96,9 @@ class SqleurPreproDef extends SqleurPrepro
 		// À la différence des statiques (qui remplacent un peu n'importe quoi), nous nous rapprochons d'un préprocesseur C qui ne recherche que les mots.
 		// Ex.: "#define pied(x) (x+1)" remplacera pied(3) et casse-pied(3) mais pas cassepied(3) (le - étant un séparateur de mots, ça donnera casse-(3+1)).
 			$var = $this->_préparerDéfParams($var, $paramsDéf, $val);
+				if(isset($multi)) // $multi est définie en mode #set.
+					$val = [ $this, '_remplacerSetParams'.($multi ? 'Multi' : '') ];
+				else
 			$val = array($this, '_remplacerDéfParams');
 				break;
 			case 2:
@@ -157,6 +169,27 @@ class SqleurPreproDef extends SqleurPrepro
 		foreach($déroulé as $bout)
 			$r .= (($texte = !$texte)) ? $bout : strtr($rés[$bout], array('\,' => ','));
 		return $r;
+	}
+	
+	public function _remplacerSetParamsMulti($rés) { return $this->_remplacerSetParams($rés, true); }
+	public function _remplacerSetParams($rés, $multi = false)
+	{
+		// Les paramètres de l'invocation sont attendus en mode #define: titi est la chaîne "titi", à moins qu'une variable titi existe auquel cas on remplace.
+		for($un = count($rés); --$un >= 2;)
+		{
+			$val = $this->_sqleur->appliquerDéfs($rés[$un]);
+			$val = '"'.strtr($val, [ '"' => '\"' ]).'"';
+			$rés[$un] = $val;
+		}
+		
+		// Tout ça devient une expression #set: on interprète.
+		$val = $this->_remplacerDéfParams($rés);
+		
+		// Et on fait manger ça à l'expression.
+		$e = new SqleurPreproExpr();
+		$val = $e->calculer($val, $this->_sqleur, false, $multi);
+		
+		return $val;
 	}
 	
 	public function _remplacerRegex($rés, $rempl)
