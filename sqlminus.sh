@@ -85,6 +85,9 @@ sqlm()
 	# /!\ Même si le mélange de paramètres "requête" et de paramètres "fichier" est possible,
 	#     à l'exécution tous les fichiers seront joués avant les requêtes individuelles.
 	(
+		err=/tmp/temp.sqlm.$$.err
+		r=0
+		rm -f $err
 		IFS="$sep"
 		{
 			for req in $reqs
@@ -96,7 +99,9 @@ sqlm()
 				esac
 			done
 		} \
-		| tifs php "$SQLEUR/sql2csv.php" -E -print0 $ppp | _sqlm -0 "$@"
+		| { tifs php "$SQLEUR/sql2csv.php" -E -print0 $ppp || echo "$?" > $err ; } | _sqlm -0 "$@" || r=$?
+		[ -s $err ] && r="`cat $err`" || true ; rm -f $err
+		exit $r
 	)
 }
 
