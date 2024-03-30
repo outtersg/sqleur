@@ -58,7 +58,10 @@ sqlm()
 						;;
 				esac
 		case "$param" in
-			*.sql) reqs="$reqs#include $param$sep" ; return 1 ;;
+			*.sql)
+				reqs="$reqs#include $param$sep"
+				return 1
+				;;
 		esac
 		# Si deux des paramètres commencent par une lettre, il y a de fortes chances pour que ce soit une requête SQL ("from table", "update table", etc.).
 		if _deuxMotsSeSuivent $param
