@@ -31,7 +31,7 @@ sqlm()
 	# - $reqs: requêtes SQL ou instructions préprocesseur (dont des #include pour les fichiers passés à sqlm) ou - pour stdin
 	# - $ppp: Params PréProcesseur
 	# - "$@": params joueur
-	local sep="`printf '\036'`" reqs= ppp= prereqs=
+	local sep="`printf '\036'`" reqs= ppp= prereqs= prems=1
 	local ppq= # Prochain Pour Qui
 			# /!\ Repose sur le repapa des scripts de Guillaume.
 	_exfifi_param() { unset IFS ; case "$1" in *[^A-Za-z0-9_@:]*) false ;; esac ; }
@@ -59,6 +59,13 @@ sqlm()
 				esac
 		case "$param" in
 			*.sql)
+				# Si on est le premier fichier explicitement nommé, on devient :SCRIPT_FILENAME (surchargeant même les éventuels :SCRIPT_FILENAME définis par SqleurPreproIncl pour les -i).
+				case "$prems" in 1)
+					prems="$param"
+					case "$prems" in /*) true ;; *) prems="$PWD/$prems" ;; esac
+					reqs="$reqs#define :SCRIPT_FILENAME $prems$sep#define :SCRIPT_NAME `basename "$prems"`$sep"
+					prems=
+				;; esac
 				reqs="$reqs#include $param$sep"
 				return 1
 				;;
