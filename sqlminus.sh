@@ -136,6 +136,7 @@ _sqlm()
 	esac
 	if [ -z "$bddtunnel" ]
 	then
+		# À FAIRE: décoder en dur l'ojdbc8.jar, chercher en fonction du type de base (dans $bdd?).
 		java -cp "$SQLEUR/sqlminus.jar:$SQLEUR/opencsv.jar:$SQLEUR/ojdbc8.jar" eu.outters.sqleur.SqlMinus "$bdd" "$@"
 	else
 		local sep sepaff # SÉParateur AFFichable (ou plutôt printfable).
