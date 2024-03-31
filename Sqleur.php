@@ -252,6 +252,34 @@ class Sqleur
 		$this->_dansChaîne = null;
 	}
 	
+	/**
+	 * Enregistre l'état de la ponte dans une SqleurCond.
+	 * (similaire pour les sorties, à mémoriserÉtat() qui elle travaille sur les entrées)
+	 * 
+	 * @param SqleurCond $condition Si fournie, l'état est inscrit dans ce condenant.
+	 * 
+	 * @return SqleurCond Mémorisation de l'état de ponte.
+	 */
+	public function jalon($condition = null)
+	{
+		if(!$condition) $condition = new SqleurCond($this, 1);
+		
+		$condition->requêteEnCours = $this->_requeteEnCours;
+		$condition->requêteRemplacée = $this->_requêteRemplacée;
+		$condition->requêteÀRedécouper = $this->_requêteÀRedécouper;
+		$condition->défs = $this->_defs;
+		
+		return $condition;
+	}
+	
+	public function reprise($mém)
+	{
+		$this->_requeteEnCours = $mém->requêteEnCours;
+		$this->_requêteRemplacée = $mém->requêteRemplacée;
+		$this->_requêteÀRedécouper = $mém->requêteÀRedécouper;
+		$this->_defs = $mém->défs;
+	}
+	
 	public function decoupeFichier($fichier)
 	{
 		$this->_init();
@@ -879,10 +907,7 @@ class Sqleur
 				)
 				{
 					$this->_sortie = $condition->sortie;
-					$this->_requeteEnCours = $condition->requêteEnCours;
-					$this->_requêteRemplacée = $condition->requêteRemplacée;
-					$this->_requêteÀRedécouper = $condition->requêteÀRedécouper;
-					$this->_defs = $condition->défs;
+					$this->reprise($condition);
 					$condition->enCours(true);
 					$condition->déjàFaite = true;
 				}
@@ -891,10 +916,7 @@ class Sqleur
 					$this->_sortie = array($this, 'sortirContenuIfFalse');
 					if($condition->enCours) // Si on clôt l'en-cours.
 					{
-						$condition->requêteEnCours = $this->_requeteEnCours; // On mémorise.
-						$condition->requêteRemplacée = $this->_requêteRemplacée;
-						$condition->requêteÀRedécouper = $this->_requêteÀRedécouper;
-						$condition->défs = $this->_defs;
+						$this->jalon($condition); // On mémorise dans la condition.
 						$condition->enCours(false);
 					}
 				}
@@ -906,12 +928,7 @@ class Sqleur
 				if(!$condition)
 					throw $this->exception('#endif sans #if');
 				if(!$condition->enCours) // Si le dernier bloc traité (#if ou #else) était à ignorer,
-				{
-					$this->_requeteEnCours = $condition->requêteEnCours; // On restaure.
-					$this->_requêteRemplacée = $condition->requêteRemplacée;
-					$this->_requêteÀRedécouper = $condition->requêteÀRedécouper;
-					$this->_defs = $condition->défs;
-				}
+					$this->reprise($condition);
 				$condition->enCours(false);
 				$this->_sortie = $condition->sortie;
 				return;
