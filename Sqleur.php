@@ -253,6 +253,25 @@ class Sqleur
 	}
 	
 	/**
+	 * Marque un arrêt dans la ponte après en avoir mémorisé l'état dans une SqleurCond.
+	 * 
+	 * @return SqleurCond Mémorisation de l'état de ponte, à réinjecter plus tard dans reprise().
+	 */
+	public function pause()
+	{
+		$mém = new SqleurMém($this);
+		$this->jalon($mém);
+		$mém->conditions = $this->_conditions;
+		$mém->chaîneDernièreDécoupe = $this->_chaineDerniereDecoupe;
+		$mém->resteEnCours = isset($this->_resteEnCours) ? $this->_resteEnCours : null;
+		$mém->dansChaîne = $this->_dansChaîne;
+		
+		$this->_init(true);
+		
+		return $mém;
+	}
+	
+	/**
 	 * Enregistre l'état de la ponte dans une SqleurCond.
 	 * (similaire pour les sorties, à mémoriserÉtat() qui elle travaille sur les entrées)
 	 * 
@@ -278,6 +297,14 @@ class Sqleur
 		$this->_requêteRemplacée = $mém->requêteRemplacée;
 		$this->_requêteÀRedécouper = $mém->requêteÀRedécouper;
 		$this->_defs = $mém->défs;
+		
+		if($mém instanceof SqleurMém)
+		{
+			$this->_conditions = $mém->conditions;
+			$this->_chaineDerniereDecoupe = $mém->chaîneDernièreDécoupe;
+			$this->_resteEnCours = $mém->resteEnCours;
+			$this->_dansChaîne = $mém->dansChaîne;
+		}
 	}
 	
 	public function decoupeFichier($fichier)

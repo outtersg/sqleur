@@ -150,4 +150,18 @@ class SqleurCond
 	}
 }
 
+/**
+ * Mémorisation d'un contexte complet de ponte.
+ * On par de SqleurCond qui contient déjà pas mal de champs.
+ */
+class SqleurMém extends SqleurCond
+{
+	public $conditions;
+	public $chaîneDernièreDécoupe;
+	public $resteEnCours;
+	public $dansChaîne;
+	
+	public function __construct($sqleur) { parent::__construct($sqleur, 1); }
+}
+
 ?>
