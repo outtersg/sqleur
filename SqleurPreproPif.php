@@ -125,7 +125,7 @@ class SqleurPreproPif extends SqleurPrepro
 		return $mots;
 	}
 	
-	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
+	public function préprocesse($motClé, $directiveComplète)
 	{
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
@@ -180,8 +180,6 @@ class SqleurPreproPif extends SqleurPrepro
 		// La directive s'appliquera-t-elle à la prochaine requête, ou bien est-elle de type auto-contenue (se terminant maintenant)?
 		
 		$this->_termineDirective();
-		
-		return $requêteEnCours;;
 	}
 	
 	protected function _entre()

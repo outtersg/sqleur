@@ -833,8 +833,6 @@ class Sqleur
 	
 	protected function _préprocesse($directive)
 	{
-		$requeteEnCours = $this->_requeteEnCours;
-		
 		$posEspace = strpos($directive, ' ');
 		$motCle = $posEspace === false ? $directive : substr($directive, 0, $posEspace);
 		switch($motCle)
@@ -893,7 +891,7 @@ class Sqleur
 					$this->_sortie = array($this, 'sortirContenuIfFalse');
 					if($condition->enCours) // Si on clôt l'en-cours.
 					{
-						$condition->requêteEnCours = $requeteEnCours; // On mémorise.
+						$condition->requêteEnCours = $this->_requeteEnCours; // On mémorise.
 						$condition->requêteRemplacée = $this->_requêteRemplacée;
 						$condition->requêteÀRedécouper = $this->_requêteÀRedécouper;
 						$condition->défs = $this->_defs;
@@ -920,17 +918,11 @@ class Sqleur
 		}
 		if(!$this->dansUnSiÀLaTrappe())
 		{
-			$this->_requeteEnCours = $requeteEnCours;
 			foreach($this->_préprocesseurs as $préproc)
-				// N.B.: $requeteEnCours NE DOIT PLUS être passée à préprocesse().
 				// Les préprocesseurs désirant modifier la requête en cours de constitution doivent désormais exploiter $this->_requeteEnCours.
-				// Ce dernier paramètre désormais inutile pourra être supprimé une fois tous les préprocesseurs existants purgés.
-				if($préproc->préprocesse($motCle, $directive, $requeteEnCours) !== false)
-				{
-					$requeteEnCours = $this->_requeteEnCours;
-					return $requeteEnCours;
-				}
-			$requeteEnCours = $this->_requeteEnCours;
+				if($préproc->préprocesse($motCle, $directive) !== false)
+					return;
+			
 			switch($motCle)
 			{
 			case '#encoding':
@@ -945,8 +937,6 @@ class Sqleur
 					break;
 			}
 		}
-		
-		$this->_requeteEnCours = $requeteEnCours;
 	}
 	
 	protected function _effeuillerÉphéméride()

@@ -27,7 +27,7 @@ class SqleurPreproIncl extends SqleurPrepro
 {
 	protected $_préfixes = array('#incl', '#inclure', '#include');
 	
-	public function préprocesse($motClé, $directiveComplète, $requêteEnCours)
+	public function préprocesse($motClé, $directiveComplète)
 	{
 		if(!in_array($motClé, $this->_préfixes))
 			return false;
@@ -46,8 +46,6 @@ class SqleurPreproIncl extends SqleurPrepro
 		}
 		if(!$auMoinsUn)
 			throw new Exception($motClé.', oui, mais '.$motClé.' quoi?');
-		
-		return $requêteEnCours;
 	}
 	
 	public function inclure($chemin)
