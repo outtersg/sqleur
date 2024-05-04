@@ -831,6 +831,12 @@ class Sqleur
 				return $r;
 			}
 			
+			return $this->_pousserVersLaSortie($requete, $interne);
+		}
+	}
+	
+	protected function _pousserVersLaSortie($requete, $interne)
+	{
 			if(isset($this->_conv))
 				$requete = call_user_func($this->_conv, $requete);
 			$sortie = $this->_sortie;
@@ -840,12 +846,14 @@ class Sqleur
 				$paramsSortir = array_merge($paramsSortir, array_splice($sortie, 2));
 			
 			return call_user_func_array($sortie, $paramsSortir);
-		}
 	}
 	
 	// À FAIRE: possibilité de demander la "vraie" sortie. Mais pas facile, car un certain nombre de préprocesseurs peuvent la court-circuiter.
 	public function exécuter($req, $appliquerDéfs = false, $interne = false)
 	{
+		/* À FAIRE: ne devrait-on pas systématiquement appeler _pousserVersLaSortie()? Si on demande exécuter, c'est qu'on veut exécuter(), pas être soumis notamment au _queDuVent qui n'est recalculé que dans certaines circonstances? */
+		if($interne && !$appliquerDéfs)
+			return $this->_pousserVersLaSortie($req, $interne);
 		return $this->_sors($req, true, $appliquerDéfs, $interne);
 	}
 	
