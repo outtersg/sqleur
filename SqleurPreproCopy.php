@@ -265,17 +265,20 @@ class SqleurPreproCopyPousseur
 		{
 			/* À FAIRE: si on rencontre notre séparateur interne dans la chaîne, on reparcourt l'ensemble des données pour l'éjecter. */
 			if(strpos($l, '"') !== false)
-			{
 				$l = preg_replace_callback('#""|"|'.$this->_sép.'#', [ $this, '_remplCsv' ], $l);
-				/* À FAIRE: gérer les \n dans le CSV. */
-				$d[] = $l;
-				continue;
-			}
-			else if(!$this->_nGuili)
+			else
 				$l = strtr($l, [ $this->_sép => $this->_sépi ]);
 			
 			if(isset($résidu))
+			{
 				$l = $résidu."\n".$l;
+				unset($résidu);
+			}
+			if($this->_nGuili)
+			{
+				$résidu = $l;
+				continue;
+			}
 			
 			$d[] = $l;
 		}
@@ -312,8 +315,9 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 		if(!count($this->_données)) return;
 		
 		// Argh un CSV contenant des \ m'a fait rudement découvrir les cas aux limites de pgsqlCopyFromArray:
+		// mais à vrai dire ce sens (non publié) de l'\ est bien pratique pour passer toute sorte de caractères spéciaux comme les retours à la ligne.
 		foreach(($données = $this->données()) as $pos => $l)
-			$données[$pos] = strtr($l, [ '\\' => '\\\\' ]);
+			$données[$pos] = strtr($l, [ "\n" => '\n', "\r" => '\r', '\\' => '\\\\' ]);
 		if(!$this->_bdd->pgsqlCopyFromArray($this->_table, $données, $this->_sép, 'NULL', isset($this->_champs) ? implode(',', $this->_champs) : null))
 		{
 			$e = $this->_bdd->errorInfo();
