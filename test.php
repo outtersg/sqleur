@@ -56,8 +56,10 @@ class PréproBdd
 					$bdd->pgsqlSetNoticeCallback(array($this, 'notifDiag'));
 				$joueur = new JoueurPdo($bdd);
 				$this->_sqleur->_sortie = array($joueur, 'exécuter');
-				break;
+				return;
 		}
+		
+		return false;
 	}
 	
 	public function notifDiag($message)
