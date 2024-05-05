@@ -166,7 +166,8 @@ class SqleurPréproExécLanceur
 		$parDéfautMaintenant = $pdm = " default MAINTENANT()";
 		if(($parDéfautMaintenant = $this->_sqleur->appliquerDéfs($pdm)) == $pdm) $parDéfautMaintenant = '';
 		
-		/* À FAIRE: permettre la paramétrisation du nom de la table des processus */
+		if(isset($params[SqleurPreproExec::P_ES]['?'][SqleurPreproExec::PES_TABLE]))
+			$this->_tablePid = $params[SqleurPreproExec::P_ES]['?'][SqleurPreproExec::PES_TABLE];
 		$tPid = $this->_tablePid;
 		$reqs[] = "create temp table if not exists $tPid (pid varchar(127), r integer)";
 		
