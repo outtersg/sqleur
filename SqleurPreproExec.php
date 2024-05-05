@@ -198,19 +198,25 @@ class SqleurPréproExécLanceur
 	
 	protected function _lancer($params, $commande)
 	{
+		$tPid = $this->_tablePid;
+		
 		/* Obtention de l'environnement propre à cette instance (PID, etc.) */
 		
 		$pidi = ++self::$DernierId; /* À FAIRE: s'assurer qu'il n'est pas déjà pris dans la table. */
 		
 		if(isset($params[SqleurPreproExec::P_PID]))
+		{
 			$pid = $params[SqleurPreproExec::P_PID];
+			$pidc = $this->_cs($pid);
+			$requIns = "insert into $tPid (id, pid) values ($pidi, $pidc)";
+			$this->_sqleur->exécuter($requIns, false, true);
+		}
 		else
 		{
 			/* À FAIRE: optimiser pour les BdD ayant des regex: ~ '^[0-9]+$' */
 			$seultNbres = "pid";
 			for($i = 10; --$i >= 0;) $seultNbres = "replace($seultNbres,'$i','')";
 			$seultNbres = "length(pid) > 0 and length($seultNbres) = 0";
-			$tPid = $this->_tablePid;
 			$requIns = "insert into $tPid (id, pid) select $pidi, 1 + coalesce(max(cast(pid as integer)), 0) pid from $tPid where $seultNbres returning pid";
 			$pids = $this->_sqleur->exécuter($requIns, false, true);
 			$pid = $pids->fetchAll();
