@@ -193,7 +193,7 @@ class SqleurPréproExécLanceur
 	{
 		/* Obtention de l'environnement propre à cette instance (PID, etc.) */
 		
-		$pidi = count($this->_pids);
+		$pidi = ++self::$DernierId; /* À FAIRE: s'assurer qu'il n'est pas déjà pris dans la table. */
 		
 		if(isset($params[SqleurPreproExec::P_PID]))
 			$pid = $params[SqleurPreproExec::P_PID];
@@ -271,6 +271,7 @@ class SqleurPréproExécLanceur
 	protected $_tablePid = 'pid';
 	protected $_es;
 	protected $_pids = [];
+	protected static $DernierId = 0;
 	protected $_tampon = []; // Enregistrement des données à sortir en une seule fois en fin de processus.
 	protected $_nl = []; // Numéro de ligne.
 }
