@@ -259,6 +259,14 @@ class SqleurPréproExécLanceur
 		$this->_sqleur->exécuter($requIns, false, true);
 	}
 	
+	/**
+	 * Chaîne SQL
+	 */
+	protected function _cs($val)
+	{
+		return $val === null ? 'null' : "'".strtr($val, [ "'" => "''" ])."'";
+	}
+	
 	protected $_sqleur;
 	protected $_tablePid = 'pid';
 	protected $_es;
