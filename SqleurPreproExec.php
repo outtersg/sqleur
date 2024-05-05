@@ -175,7 +175,7 @@ class SqleurPréproExécLanceur
 		if(isset($params[SqleurPreproExec::P_ES]['?'][SqleurPreproExec::PES_TABLE]))
 			$this->_tablePid = $params[SqleurPreproExec::P_ES]['?'][SqleurPreproExec::PES_TABLE];
 		$tPid = $this->_tablePid;
-		$reqs[] = "create temp table if not exists $tPid (pid varchar(127), r integer)";
+		$reqs[] = "create temp table if not exists $tPid (id integer, pid varchar(127), r integer)";
 		
 		$déjà = [];
 		foreach($params[SqleurPreproExec::P_ES] as $nes => $es)
@@ -211,7 +211,7 @@ class SqleurPréproExécLanceur
 			for($i = 10; --$i >= 0;) $seultNbres = "replace($seultNbres,'$i','')";
 			$seultNbres = "length(pid) > 0 and length($seultNbres) = 0";
 			$tPid = $this->_tablePid;
-			$requIns = "insert into $tPid (pid) select 1 + coalesce(max(cast(pid as integer)), 0) pid from $tPid where $seultNbres returning pid";
+			$requIns = "insert into $tPid (id, pid) select $pidi, 1 + coalesce(max(cast(pid as integer)), 0) pid from $tPid where $seultNbres returning pid";
 			$pids = $this->_sqleur->exécuter($requIns, false, true);
 			$pid = $pids->fetchAll();
 			$pid = $pid[0]['pid'];
