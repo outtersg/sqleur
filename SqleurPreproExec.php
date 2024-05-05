@@ -54,6 +54,7 @@ class SqleurPreproExec extends SqleurPrepro
 		[
 			'(?<op>'.implode('|', $this->_préfixes).') ',
 			"(?<vers>vers|into) (?<stdout>$exprDest)(?:, (?<stderr>$exprDest))?",
+			"(?<redire>|[1-9][0-9]*|[?])> (?<redir>$exprDest)", /* À FAIRE: distinguer > et >> (avec un petit coup de truncate pour le premier). */
 		];
 		$exprBouts = '@^(?:'.implode('|', $exprBouts).')@i';
 		$exprBouts = strtr($exprBouts, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+', '_' => '\w+' ]);
@@ -67,6 +68,9 @@ class SqleurPreproExec extends SqleurPrepro
 				case isset($r['op']) && strlen($r['op']):
 					if(isset($p['op'])) throw $this->_sqleur->exception('2 opérations mentionnées');
 					$p['op'] = $r['op'];
+					break;
+				case isset($r['redir']) && strlen($r['redir']):
+					$this->_interpréterSortie($r['redire'] ? $r['redire'] : 1, $r['redir'], /*&*/ $p);
 					break;
 				case isset($r['vers']) && strlen($r['vers']):
 					foreach([ 1 => 'stdout', 2 => 'stderr' ] as $nes => $nom)
