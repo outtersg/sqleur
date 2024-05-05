@@ -251,8 +251,8 @@ class SqleurPréproExécLanceur
 		$numL = ++$this->_nl[$nes][$pidi];
 		
 		// Évidemment des requêtes paramétrées eussent été plus propres, mais bon le Sqleur est fait pour du texte à la chaîne.
-		$texte = "'".strtr($texte, [ "'" => "''" ])."'";
-		$pid = "'".strtr($pid, [ "'" => "''" ])."'";
+		$texte = $this->_cs($texte);
+		$pid = $this->_cs($pid);
 		
 		$requIns = "insert into $table (pid, d, l, t) values ($pid, $nes, $numL, $texte)";
 		
