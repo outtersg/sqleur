@@ -8,12 +8,12 @@ create temporary table t (passe int, val text);
 select count(1) from stdout;
 select t from stdout where l = 2;
 
+#exec > temp stdout 2> temp stderr ?> temp proc sh -c 'echo encore ; echo "argh" >&2 ; exit 42'
+select count(1) from stdout;
+select r from proc where id = (select max(id) from proc);
+
 #if 0
 -- À FAIRE
-
-#exec into temp stdout, temp stderr sh -c 'echo encore ; echo "argh" >&2 ; exit 42'
-select count(1) from stdout;
--- Hum, comment restituer l'erreur? Je pensais initialement définir un $?, mais ça ne porterait que le résultat du dernier joué or comme vu ci-dessous on va vouloir s'amuser avec des instanciations multiples.
 
 create temp table t_qui (id int, texte text);
 insert into t_qui values (1, 'Guillaume');

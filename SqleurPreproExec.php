@@ -243,6 +243,13 @@ class SqleurPréproExécLanceur
 		foreach($this->_tampon as $nes => $bla)
 			if($this->_tampon[$nes][$pidi] !== '')
 				$this->_consigner($nes, $pidi, $this->_tampon[$nes][$pidi]);
+		
+		// Gestion d'erreur: en fonction de s'il a été déclaré une table de recueil (et donc de rattrapage) des erreurs.
+		
+		$requIns = "update $tPid set r = $r where id = $pidi";
+		$this->_sqleur->exécuter($requIns, false, true);
+		if($r && !isset($params[SqleurPreproExec::P_ES]['?']))
+			throw new Exception("Le processus est sorti en erreur $r");
 	}
 	
 	public function _ligneRés($ligne, $nes, $finDeLigne, $pidi)
