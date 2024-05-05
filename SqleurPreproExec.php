@@ -212,8 +212,6 @@ class SqleurPréproExécLanceur
 		{
 			$pid = $params[SqleurPreproExec::P_PID];
 			$pidc = $this->_cs($pid);
-			$requIns = "insert into $tPid (id, pid) values ($pidi, $pidc)";
-			$this->_sqleur->exécuter($requIns, false, true);
 		}
 		else
 		{
@@ -221,11 +219,13 @@ class SqleurPréproExécLanceur
 			$seultNbres = "pid";
 			for($i = 10; --$i >= 0;) $seultNbres = "replace($seultNbres,'$i','')";
 			$seultNbres = "length(pid) > 0 and length($seultNbres) = 0";
-			$requIns = "insert into $tPid (id, pid) select $pidi, 1 + coalesce(max(cast(pid as integer)), 0) pid from $tPid where $seultNbres returning pid";
+			$pidc = "1 + coalesce(max(case when $seultNbres then cast(pid as integer) end), 0)";
+		}
+			
+		$requIns = "insert into $tPid (id, pid) select $pidi, $pidc pid from $tPid returning pid";
 			$pids = $this->_sqleur->exécuter($requIns, false, true);
 			$pid = $pids->fetchAll();
 			$pid = $pid[0]['pid'];
-		}
 		$this->_pids[$pidi] = $pid;
 		
 		foreach($this->_tampon as $nes => $bla)
