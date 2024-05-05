@@ -49,14 +49,7 @@ class SqleurPreproExec extends SqleurPrepro
 	{
 		$commande = $this->_sqleur->appliquerDéfs($commande);
 		
-		$optionsTable =
-		[
-			'temp' => [ self::PES_TEMP => true ],
-			'statique|static|persis(?:tente?|ing)' => [ self::PES_TEMP => false ],
-			'mono|brute?|raw' => [ self::PES_F => self::F_AGRÉG ],
-			'multi' => [ self::PES_F => self::F_ÉCLAT ],
-		];
-		$exprDest = '(?:(?:'.implode('|', array_keys($optionsTable)).') +)*_';
+		$exprDest = '(?:(?:'.implode('|', array_keys(self::$OptionsTable)).') +)*_';
 		$exprBouts =
 		[
 			'(?<op>'.implode('|', $this->_préfixes).') ',
@@ -79,27 +72,7 @@ class SqleurPreproExec extends SqleurPrepro
 					foreach([ 1 => 'stdout', 2 => 'stderr' ] as $nes => $nom)
 					{
 						if(!isset($r[$nom]) || !strlen($r[$nom])) continue;
-						if(isset($p[self::P_ES][$nes])) throw $this->_sqleur->exception('sortie '.$nes.' ambiguë');
-						$es = [];
-						foreach(preg_split('/\s+/', $r[$nom]) as $bout)
-						{
-							// Est-ce une option?
-							
-							foreach($optionsTable as $exprOption => $paramétrageOption)
-								if(preg_match('#^(?:'.$exprOption.')$#i', $bout))
-								{
-									if(count(array_intersect_key($es, $paramétrageOption))) throw $this->_sqleur->exception('option '.$bout.' redondante ou contradictoire avec une des précédentes');
-									$es = $paramétrageOption + $es;
-									continue 2;
-								}
-							
-							// Sinon le nom de table.
-							
-							if(isset($es[self::PES_TABLE])) throw $this->_sqleur->exception($r[$nom].': 1 seule table de sortie SVP');
-							$es[self::PES_TABLE] = $bout;
-						}
-						if(!isset($es[self::PES_TABLE])) throw $this->_sqleur->exception($r[$nom].': nom de table manquant');
-						$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true ];
+						$this->_interpréterSortie($nes, $r[$nom], /*&*/ $p);
 					}
 					break;
 			}
@@ -136,6 +109,31 @@ class SqleurPreproExec extends SqleurPrepro
 		new SqleurPréproExécLanceur($this->_sqleur, $p, $c);
 	}
 	
+	protected function _interpréterSortie($nes, $descr, &$p)
+	{
+		if(isset($p[self::P_ES][$nes])) throw $this->_sqleur->exception('sortie '.$nes.' ambiguë');
+		$es = [];
+		foreach(preg_split('/\s+/', $descr) as $bout)
+		{
+			// Est-ce une option?
+			
+			foreach(self::$OptionsTable as $exprOption => $paramétrageOption)
+				if(preg_match('#^(?:'.$exprOption.')$#i', $bout))
+				{
+					if(count(array_intersect_key($es, $paramétrageOption))) throw $this->_sqleur->exception('option '.$bout.' redondante ou contradictoire avec une des précédentes');
+					$es = $paramétrageOption + $es;
+					continue 2;
+				}
+			
+			// Sinon le nom de table.
+			
+			if(isset($es[self::PES_TABLE])) throw $this->_sqleur->exception($descr.': 1 seule table de sortie SVP');
+			$es[self::PES_TABLE] = $bout;
+		}
+		if(!isset($es[self::PES_TABLE])) throw $this->_sqleur->exception($descr.': nom de table manquant');
+		$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true ];
+	}
+	
 	const PES_F = 'format';
 	const F_AGRÉG = '1';
 	const F_ÉCLAT = 'n';
@@ -143,6 +141,14 @@ class SqleurPreproExec extends SqleurPrepro
 	const PES_TABLE = 'table';
 	const P_PID = 'pid';
 	const P_ES = 'es'; // Entrées - Sorties
+	
+	protected static $OptionsTable =
+	[
+		'temp' => [ self::PES_TEMP => true ],
+		'statique|static|persis(?:tente?|ing)' => [ self::PES_TEMP => false ],
+		'mono|brute?|raw' => [ self::PES_F => self::F_AGRÉG ],
+		'multi' => [ self::PES_F => self::F_ÉCLAT ],
+	];
 }
 
 /**
