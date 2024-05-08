@@ -54,7 +54,7 @@ class SqleurPreproExec extends SqleurPrepro
 		[
 			'(?<op>'.implode('|', $this->_préfixes).') ',
 			"(?<vers>vers|into) (?<stdout>$exprDest)(?:, (?<stderr>$exprDest))?",
-			"(?<redire>|[1-9][0-9]*|[?])> (?<redir>$exprDest)", /* À FAIRE: distinguer > et >> (avec un petit coup de truncate pour le premier). */
+			"(?<redire>|[1-9][0-9]*|[?])(?<redirt>>>?) (?<redir>$exprDest)",
 		];
 		$exprBouts = '@^(?:'.implode('|', $exprBouts).')@i';
 		$exprBouts = strtr($exprBouts, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+', '_' => '\w+' ]);
@@ -70,7 +70,7 @@ class SqleurPreproExec extends SqleurPrepro
 					$p['op'] = $r['op'];
 					break;
 				case isset($r['redir']) && strlen($r['redir']):
-					$this->_interpréterSortie($r['redire'] ? $r['redire'] : 1, $r['redir'], /*&*/ $p);
+					$this->_interpréterSortie($r['redire'] ? $r['redire'] : 1, ($r['redirt'] == '>>' ? 'cumul' : 'init').' '.$r['redir'], /*&*/ $p);
 					break;
 				case isset($r['vers']) && strlen($r['vers']):
 					foreach([ 1 => 'stdout', 2 => 'stderr' ] as $nes => $nom)
@@ -135,13 +135,14 @@ class SqleurPreproExec extends SqleurPrepro
 			$es[self::PES_TABLE] = $bout;
 		}
 		if(!isset($es[self::PES_TABLE])) throw $this->_sqleur->exception($descr.': nom de table manquant');
-		$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true ];
+		$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true, self::PES_SEUL_AU_MONDE => false ];
 	}
 	
 	const PES_F = 'format';
 	const F_AGRÉG = '1';
 	const F_ÉCLAT = 'n';
 	const PES_TEMP = 'temp';
+	const PES_SEUL_AU_MONDE = 'vide';
 	const PES_TABLE = 'table';
 	const P_PID = 'pid';
 	const P_ES = 'es'; // Entrées - Sorties
@@ -150,6 +151,8 @@ class SqleurPreproExec extends SqleurPrepro
 	[
 		'temp' => [ self::PES_TEMP => true ],
 		'statique|static|persis(?:tente?|ing)' => [ self::PES_TEMP => false ],
+		'init|vide|new' => [ self::PES_SEUL_AU_MONDE => true ],
+		'cumul|append' => [ self::PES_SEUL_AU_MONDE => false ],
 		'mono|brute?|raw' => [ self::PES_F => self::F_AGRÉG ],
 		'multi' => [ self::PES_F => self::F_ÉCLAT ],
 	];
@@ -187,6 +190,8 @@ class SqleurPréproExécLanceur
 			if(isset($déjà[$es[SqleurPreproExec::PES_TABLE]])) continue;
 			
 			$reqs[] = "create".($es[SqleurPreproExec::PES_TEMP] ? ' temp' : '')." table if not exists ".$es[SqleurPreproExec::PES_TABLE]." (pid varchar(127), d integer, h timestamp$parDéfautMaintenant, l integer, t text)";
+			if($es[SqleurPreproExec::PES_SEUL_AU_MONDE])
+				$reqs[] = "delete from ".$es[SqleurPreproExec::PES_TABLE];
 			$déjà[$es[SqleurPreproExec::PES_TABLE]] = true;
 			
 			if($es[SqleurPreproExec::PES_F] == SqleurPreproExec::F_AGRÉG)
