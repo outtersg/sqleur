@@ -8,7 +8,8 @@ create temporary table t (passe int, val text);
 select count(1) from stdout;
 select t from stdout where l = 2;
 
-#exec > temp stdout 2> temp stderr ?> temp proc sh -c 'echo encore ; echo "argh" >&2 ; exit 42'
+#exec >> temp stdout 2> temp stderr ?> temp proc \
+	sh -c 'echo encore ; echo "argh" >&2 ; exit 42'
 select count(1) from stdout;
 select r from proc where id = (select max(id) from proc);
 
