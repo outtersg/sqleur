@@ -13,17 +13,17 @@ select t from stdout where l = 2;
 select count(1) from stdout;
 select r from proc where id = (select max(id) from proc);
 
-#if 0
--- À FAIRE
-
 create temp table t_qui (id int, texte text);
 insert into t_qui values (1, 'Guillaume');
 insert into t_qui values (2, 'Lucette');
 insert into t_qui values (3, 'Georges');
 
-truncate table stdout;
-#exec > raw temp stdout, 2> raw temp stderr < `select texte from t_qui order by id` sed -e 's/^/Bonjour /'
+#exec > mono temp stdout 2> mono temp stderr < `select texte from t_qui order by id` sed -e 's/^/Bonjour /'
+select count(1) from stdout; -- 1 seule, car on a demandé du mono.
 select t from stdout;
+
+#if 0
+-- À FAIRE
 
 truncate table stdout;
 #exec > temp stdout `select id pid, 'sed', texte "<", '-e', 's/^/Bonjour /' from t_qui`

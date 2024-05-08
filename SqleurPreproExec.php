@@ -55,6 +55,7 @@ class SqleurPreproExec extends SqleurPrepro
 			'(?<op>'.implode('|', $this->_préfixes).') ',
 			"(?<vers>vers|into) (?<stdout>$exprDest)(?:, (?<stderr>$exprDest))?",
 			"(?<redire>|[1-9][0-9]*|[?])(?<redirt>>>?) (?<redir>$exprDest)",
+			"< `(?<req0>[^`]*)`",
 		];
 		$exprBouts = '@^(?:'.implode('|', $exprBouts).')@i';
 		$exprBouts = strtr($exprBouts, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+', '_' => '\w+' ]);
@@ -78,6 +79,9 @@ class SqleurPreproExec extends SqleurPrepro
 						if(!isset($r[$nom]) || !strlen($r[$nom])) continue;
 						$this->_interpréterSortie($nes, $r[$nom], /*&*/ $p);
 					}
+					break;
+				case isset($r['req0']) && strlen($r['req0']):
+					$p[self::P_E_REQ] = $r['req0'];
 					break;
 			}
 			$commande = ltrim(substr($commande, strlen($r[0])));
@@ -145,6 +149,7 @@ class SqleurPreproExec extends SqleurPrepro
 	const PES_SEUL_AU_MONDE = 'vide';
 	const PES_TABLE = 'table';
 	const P_PID = 'pid';
+	const P_E_REQ = 'entrée_requête';
 	const P_ES = 'es'; // Entrées - Sorties
 	
 	protected static $OptionsTable =
@@ -239,12 +244,31 @@ class SqleurPréproExécLanceur
 		foreach($this->_tampon as $nes => $bla)
 			$this->_tampon[$nes][$pidi] = '';
 		
+		// En cas d'entrée de type < `select …`, celle-ci est calculée une fois pour être passée à l'identique à chacune des instances.
+		
+		$stdinPrécalc = null;
+		if(isset($params[SqleurPreproExec::P_E_REQ]))
+		{
+			$récupEntrée = $this->_sqleur->exécuter($params[SqleurPreproExec::P_E_REQ], true, true);
+			/* À FAIRE: pour les processus longs, du fetch() au fur et à mesure.
+			 * Difficulté: si derrière nous avons n instances, la 1ère aura certes son stdin au fur et à mesure, par contre nous devrons mémoriser l'intégralité pour la repasser aux instances suivantes.
+			 * Ceci dit dans le cas conventionnel "1 gros stdin passé à une seule instance d'une processus", ça marchera.
+			 * On pourrait donc avoir un objet (répondant à l'interface de Processus._source: lire() et poursuivre()),
+			 * pointant sur le PDOStatement mutualisé (ce n'est pas la première instance de processus qui a le Statement et les autres la mémoire: en cas de lancement parallèle, ce n'est pas nécessairement la première instance qui parcourra le plus rapidement l'entrant. Donc toutes se partagent le Statement, chacun avec son compteur de ligne, et la première à demander une ligne non encore récupérée déclenche le fetch(). Idéalement on sait aussi à l'avance combien d'instances on va lancer, de manière à pouvoir libérer les lignes une fois ingurgitées par l'ensemble des instances).
+			 */
+			$résEntrée = $récupEntrée->fetchAll(PDO::FETCH_NUM);
+			/* À FAIRE: gérer les différents formats. */
+			$stdinPrécalc = '';
+			foreach($résEntrée as $l)
+				$stdinPrécalc .= implode("\t", $l)."\n";
+		}
+		
 		/* Instanciation */
 		
 		require_once __DIR__.'/../util/processus.php';
 		
 		$p = new ProcessusLignes($commande, [ $this, '_ligneRés', $pidi ]);
-		$r = $p->attendre(/* À FAIRE: ici le stdin s'il est déjà connu */);
+		$r = $p->attendre($stdinPrécalc);
 		
 		/* Ménage */
 		
