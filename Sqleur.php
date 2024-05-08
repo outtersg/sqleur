@@ -851,9 +851,13 @@ class Sqleur
 	// À FAIRE: possibilité de demander la "vraie" sortie. Mais pas facile, car un certain nombre de préprocesseurs peuvent la court-circuiter.
 	public function exécuter($req, $appliquerDéfs = false, $interne = false)
 	{
-		/* À FAIRE: ne devrait-on pas systématiquement appeler _pousserVersLaSortie()? Si on demande exécuter, c'est qu'on veut exécuter(), pas être soumis notamment au _queDuVent qui n'est recalculé que dans certaines circonstances? */
-		if($interne && !$appliquerDéfs)
+		if($interne)
+		{
+			if($appliquerDéfs)
+				$req = $this->appliquerDéfs($req);
 			return $this->_pousserVersLaSortie($req, $interne);
+		}
+		/* À FAIRE: n'est-ce pas une erreur d'exécuter() hors $interne en court-circuitant tout les mécanismes d'_ajouterBoutRequête? */
 		return $this->_sors($req, true, $appliquerDéfs, $interne);
 	}
 	
