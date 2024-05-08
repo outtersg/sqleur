@@ -76,7 +76,7 @@ function parfaire($chemin)
 	if(isset($suffixeRés))
 	{
 		$GLOBALS['rés'] = '';
-		$GLOBALS['résAttendu'] = file_get_contents($cheminRés);
+		$GLOBALS['résAttendu'] = preg_replace('/^--..*$/m', '--', file_get_contents($cheminRés));
 	}
 	
 	if($GLOBALS['aff'] >= 2)
