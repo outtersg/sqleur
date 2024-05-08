@@ -206,7 +206,7 @@ class SqleurPréproExécLanceur
 		
 		/* Obtention de l'environnement propre à cette instance (PID, etc.) */
 		
-		$pidi = ++self::$DernierId; /* À FAIRE: s'assurer qu'il n'est pas déjà pris dans la table. */
+		$pidi = ++self::$DernierId;
 		
 		if(isset($params[SqleurPreproExec::P_PID]))
 		{
@@ -222,9 +222,12 @@ class SqleurPréproExécLanceur
 			$pidc = "1 + coalesce(max(case when $seultNbres then cast(pid as integer) end), 0)";
 		}
 			
-		$requIns = "insert into $tPid (id, pid) select $pidi, $pidc pid from $tPid returning pid";
+		$pidimax = "coalesce(max(case when id >= $pidi then id + 1 end), $pidi) id";
+		$requIns = "insert into $tPid (id, pid) select $pidimax, $pidc pid from $tPid returning id, pid";
 			$pids = $this->_sqleur->exécuter($requIns, false, true);
 			$pid = $pids->fetchAll();
+		if($pid[0]['id'] > $pidi)
+			self::$DernierId = $pidi = $pid[0]['id'];
 			$pid = $pid[0]['pid'];
 		$this->_pids[$pidi] = $pid;
 		
