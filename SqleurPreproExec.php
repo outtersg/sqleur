@@ -210,7 +210,7 @@ class SqleurPréproExécLanceur
 		$tPid = $this->_tablePid;
 		$reqs[] = "create temp table if not exists $tPid (id integer, pid varchar(127), r integer)";
 		
-		$déjà = [];
+		$déjà = [ $tPid => true ];
 		foreach($params[SqleurPreproExec::P_ES] as $nes => $es)
 		{
 			if(isset($déjà[$es[SqleurPreproExec::PES_TABLE]])) continue;
