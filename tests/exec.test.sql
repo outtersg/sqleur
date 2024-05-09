@@ -26,7 +26,7 @@ select t from stdout;
 	select id pid, 'sed', texte "<", '-e', 's/^/Coucou /' from t_qui;
 -- On s'attend à avoir été traités par 3 processus distincts:
 select count(distinct proc.id) from stdout, proc where proc.pid = stdout.pid;
-select t from stdout order by l;
+select t from stdout order by pid, l;
 
 #if 0
 -- À FAIRE
