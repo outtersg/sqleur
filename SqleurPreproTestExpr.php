@@ -46,17 +46,11 @@ class SqleurPreproTestExpr extends SqleurPreproTest
 		
 		$this->_expr = $expr;
 		
-		$this->_sortieOriginelle = $this->_sqleur->_sortie;
-		$this->_sqleur->_sortie = array($this, '_chopeRésAttenduEtSors');
+		$this->_préempterSql();
 	}
 	
-	public function _chopeRésAttenduEtSors($résAttendu)
+	protected function _chope($résAttendu)
 	{
-		// On restaure l'environnement avant de faire le test: en cas de pétage, on doit pouvoir continuer.
-		$this->_sqleur->_sortie = $this->_sortieOriginelle;
-		unset($this->_sortieOriginelle);
-		
-		// Le test!
 		$this->_teste($this->_expr, $résAttendu);
 	}
 	

@@ -47,7 +47,6 @@ class SqleurPreproTest extends SqleurPrepro
 {
 	protected $_préfixes = array('#test');
 	
-	protected $_sortieOriginelle;
 	protected $_mode;
 	
 	const APPELANT = 0x01; // Masque des bits d'appelant.
@@ -75,8 +74,7 @@ class SqleurPreproTest extends SqleurPrepro
 		if(isset($this->_sortieOriginelle))
 			throw new Exception($motClé.': impossible de commencer un test alors que je n\'ai pas terminé le précédent');
 		
-		$this->_sortieOriginelle = $this->_sqleur->_sortie;
-		$this->_sqleur->_sortie = array($this, '_chope');
+		$this->_préempterSql(2);
 		$this->_boulot = array();
 		$this->_prochainFatal = $this->_mode & SqleurPreproTest::FATAL;
 		if(preg_match("/^$motClé\\sfatal/", $directiveComplète))
@@ -96,10 +94,6 @@ class SqleurPreproTest extends SqleurPrepro
 		$résAttendu = $this->_boulot[1];
 		
 		$résAttendu = $this->_normaliseRésAttendu($résAttendu);
-		
-		// On restaure l'environnement avant de faire le test: en cas de pétage, on doit pouvoir continuer.
-		$this->_sqleur->_sortie = $this->_sortieOriginelle;
-		unset($this->_sortieOriginelle);
 		
 		// Le test!
 		$this->_teste($req, $résAttendu);
