@@ -47,6 +47,8 @@ class SqleurPreproExec extends SqleurPrepro
 	
 	protected function _interpréterDirective($commande)
 	{
+		if(isset($this->_lanceur)) throw $this->_sqleur->exception('Impossible de lancer une opération alors que la dernière tourne encore');
+		
 		$commande = $this->_sqleur->appliquerDéfs($commande);
 		
 		$exprDest = '(?:(?:'.implode('|', array_keys(self::$OptionsTable)).') +)*_';
@@ -114,7 +116,21 @@ class SqleurPreproExec extends SqleurPrepro
 		
 		if(strlen($commande)) throw $this->_sqleur->exception('reste ininterprétable: '.$commande);
 		
-		new SqleurPréproExécLanceur($this->_sqleur, $p, $c);
+		$lanceur = new SqleurPréproExécLanceur($this->_sqleur, $p, $c);
+		
+		// Si la ligne de commande n'est pas précisée, c'est que la requête suivante doit nous la fournir.
+		if(!count($c))
+		{
+			$this->_lanceur = $lanceur;
+			$this->_préempterSql();
+		}
+	}
+	
+	protected function _chope($req)
+	{
+		$récup = $this->_sqleur->exécuter($req, true, true);
+		$this->_lanceur->lancers($récup);
+		$this->_lanceur = null;
 	}
 	
 	protected function _interpréterSortie($nes, $descr, &$p)
@@ -142,6 +158,8 @@ class SqleurPreproExec extends SqleurPrepro
 		$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true, self::PES_SEUL_AU_MONDE => false ];
 	}
 	
+	protected $_lanceur;
+	
 	const PES_F = 'format';
 	const F_AGRÉG = '1';
 	const F_ÉCLAT = 'n';
@@ -150,6 +168,7 @@ class SqleurPreproExec extends SqleurPrepro
 	const PES_TABLE = 'table';
 	const P_PID = 'pid';
 	const P_E_REQ = 'entrée_requête';
+	const P_E_VAL = 'entrée_contenu';
 	const P_ES = 'es'; // Entrées - Sorties
 	
 	protected static $OptionsTable =
@@ -168,12 +187,14 @@ class SqleurPreproExec extends SqleurPrepro
  */
 class SqleurPréproExécLanceur
 {
-	public function __construct($sqleur, $params, $commande)
+	public function __construct($sqleur, $params, $commande = null)
 	{
 		$this->_sqleur = $sqleur;
+		$this->_params = $params;
 		
 		$this->_initSorties($params);
 		
+		if($commande && count($commande))
 		$this->_lancer($params, $commande);
 	}
 	
@@ -210,8 +231,41 @@ class SqleurPréproExécLanceur
 		$this->_es = $params[SqleurPreproExec::P_ES];
 	}
 	
+	public function lancers($commandeur)
+	{
+		foreach($commandeur->fetchAll(PDO::FETCH_NUM) as $l)
+		{
+			// Sur la première ligne, on repère les colonnes spéciales (personnalisant l'instance).
+			
+			if(!isset($spéciales))
+			{
+				$spéciales = [];
+				foreach($l as $col => $val)
+				{
+					$descr = $commandeur->getColumnMeta($col);
+					switch(strtolower($descr['name']))
+					{
+						case 'pid': $spéciales[$col] = SqleurPreproExec::P_PID; break;
+						case '<': $spéciales[$col] = SqleurPreproExec::P_E_VAL; break;
+					}
+				}
+			}
+			
+			// Allez hop, au boulot.
+			
+			$params = $this->_params;
+			foreach($spéciales as $col => $param)
+				$params[$param] = $l[$col];
+			$l = array_diff_key($l, $spéciales);
+			
+			$this->_lancer($params, $l);
+		}
+	}
+	
 	protected function _lancer($params, $commande)
 	{
+		if(!isset($params))
+			$params = $this->_params;
 		$tPid = $this->_tablePid;
 		
 		/* Obtention de l'environnement propre à cette instance (PID, etc.) */
@@ -262,6 +316,8 @@ class SqleurPréproExécLanceur
 			foreach($résEntrée as $l)
 				$stdinPrécalc .= implode("\t", $l)."\n";
 		}
+		else if(isset($params[SqleurPreproExec::P_E_VAL]))
+			$stdinPrécalc = $params[SqleurPreproExec::P_E_VAL];
 		
 		/* Instanciation */
 		
@@ -324,6 +380,7 @@ class SqleurPréproExécLanceur
 	}
 	
 	protected $_sqleur;
+	protected $_params;
 	protected $_tablePid = 'pid';
 	protected $_es;
 	protected $_pids = [];
