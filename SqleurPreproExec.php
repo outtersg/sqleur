@@ -226,7 +226,7 @@ class SqleurPréproExécLanceur
 		}
 		
 		foreach($reqs as $req)
-			$this->_sqleur->exécuter($this->_sqleur->appliquerDéfs($req), false, true);
+			$this->_sqleur->exécuter($req, true, true);
 		
 		$this->_es = $params[SqleurPreproExec::P_ES];
 	}
