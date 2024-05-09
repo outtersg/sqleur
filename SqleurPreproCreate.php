@@ -61,14 +61,14 @@ class SqleurPreproCreate extends SqleurPrepro
 		$this->_reqs = [];
 		if(!empty($args[self::REQ]))
 			$this->_reqs[] = $args[self::REQ];
-		$this->_nReqs = empty($args['n']) ? 1 : $args['n'];
+		$nReqs = empty($args['n']) ? 1 : $args['n'];
 		
 		$this->_params = $args;
 		
-		if(count($this->_reqs) >= $this->_nReqs)
+		if(0 >= ($nReqs -= count($this->_reqs)))
 			$this->_lance();
 		else
-			$this->_entre();
+			$this->_préempterSql($nReqs);
 	}
 	
 	public function _oracle_in($col, $vals, $n = null)
@@ -115,12 +115,6 @@ class SqleurPreproCreate extends SqleurPrepro
 		$this->traiterCreateFrom($bouts);
 	}
 	
-	protected function _entre()
-	{
-		$this->_sortieOriginelle = $this->_sqleur->_sortie;
-		$this->_sqleur->_sortie = array($this, '_chope');
-	}
-	
 	public function _chope($req)
 	{
 		/* À FAIRE: accepter le mode chaîne dollar? Notamment les ; y sont passés tels quels. */
@@ -129,12 +123,8 @@ class SqleurPreproCreate extends SqleurPrepro
 			$req .= $this->_sqleur->terminaison;
 		$this->_reqs[] = $req;
 		
-		if(count($this->_reqs) >= $this->_nReqs)
-		{
-			$this->_sqleur->_sortie = $this->_sortieOriginelle;
-			unset($this->_sortieOriginelle);
+		if(!$this->_nReqsÀChoper)
 			$this->_lance();
-		}
 	}
 	
 	protected function _lance()
@@ -267,10 +257,8 @@ class SqleurPreproCreate extends SqleurPrepro
 	}
 	
 	protected $_pousseur;
-	protected $_sortieOriginelle;
 	protected $_exprCreateFrom;
 	protected $_params;
-	protected $_nReqs;
 	protected $_reqs;
 	protected $_cheminTemp;
 	protected $_temp;
