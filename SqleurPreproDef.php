@@ -63,11 +63,7 @@ class SqleurPreproDef extends SqleurPrepro
 		$paramsDéfinir = [ $motClé, $var, $val, $mode, $mode == 1 ? $rer[3] : null ];
 		
 		if($val == '<<')
-		{
-			$this->_sortieOriginelle = $this->_sqleur->_sortie;
-			$this->_sqleur->_sortie = array($this, '_chope', $paramsDéfinir);
-			return;
-		}
+			return $this->_préempterSql(1, $paramsDéfinir);
 		
 		call_user_func_array([ $this, '_définir' ], $paramsDéfinir);
 	}
@@ -213,15 +209,10 @@ class SqleurPreproDef extends SqleurPrepro
 		if(!preg_match('/\n[$]'.$rd[1].'[$]\n*$/', $req, $rf))
 			throw new Exception('le heredoc prend en entrée une chaîne délimitée par dollars et terminée de la même manière');
 		
-		$this->_sqleur->_sortie = $this->_sortieOriginelle;
-		unset($this->_sortieOriginelle);
-		
 		$val = substr($req, strlen($rd[0]), -strlen($rf[0]));
 		$paramsDéfinir[2] = $val;
 		call_user_func_array([ $this, '_définir' ], $paramsDéfinir);
 	}
-	
-	protected $_sortieOriginelle;
 }
 
 ?>
