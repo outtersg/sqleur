@@ -33,8 +33,6 @@ select t from stdout order by pid, l;
 
 #exec //3 
 
--- select "<"
-
 -- < `/*+ csv */ select …`
 -- ou
 -- <csv `select …`
