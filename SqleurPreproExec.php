@@ -216,14 +216,15 @@ class SqleurPréproExécLanceur
 			if(isset($déjà[$es[SqleurPreproExec::PES_TABLE]])) continue;
 			
 			$reqs[] = "create".($es[SqleurPreproExec::PES_TEMP] ? ' temp' : '')." table if not exists ".$es[SqleurPreproExec::PES_TABLE]." (pid varchar(127), d integer, h timestamp$parDéfautMaintenant, l integer, t text)";
-			if($es[SqleurPreproExec::PES_SEUL_AU_MONDE])
-				$reqs[] = "delete from ".$es[SqleurPreproExec::PES_TABLE];
 			$déjà[$es[SqleurPreproExec::PES_TABLE]] = true;
 			
 			if($es[SqleurPreproExec::PES_F] == SqleurPreproExec::F_AGRÉG)
 				$this->_tampon[$nes] = [];
 			$this->_nl[$nes] = [];
 		}
+		foreach($params[SqleurPreproExec::P_ES] as $nes => $es)
+			if($es[SqleurPreproExec::PES_SEUL_AU_MONDE])
+				$reqs[] = "delete from ".$es[SqleurPreproExec::PES_TABLE];
 		
 		foreach($reqs as $req)
 			$this->_sqleur->exécuter($req, true, true);
