@@ -58,6 +58,7 @@ class SqleurPreproExec extends SqleurPrepro
 			"(?<vers>vers|into) (?<stdout>$exprDest)(?:, (?<stderr>$exprDest))?",
 			"(?<redire>|[1-9][0-9]*|[?])(?<redirt>>>?) (?<redir>$exprDest)",
 			"< `(?<req0>[^`]*)`",
+			'//(?<para>[1-9][0-9]*)',
 		];
 		$exprBouts = '@^(?:'.implode('|', $exprBouts).')@i';
 		$exprBouts = strtr($exprBouts, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+', '_' => '\w+' ]);
@@ -84,6 +85,9 @@ class SqleurPreproExec extends SqleurPrepro
 					break;
 				case isset($r['req0']) && strlen($r['req0']):
 					$p[self::P_E_REQ] = $r['req0'];
+					break;
+				case isset($r['para']) && strlen($r['para']):
+					$p[self::P_PARALLÉLISME] = 0 + $r['para'];
 					break;
 			}
 			$commande = ltrim(substr($commande, strlen($r[0])));
@@ -169,6 +173,7 @@ class SqleurPreproExec extends SqleurPrepro
 	const P_PID = 'pid';
 	const P_E_REQ = 'entrée_requête';
 	const P_E_VAL = 'entrée_contenu';
+	const P_PARALLÉLISME = '//';
 	const P_ES = 'es'; // Entrées - Sorties
 	
 	protected static $OptionsTable =
@@ -325,7 +330,19 @@ class SqleurPréproExécLanceur
 		require_once __DIR__.'/../util/processus.php';
 		
 		$p = new ProcessusLignes($commande, [ $this, '_ligneRés', $pidi ]);
-		$r = $p->attendre($stdinPrécalc);
+		$p->brancher($stdinPrécalc);
+		
+		//if(!isset($params[SqleurPreproExec::P_PARALLÉLISER]))
+		{
+			$r = $p->attendre();
+			$this->_finir($pidi, $p, $r);
+		}
+	}
+	
+	protected function _finir($pidi, $p, $r)
+	{
+		$params = $this->_params;
+		$tPid = $this->_tablePid;
 		
 		/* Ménage */
 		
