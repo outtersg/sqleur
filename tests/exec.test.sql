@@ -57,6 +57,26 @@ select t from stdout order by pid, l;
 select t from stdout order by h;
 
 #if 0
+-- Vérification que deux lectures en parallèle ne s'emmêlent pas les pinceaux.
+-- Test un peu longuet, et trop dépendant de l'environnement (système + présence de fichiers).
+-- res1: md5 calculé directement en shell
+-- res2: md5 calculé après avoir #exec //2 cat le contenu des fichiers dans une table chez nous, puis réinjecté ces contenus vers un autre #exec md5 (avec un peu d'uuencode pour coller nos données binaires dans notre colonne texte qui apprécie mal l'UTF-8 malformé).
+#exec > temp stdout sh -c 'find /tmp/ -maxdepth 1 -type f -size +1M -size -2M | head -2 | while read f ; do printf "%s %s\\n" "`md5 < "$f"`" "$f" ; done'
+create temp table res1 as
+	select substr(t, 1, instr(t, ' ') - 1) md5, substr(t, instr(t, ' ') + 1) chemin from stdout;
+#exec //2 > mono temp contenu
+	select chemin pid, 'uuencode', chemin, 'bla' from res1;
+#exec //2 > temp res2
+	select chemin pid, contenu.t "<", 'sh', '-c', 'uudecode -p | md5'
+	from res1, contenu where res1.chemin = contenu.pid;
+--select length(t) from contenu;
+--select * from res1;
+--select * from res2;
+select count(1)||' fichiers '||case when res1.md5 = res2.t then 'correctement' else 'mal' end||' injectés en parallèle en base'
+from res1 join res2 on res1.chemin = res2.pid;
+#endif
+
+#if 0
 -- À FAIRE
 
 -- < `/*+ csv */ select …`
