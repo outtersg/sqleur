@@ -28,10 +28,36 @@ select t from stdout;
 select count(distinct proc.id) from stdout, proc where proc.pid = stdout.pid;
 select t from stdout order by pid, l;
 
+#exec //3 > temp stdout
+	with
+		v as (select 0.1 v), -- Délai en secondes, pour disjoindre les opérations afin de bien distinguer les étapes.
+		config as
+		(
+			select '0' pid, 0 t0, 0 t1, 0 t2, 0 t3 where false
+			union all select 'A', 0, 4, 6, 12
+			union all select 'B', 0, 1, 2, 5 -- Le rapide, qui devrait laisser sa place à D.
+			union all select 'C', 0, 3, 9, 10
+			union all select 'D', 5, 7, 8, 11 -- Son t0 est à 5 = la fin de la première des 3 tâches précédentes (car on parallélise à hauteur de 3 max).
+		),
+		tranches as
+		(
+			select pid, 0 pos, 0 delai from config, v where false
+			union all select pid, 1, v * (t1 - t0) from config, v
+			union all select pid, 2, v * (t2 - t1) from config, v
+			union all select pid, 3, v * (t3 - t2) from config, v
+		),
+		tout as
+		(
+			select pid, pos, group_concat('sleep '||delai||' ; echo '||pid||pos, ' ; ') over (partition by pid order by pos) deroule
+			from tranches
+		)
+	select pid, 'sh', '-c', 'echo '||pid||' ; '||deroule
+	from tout where pos = 3 order by pid
+;
+select t from stdout order by h;
+
 #if 0
 -- À FAIRE
-
-#exec //3 
 
 -- < `/*+ csv */ select …`
 -- ou

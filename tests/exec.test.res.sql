@@ -23,3 +23,20 @@ Bonjour Georges
 Coucou Guillaume
 Coucou Lucette
 Coucou Georges
+--
+A
+B
+C
+B1
+B2
+C1
+A1
+B3
+D
+A2
+D1
+D2
+C2
+C3
+D3
+A3

@@ -264,11 +264,14 @@ class SqleurPréproExécLanceur
 				$params[$param] = $l[$col];
 			$l = array_diff_key($l, $spéciales);
 			
-			$this->_lancer($params, $l);
+			$this->_lancer($params, $l, false);
 		}
+		
+		while(count($this->_derviches))
+			$this->_attendreUnDerviche();
 	}
 	
-	protected function _lancer($params, $commande)
+	protected function _lancer($params, $commande, $fini = true)
 	{
 		if(!isset($params))
 			$params = $this->_params;
@@ -332,9 +335,24 @@ class SqleurPréproExécLanceur
 		$p = new ProcessusLignes($commande, [ $this, '_ligneRés', $pidi ]);
 		$p->brancher($stdinPrécalc);
 		
-		//if(!isset($params[SqleurPreproExec::P_PARALLÉLISER]))
+		$this->_derviches[spl_object_hash($p)] = [ $pidi, $p ];
+		$this->_attendreUnDerviche($fini);
+	}
+	
+	protected function _attendreUnDerviche($vraiment = true)
+	{
+		$para = isset($this->_params[SqleurPreproExec::P_PARALLÉLISME]) ? $this->_params[SqleurPreproExec::P_PARALLÉLISME] : 1;
+		
+		// Si on attend encore de joyeux lurons dans la bande et qu'il reste de la place, laissons l'appelant continuer à nous entasser.
+		
+		if(!$vraiment && $para > count($this->_derviches))
+			return;
+		
+		if(($bouclage = Processus::AttendreUn(array_map(function($x) { return $x[1]; }, $this->_derviches))))
 		{
-			$r = $p->attendre();
+			list($p, $r) = $bouclage;
+			$pidi = $this->_derviches[spl_object_hash($p)][0];
+			unset($this->_derviches[spl_object_hash($p)]); // Ce faisant on libère un emplacement.
 			$this->_finir($pidi, $p, $r);
 		}
 	}
@@ -405,6 +423,7 @@ class SqleurPréproExécLanceur
 	protected static $DernierId = 0;
 	protected $_tampon = []; // Enregistrement des données à sortir en une seule fois en fin de processus.
 	protected $_nl = []; // Numéro de ligne.
+	protected $_derviches = []; // Les machins tournant encore.
 }
 
 ?>
