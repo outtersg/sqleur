@@ -30,7 +30,7 @@ select t from stdout order by pid, l;
 
 #exec //3 > temp stdout
 	with
-		v as (select 0.1 v), -- Délai en secondes, pour disjoindre les opérations afin de bien distinguer les étapes.
+		v as (select 0.12 v), -- Délai en secondes, pour disjoindre les opérations afin de bien distinguer les étapes.
 		config as
 		(
 			select '0' pid, 0 t0, 0 t1, 0 t2, 0 t3 where false
@@ -51,7 +51,7 @@ select t from stdout order by pid, l;
 			select pid, pos, group_concat('sleep '||delai||' ; echo '||pid||pos, ' ; ') over (partition by pid order by pos) deroule
 			from tranches
 		)
-	select pid, 'sh', '-c', 'echo '||pid||' ; '||deroule
+	select pid, 'sh', '-c', 'sleep '||((row_number() over (order by pid) - 1) * 0.01)||' ; echo '||pid||' ; '||deroule
 	from tout where pos = 3 order by pid
 ;
 select t from stdout order by h;
