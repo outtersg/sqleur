@@ -467,6 +467,17 @@ class JoueurSqlPdo extends JoueurSql
 				':driver' => $pilote,
 			)
 		);
+		
+		/* NOTE: ATTR_EMULATE_PREPARES
+		 * Pour pdo_pgsql (reste à tester d'autres moteurs), contrairement à ce qu'indique son nom, ATTR_EMULATE_PREPARES rend l'interface *plus* transparente que sans.
+		 * PGSQL_ATTR_DISABLE_PREPARES, elle, n'a aucun effet.
+		 * Ainsi les deux exécutions suivantes foirent-elles sans, car le ? est remplacé par $1:
+		 *   echo "select '{\"u\":1}'::jsonb ? 'u';" | bdd=pgsql:dbname=test php sql2csv.php # → erreur de syntaxe SQL
+		 *   echo 'select $$coucou ? oui$$;' | bdd=pgsql:dbname=test php sql2csv.php # Le contenu de la chaîne à dollars est modifié.
+		 * https://stackoverlow.com/a/36177073
+		 * https://github.com/php/php-src/issues/14244
+		 */
+		$this->bdd->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1); // /!\ Pas mal de questions sur la sécurité et les perfs.
 	}
 	
 	protected function bdd()
