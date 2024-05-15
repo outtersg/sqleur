@@ -49,7 +49,7 @@ class SqleurPreproTestExpr extends SqleurPreproTest
 		$this->_préempterSql();
 	}
 	
-	protected function _chope($résAttendu)
+	public function _chope($résAttendu)
 	{
 		$this->_teste($this->_expr, $résAttendu);
 	}
