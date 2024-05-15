@@ -74,7 +74,7 @@ class SqleurPreproExec extends SqleurPrepro
 					$p['op'] = $r['op'];
 					break;
 				case isset($r['redir']) && strlen($r['redir']):
-					$this->_interpréterSortie($r['redire'] ? $r['redire'] : 1, ($r['redirt'] == '>>' ? 'cumul' : 'init').' '.$r['redir'], /*&*/ $p);
+					$this->_interpréterSortie($r['redire'] ? $r['redire'] : 1, $r['redir'], /*&*/ $p, $r['redirt'] == '>');
 					break;
 				case isset($r['vers']) && strlen($r['vers']):
 					foreach([ 1 => 'stdout', 2 => 'stderr' ] as $nes => $nom)
@@ -137,7 +137,7 @@ class SqleurPreproExec extends SqleurPrepro
 		$this->_lanceur = null;
 	}
 	
-	protected function _interpréterSortie($nes, $descr, &$p)
+	protected function _interpréterSortie($nes, $descr, &$p, $écrabouillageSiNonPrécisé = false)
 	{
 		if(isset($p[self::P_ES][$nes])) throw $this->_sqleur->exception('sortie '.$nes.' ambiguë');
 		$es = [];
@@ -159,7 +159,10 @@ class SqleurPreproExec extends SqleurPrepro
 			$es[self::PES_TABLE] = $bout;
 		}
 		if(!isset($es[self::PES_TABLE])) throw $this->_sqleur->exception($descr.': nom de table manquant');
-		$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true, self::PES_SEUL_AU_MONDE => false ];
+		// Protection: on n'écrase pas une table non temporaire, sauf si demandé explicitement.
+		if((!isset($es[self::PES_TEMP]) || !$es[self::PES_TEMP]) && !isset($es[self::PES_SEUL_AU_MONDE]) && $écrabouillageSiNonPrécisé)
+			throw $this->_sqleur->exception('sécurité contre l\'écrasement du contenu de '.$es[self::PES_TABLE].'; si souhaité, précédez-la explicitement du mot-clé \'init\'');
+		$p[self::P_ES][$nes] = $es + [ self::PES_F => self::F_ÉCLAT, self::PES_TEMP => true, self::PES_SEUL_AU_MONDE => $écrabouillageSiNonPrécisé ];
 	}
 	
 	protected $_lanceur;

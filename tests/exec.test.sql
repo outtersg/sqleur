@@ -22,7 +22,7 @@ insert into t_qui values (3, 'Georges');
 select count(1) from stdout; -- 1 seule, car on a demandé du mono.
 select t from stdout;
 
-#exec > temp stdout ?> proc
+#exec > temp stdout ?> temp proc
 	select id pid, 'sed', texte "<", '-e', 's/^/Coucou /' from t_qui;
 -- On s'attend à avoir été traités par 3 processus distincts:
 select count(distinct proc.id) from stdout, proc where proc.pid = stdout.pid;
