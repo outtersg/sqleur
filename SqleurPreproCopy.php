@@ -243,6 +243,7 @@ class SqleurPreproCopyPousseur
 		$this->_table = $r['t'];
 		$this->_champs = preg_split('/\s*,\s*/', $r['c']);
 		$this->_sép = empty($rp['delim']) ? "\t" : $rp['delim'];
+		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
 		$this->source = empty($rp['from']) || strcasecmp($rp['from'], 'stdin') == 0 ? null : substr($rp['from'], 1, -1);
 		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
 		$this->_sauf = empty($rp['sauf']) ? 0 : 1;
