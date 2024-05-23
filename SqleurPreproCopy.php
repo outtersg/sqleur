@@ -330,7 +330,17 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 		// mais à vrai dire ce sens (non publié) de l'\ est bien pratique pour passer toute sorte de caractères spéciaux comme les retours à la ligne.
 		foreach(($données = $this->données()) as $pos => $l)
 			$données[$pos] = strtr($l, [ "\n" => '\n', "\r" => '\r', '\\' => '\\\\' ]);
-		if(!$this->_bdd->pgsqlCopyFromArray($this->_table, $données, $this->_sép, 'NULL', isset($this->_champs) ? implode(',', $this->_champs) : null))
+		if
+		(
+			!$this->_bdd->pgsqlCopyFromArray
+			(
+				$this->_table,
+				$données,
+				$this->_sép,
+				'NULL',
+				isset($this->_champs) ? implode(',', $this->_champs) : null
+			)
+		)
 		{
 			$e = $this->_bdd->errorInfo();
 			throw new Exception('copy: '.$e[2]);
