@@ -267,17 +267,19 @@ class SqleurPreproCopyPousseur
 		$données = $this->_données;
 		
 		if($this->_sauf)
+		{
 			$données = array_slice($données, $this->_sauf);
+			$this->_sauf = 0;
+		}
 		
 		if(!isset($this->_csv)) return $données;
 		
 		$d = [];
-		$résidu = null;
+		$résidu = $this->_résidu;
 		$this->_sépi = "\037"; // Séparateur Interne
-		$this->_nGuili = 0; // Nombre de guillemets internes.
 		foreach($données as $l)
 		{
-			/* À FAIRE: si on rencontre notre séparateur interne dans la chaîne, on reparcourt l'ensemble des données pour l'éjecter. */
+			/* À FAIRE: si on rencontre notre séparateur interne dans la chaîne, on reparcourt l'ensemble des données pour l'éjecter. Il faudra alors que _sépi soit persisté (rajouter un if(!isset avant le 037). */
 			if(strpos($l, '"') !== false)
 			{
 				$sépExpr = preg_replace('#([|\#*?\[\]()])#', '\\\\\\1', $this->_sép);
@@ -289,7 +291,7 @@ class SqleurPreproCopyPousseur
 			if(isset($résidu))
 			{
 				$l = $résidu."\n".$l;
-				unset($résidu);
+				$résidu = null;
 			}
 			if($this->_nGuili)
 			{
@@ -299,8 +301,9 @@ class SqleurPreproCopyPousseur
 			
 			$d[] = $l;
 		}
-		$this->_sép = $this->_sépi;
 		
+		$this->_données = [];
+		$this->_résidu = $résidu;
 		return $d;
 	}
 	
@@ -322,8 +325,9 @@ class SqleurPreproCopyPousseur
 	protected $_csv;
 	protected $_sauf = 0;
 	protected $_données;
+	protected $_résidu;
 	protected $_sépi;
-	protected $_nGuili;
+	protected $_nGuili = 0; // Nombre de guillemets internes.
 }
 
 class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
@@ -351,7 +355,6 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 			$e = $this->_bdd->errorInfo();
 			throw new Exception('copy: '.$e[2]);
 		}
-		$this->_données = [];
 	}
 }
 
