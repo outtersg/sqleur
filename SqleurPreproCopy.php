@@ -107,12 +107,23 @@ class SqleurPreproCopy extends SqleurPrepro
 		if(isset($this->_pousseur))
 			return $this->_pousseur;
 		
-		if(!isset($this->_sqleur->bdd))
+		if(isset($this->_sqleur->bdd))
+			$bdd = $this->_sqleur->bdd;
+		else if
+		(
+			isset($this->_sqleur->_sortie)
+			&& is_array($this->_sqleur->_sortie)
+			&& isset($this->_sqleur->_sortie[0])
+			&& is_object($this->_sqleur->_sortie[0])
+			&& isset($this->_sqleur->_sortie[0]->bdd)
+		)
+			$bdd = $this->_sqleur->_sortie[0]->bdd;
+		else
 			throw new Exception('copy appelé, mais le Sqleur n\'a pas de bdd attachée');
 		/* À FAIRE: pgsqlCopyFromArray/File c'est bien gentil mais ça oblige à tout charger en mémoire avant d'appeler.
 		 * N'y a-t-il pas une bonne âme pour répliquer ce que font les pg_put_line et pg_end_copy? */
-		if(method_exists($this->_sqleur->bdd, 'pgsqlCopyFromFile'))
-			$this->_pousseur = new SqleurPreproCopyPousseurPg($this->_sqleur->bdd);
+		if(method_exists($bdd, 'pgsqlCopyFromFile'))
+			$this->_pousseur = new SqleurPreproCopyPousseurPg($bdd);
 		/* À FAIRE: autres SGBD que PostgreSQL. */
 		
 		if(!isset($this->_pousseur))
