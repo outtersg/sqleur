@@ -279,7 +279,10 @@ class SqleurPreproCopyPousseur
 		{
 			/* À FAIRE: si on rencontre notre séparateur interne dans la chaîne, on reparcourt l'ensemble des données pour l'éjecter. */
 			if(strpos($l, '"') !== false)
-				$l = preg_replace_callback('#""|"|'.$this->_sép.'#', [ $this, '_remplCsv' ], $l);
+			{
+				$sépExpr = preg_replace('#([|\#*?\[\]()])#', '\\\\\\1', $this->_sép);
+				$l = preg_replace_callback('#""|"|'.$sépExpr.'#', [ $this, '_remplCsv' ], $l);
+			}
 			else
 				$l = strtr($l, [ $this->_sép => $this->_sépi ]);
 			
