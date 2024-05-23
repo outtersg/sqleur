@@ -330,11 +330,11 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 {
 	public function fin()
 	{
-		if(!count($this->_données)) return;
+		if(!count($données = $this->données())) return;
 		
 		// Argh un CSV contenant des \ m'a fait rudement découvrir les cas aux limites de pgsqlCopyFromArray:
 		// mais à vrai dire ce sens (non publié) de l'\ est bien pratique pour passer toute sorte de caractères spéciaux comme les retours à la ligne.
-		foreach(($données = $this->données()) as $pos => $l)
+		foreach($données as $pos => $l)
 			$données[$pos] = strtr($l, [ "\n" => '\n', "\r" => '\r', '\\' => '\\\\' ]);
 		if
 		(
