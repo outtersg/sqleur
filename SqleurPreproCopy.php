@@ -202,7 +202,8 @@ class SqleurPreproCopy extends SqleurPrepro
 		if(!isset($this->_requêteEnCours) && !preg_match('/'.self::DÉMARRAGE.'/', $req)) return;
 		
 		// Ne travaillons pas pour des clopinettes.
-		if(strlen($req) < 0x1000000) return;
+		// PHP n'a pas à rougir face à psql, c'est surtout la latence du réseau qui fait préférer les gros paquets aux petits.
+		if(strlen($req) < (getenv('BLOC_COPIE') ? getenv('BLOC_COPIE') : 0x1000000)) return;
 		
 		$this->_chope($req, true);
 		return strlen($req);
