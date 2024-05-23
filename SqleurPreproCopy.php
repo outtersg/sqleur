@@ -229,7 +229,7 @@ class SqleurPreproCopyPousseur
 	
 	public function init($req)
 	{
-		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|(?<csv>csv)|(?<sauf>header)';
+		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|null (?:as )?\'(?<null>[^\']+)\'|(?<csv>csv)|(?<sauf>header)';
 		
 		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
@@ -243,6 +243,7 @@ class SqleurPreproCopyPousseur
 		$this->_table = $r['t'];
 		$this->_champs = preg_split('/\s*,\s*/', $r['c']);
 		$this->_sép = empty($rp['delim']) ? "\t" : $rp['delim'];
+		$this->_null = empty($rp['null']) ? null : $rp['null'];
 		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
 		$this->source = empty($rp['from']) || strcasecmp($rp['from'], 'stdin') == 0 ? null : substr($rp['from'], 1, -1);
 		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
@@ -314,6 +315,7 @@ class SqleurPreproCopyPousseur
 	protected $_table;
 	protected $_champs;
 	protected $_sép;
+	protected $_null;
 	protected $_csv;
 	protected $_sauf = 0;
 	protected $_données;
@@ -338,7 +340,7 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 				$this->_table,
 				$données,
 				$this->_sép,
-				'NULL',
+				isset($this->_null) ? $this->_null : 'NULL',
 				isset($this->_champs) ? implode(',', $this->_champs) : null
 			)
 		)
