@@ -346,7 +346,7 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 			(
 				$this->_table,
 				$données,
-				$this->_sép,
+				isset($this->_sépi) ? $this->_sépi : $this->_sép,
 				isset($this->_null) ? $this->_null : 'NULL',
 				isset($this->_champs) ? implode(',', $this->_champs) : null
 			)
