@@ -268,7 +268,7 @@ public class SqlMinus
 		}
 		
 		if(diag >= 2)
-		System.err.print(GRIS+req.trim()+BLANC+" ");
+			System.err.print(GRIS+this.reqSansLongueurs(req).trim()+BLANC+" ");
 		
 		try
 		{
@@ -367,6 +367,24 @@ public class SqlMinus
 		System.err.flush();
 		if(delaiEntreSortiesStandard > 0)
 			try { Thread.sleep(delaiEntreSortiesStandard); } catch(Exception ex) {}
+	}
+	
+	protected String reqSansLongueurs(String req)
+	{
+		int dernierArret = 0;
+		int debutMasquage, finMasquage;
+		String resinter, res = null;
+		while((debutMasquage = req.indexOf("/*<--", dernierArret)) >= 0)
+		{
+			if((debutMasquage = req.indexOf("*/", debutMasquage + 5)) < 0 || (finMasquage = req.indexOf("/*-->*/", debutMasquage + 2)) < 0)
+				break;
+			resinter = req.substring(dernierArret, debutMasquage).concat(req.substring(finMasquage + 2, finMasquage + 7));
+			dernierArret = finMasquage + 7;
+			if(res == null) res = resinter;
+			else res.concat(resinter);
+		}
+		if(res == null) return req;
+		return res+req.substring(dernierArret);
 	}
 }
 
