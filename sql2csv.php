@@ -255,7 +255,11 @@ class JoueurSql extends Sqleur
 		if($appliquerDéfs)
 			$sql = $this->_appliquerDéfs($sql);
 		if($this->bavard && !$interne)
-		fprintf(STDERR, "  %s;\n", strtr($sql, array("\n" => "\n  ")));
+		{
+			// On accepte pour convention des /* <-- La suite est barbante ou à masquer */ suite barbante ou à masquer /* --> */.
+			$sqlSansLongueurs = preg_replace('#(/\* *<--[^*]*)\*/.*/\* *(--> *\*/)#sU', '\1\2', $sql);
+			fprintf(STDERR, "  %s;\n", strtr($sqlSansLongueurs, array("\n" => "\n  ")));
+		}
 		try
 		{
 			$rés = $this->_exéc($sql);
