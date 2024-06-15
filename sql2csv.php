@@ -254,7 +254,7 @@ class JoueurSql extends Sqleur
 	{
 		if($appliquerDéfs)
 			$sql = $this->_appliquerDéfs($sql);
-		if($this->bavard)
+		if($this->bavard && !$interne)
 		fprintf(STDERR, "  %s;\n", strtr($sql, array("\n" => "\n  ")));
 		try
 		{
