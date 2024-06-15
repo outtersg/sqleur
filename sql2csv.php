@@ -465,7 +465,8 @@ class JoueurSqlPdo extends JoueurSql
 			(
 				':pilote' => $pilote,
 				':driver' => $pilote,
-			)
+			),
+			true
 		);
 		
 		/* NOTE: ATTR_EMULATE_PREPARES
@@ -670,6 +671,8 @@ class Sql2Csv
 		$j->sépChamps = $sépChamps;
 		$défs = $this->tradDéfs($défs);
 		$j->ajouterDéfs($défs);
+		if(count($défsMoteur = array_intersect_key($défs, $this->_défsMoteur)))
+			$j->ajouterDéfs($défsMoteur, true);
 		$j->sortie($sortie);
 		if(file_exists($autoDéfs = dirname(__FILE__).'/sql2csv.autodefs.sql'))
 			array_unshift($entrées, $autoDéfs);
@@ -691,6 +694,8 @@ class Sql2Csv
 		}
 		return $défs;
 	}
+	
+	protected $_défsMoteur = [ ':pilote' => true, ':driver' => true ];
 }
 
 class Sql2CsvPdo extends Sql2Csv

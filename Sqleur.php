@@ -337,11 +337,17 @@ class Sqleur
 	
 	public function découpeIncise($incise, $brut = false)
 	{
+		$défs = $this->_defs;
 		$this->mémoriserÉtat(true); /* À FAIRE: $technique ou pas $technique? */
 		try
 		{
 			if($brut)
+			{
 				$this->_defs = [ 'stat' => [], 'dyn' => [] ]; // Seront de toute manière restaurées par restaurerÉtat().
+				// … Mais on réinstaure tout de même les valeurs à usage interne des SqleurPrepro*.
+				if(isset($défs['moteur']))
+					$this->_defs['moteur'] = $défs['moteur'];
+			}
 			$r = $this->_decoupeBloc($incise, true);
 			$défsÉcrites = $this->_defs;
 			$this->restaurerÉtat($brut);
@@ -1104,7 +1110,13 @@ class Sqleur
 		return $this->ajouterDéfs($défs);
 	}
 	
-	public function ajouterDéfs($défs)
+	/**
+	 * Définition de nouvelles valeurs pour le moteur de réécriture.
+	 * 
+	 * @param array $défs Définitions (statiques, de type chaînes, ou dynamiques, sous forme de fonctions).
+	 * @param boolean $moteur Même dans une relecture d'incise brute (sans définitions), ces variables persisteront pour le moteur (c-à-d les divers SqleurPrepro*); la version publique, utilisée pour les remplacements dans le SQL, s'éclipsera normalement.
+	 */
+	public function ajouterDéfs($défs, $moteur = false)
 	{
 		// Si on a encore un bout de truc accumulé non remplacé, on lui applique les anciennes définitions.
 		if(isset($this->_requeteEnCours))
@@ -1117,6 +1129,8 @@ class Sqleur
 			if(!isset($contenu)) continue;
 			$type = is_string($contenu) || is_numeric($contenu) || !is_callable($contenu) ? 'stat' : 'dyn';
 			$this->_defs[$type][$id] = $contenu;
+			if($moteur)
+				$this->_defs['moteur'][$id] = $contenu;
 		}
 		unset($this->_defs['statr']); // Cache pour remplacements textuels, à recalculer puisque stat a bougé.
 	}
