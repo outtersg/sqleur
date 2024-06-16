@@ -151,6 +151,7 @@ class Sqleur
 	
 	public $_mode;
 	public $_sortie;
+	public $_brut = false; // Ne pas effectuer les remplacements.
 	public $_requeteEnCours;
 	public $_fichier;
 	public $_ligne;
@@ -425,6 +426,8 @@ class Sqleur
 	
 	protected function _ajouterBoutRequête($bout, $appliquerDéfs = true, $duVent = false, $numDernierArrêt = null)
 	{
+		if($appliquerDéfs && $this->_brut) $appliquerDéfs = false;
+		
 		if($appliquerDéfs)
 		{
 			isset($this->_requêteRemplacée) || $this->_requêteRemplacée = '';
