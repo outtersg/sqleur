@@ -49,6 +49,7 @@ class SqleurPreproCopy extends SqleurPrepro
 		{
 		$this->_sortieOriginelle = $this->_sqleur->_sortie;
 		/* À FAIRE: faire basculer le Sqleur dans un mode ligne à ligne plutôt qu'expression par expression, pour ne pas devoir charger tout le fichier en mémoire avant de l'injecter. */
+			$this->_sqleur->_brut = true;
 		$this->_sqleur->_sortie = array($this, '_chope');
 		}
 		else
@@ -193,6 +194,7 @@ class SqleurPreproCopy extends SqleurPrepro
 			return;
 		
 		$this->_sqleur->_sortie = $this->_sortieOriginelle;
+		$this->_sqleur->_brut = false;
 		unset($this->_sortieOriginelle);
 	}
 	
