@@ -52,10 +52,12 @@ class SqleurPreproIncl extends SqleurPrepro
 	{
 		if(substr($chemin, 0, 1) != '/' && isset($this->_sqleur->_fichier))
 			$chemin = dirname($this->_sqleur->_fichier).'/'.$chemin;
+		$cheminAbsolu = $chemin;
+		if(substr($cheminAbsolu, 0, 1) != '/') $cheminAbsolu = getcwd().'/'.$cheminAbsolu;
 		
 		// Si le script est le premier inclus, on colle son nom comme point d'entrée.
 		$créf = ':SCRIPT_FILENAME';
-		$défs = [ $créf => $chemin, ':SCRIPT_NAME' => basename($chemin) ];
+		$défs = [ $créf => $cheminAbsolu, ':SCRIPT_NAME' => basename($chemin) ];
 		if(!$this->_sqleur->_defined($créf) || !$this->_sqleur->_defs['stat'][$créf]) // La valeur 0 (stdin) n'est pas pérenne.
 			$this->_sqleur->ajouterDéfs($défs);
 		/* À FAIRE: un __FILE__ lui défini inconditionnellement? */

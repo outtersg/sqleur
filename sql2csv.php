@@ -236,11 +236,13 @@ class JoueurSql extends Sqleur
 	
 	public function jouer($chemin)
 	{
+		$cheminAbsolu = $chemin;
+		if(substr($cheminAbsolu, 0, 1) != '/') $cheminAbsolu = getcwd().'/'.$cheminAbsolu;
 		$this->ajouterDéfs
 		(
 			array
 			(
-				':SCRIPT_FILENAME' => $chemin,
+				':SCRIPT_FILENAME' => $cheminAbsolu,
 				':SCRIPT_NAME' => basename($chemin),
 			)
 		);
