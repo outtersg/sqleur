@@ -313,7 +313,7 @@ class SqleurPreproCopyPousseur
 	{
 		switch($r[0])
 		{
-			case '""': return '"';
+			case '""': return $this->_nGuili ? '"' : '';
 			case '"': $this->_nGuili = !$this->_nGuili; return '';
 			case $this->_sép: return $this->_nGuili ? $r[0] : $this->_sépi;
 		}
