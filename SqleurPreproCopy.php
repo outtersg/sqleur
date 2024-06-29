@@ -231,7 +231,7 @@ class SqleurPreproCopyPousseur
 	
 	public function init($req)
 	{
-		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|null (?:as )?\'(?<null>[^\']+)\'|(?<csv>csv)|(?<sauf>header)';
+		$expr = 'from (?<from>stdin|\'[^ ]+\')|delimiter \'(?<delim>[^\']+)\'|null (?:as )?(?<null>\'[^\']*)\'|(?<csv>csv)|(?<sauf>header)';
 		
 		if(!preg_match("/^copy\\s+(?<t>[a-z0-9_.]+)(?:\\s*\((?<c>[^)]+)\))?(?<p>(?:\\s+(?:$expr))*)\$/i", $req, $r))
 			throw new Exception('copy ininterprétable: '.$req);
@@ -245,7 +245,7 @@ class SqleurPreproCopyPousseur
 		$this->_table = $r['t'];
 		$this->_champs = preg_split('/\s*,\s*/', $r['c']);
 		$this->_sép = empty($rp['delim']) ? "\t" : $rp['delim'];
-		$this->_null = empty($rp['null']) ? null : $rp['null'];
+		$this->_null = isset($rp['null']) ? substr($rp['null'], 1) : null; // La chaîne vide n'étant pas capturée par PCRE, on capture avec le guillemet initial écarté ici.
 		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
 		$this->source = empty($rp['from']) || strcasecmp($rp['from'], 'stdin') == 0 ? null : substr($rp['from'], 1, -1);
 		$this->_csv = empty($rp['csv']) ? null : $rp['csv'];
@@ -339,18 +339,34 @@ class SqleurPreproCopyPousseurPg extends SqleurPreproCopyPousseur
 	{
 		if(!count($données = $this->données())) return;
 		
+		$sép = isset($this->_sépi) ? $this->_sépi : $this->_sép;
 		// Argh un CSV contenant des \ m'a fait rudement découvrir les cas aux limites de pgsqlCopyFromArray:
 		// mais à vrai dire ce sens (non publié) de l'\ est bien pratique pour passer toute sorte de caractères spéciaux comme les retours à la ligne.
+		$remplControblique = [ "\n" => '\n', "\r" => '\r', '\\' => '\\\\' ];
+		// Pour copyFromArray(), null ne comprend pas la chaîne vide. On la remplace.
+		if(($null = $this->_null) === '')
+		{
+			$null = chr(0x18); /* À FAIRE: vérifier que le caractère n'est présent dans aucune ligne. */
+			$remplNull = '/(^|'.$sép.')('.$sép.'|$)/'; $parNull = '\1'.$null.'\2';
+			foreach($données as $pos => $l)
+				// Pour repérer les champs vides (entre deux séparateurs, ou entre le début de ligne et un sép, ou entre sép et fin de ligne, ou entre début et fin),
+				// on est kif-kif en temps entre un preg_replace et un repérage en substr(strtr($sép.$l.$sép, [ $sép.$sép => $sép.$null.$sép ]), 1, -1).
+				// En tout cas on fait deux passes pour remplacer les successifs (dans a;;;;;b, la première passe attrapera les couples de ;; pour donner a;N;;N;;b et la seconde prendra les restants pour donner a;N;N;N;N;b).
+				$données[$pos] = preg_replace($remplNull, $parNull, preg_replace($remplNull, $parNull, strtr($l, $remplControblique)));
+		}
+		else
+			// foreach plutôt qu'array_filter: pour 50000 lignes, 1,8 s en foreach, 3,4 s en array_filter.
 		foreach($données as $pos => $l)
-			$données[$pos] = strtr($l, [ "\n" => '\n', "\r" => '\r', '\\' => '\\\\' ]);
+				$données[$pos] = strtr($l, $remplControblique);
+
 		if
 		(
 			!$this->_bdd->pgsqlCopyFromArray
 			(
 				$this->_table,
 				$données,
-				isset($this->_sépi) ? $this->_sépi : $this->_sép,
-				isset($this->_null) ? $this->_null : 'NULL',
+				$sép,
+				isset($null) ? $null : 'NULL',
 				isset($this->_champs) ? implode(',', $this->_champs) : null
 			)
 		)
