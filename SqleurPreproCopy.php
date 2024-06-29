@@ -301,6 +301,7 @@ class SqleurPreproCopyPousseur
 				continue;
 			}
 			
+			if(substr($l, -1) == "\r") $l = substr($l, 0, -1);
 			$d[] = $l;
 		}
 		
