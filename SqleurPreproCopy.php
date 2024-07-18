@@ -279,13 +279,23 @@ class SqleurPreproCopyPousseur
 		$d = [];
 		$résidu = $this->_résidu;
 		$this->_sépi = "\037"; // Séparateur Interne
+		/*
+		$sépExpr = preg_replace('#([|\#*?\[\]()])#', '\\\\\\1', $this->_sép);
+		$sépExpr = '#""|"|'.$sépExpr.'#';
+		*/
 		foreach($données as $l)
 		{
 			/* À FAIRE: si on rencontre notre séparateur interne dans la chaîne, on reparcourt l'ensemble des données pour l'éjecter. Il faudra alors que _sépi soit persisté (rajouter un if(!isset avant le 037). */
 			if(strpos($l, '"') !== false)
 			{
-				$sépExpr = preg_replace('#([|\#*?\[\]()])#', '\\\\\\1', $this->_sép);
-				$l = preg_replace_callback('#""|"|'.$sépExpr.'#', [ $this, '_remplCsv' ], $l);
+				// preg_replace_callback() est trop lente. En bidouillant avec str_getcsv(), on divise par 5 le temps d'exécution.
+				/*
+				$l = preg_replace_callback($sépExpr, [ $this, '_remplCsv' ], $l);
+				*/
+				if($this->_nGuili) $l = '"'.$l;
+				$champs = str_getcsv($l, $this->_sép);
+				$this->_nGuili = ($champs == str_getcsv($l.'"', $this->_sép)); // Si le découpage est identique en ajoutant un ", c'est que la chaîne a ouvert un guillemet sans le refermer.
+				$l = implode($this->_sépi, $champs);
 			}
 			else
 				$l = strtr($l, [ $this->_sép => $this->_sépi ]);
