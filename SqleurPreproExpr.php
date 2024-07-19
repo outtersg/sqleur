@@ -428,6 +428,7 @@ class SqleurPreproExpr
 		$bout = $bouts[$num];
 		if(!is_object($bout) || ! $bout instanceof NœudPrepro || $bout->t != '(')
 			throw new Exception("_usageParenthèse() appelée sur un nœud non parenthèse");
+		$groupante = false;
 		if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP | static::PREC_BI | static::PREC_BIMULTI)) !== false)
 		{
 			if($this->_estBimulti($bouts[$numPréc]))
@@ -450,7 +451,7 @@ class SqleurPreproExpr
 				// Parenthèse de regroupement: "2 * (3 + 4). On est
 				// À FAIRE
 				++$numPréc;
-				$bout = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
+				$groupante = true;
 			}
 			else
 			{
@@ -460,19 +461,24 @@ class SqleurPreproExpr
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == ',')
 					$bout->f[1] = $bout->f[1]->f;
 			}
-			// On _splice de toute manière, pour écrabouiller les éventuels espaces entre l'élément significatif et sa parenthèse.
-			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, array($bout));
-			$num = $numPréc;
 		}
 		else if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_MOT_SIMPLE)) === false)
-		{
 			// En début d'expression, une parenthèse ne devrait servir qu'à constituer un groupement: "(2 + 3) * 2".
-			$bouts[$num] = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
-		}
+			$groupante = true;
 		else if(count($bout->f) == 1)
 			$this->_splice($bouts, $positions, $num, 1, array($bout->f));
 		else
 			throw new ErreurExpr("Erreur interne: parenthèse ouvrante qui n'est ni fonction, ni regroupement d'expressions", $positions, $num);
+		
+		if($groupante)
+			$bouts[$num] = $bout = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
+		
+		if(isset($numPréc) && $numPréc !== false)
+		{
+			// On _splice de toute manière, pour écrabouiller les éventuels espaces entre l'élément significatif et sa parenthèse.
+			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, [ $bout ]);
+			$num = $numPréc;
+		}
 	}
 	
 	const PREC_MOT_SIMPLE = 0x01;
