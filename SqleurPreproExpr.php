@@ -772,6 +772,14 @@ class NœudPrepro
 				return $this->_exécuterF($contexte);
 			case '/':
 				return $this;
+			case ',':
+				if($exécMultiRés)
+				{
+					$r = [];
+					foreach($this->f as $f)
+						$r[] = $this->_contenu($f, $contexte);
+					return $r;
+				}
 			default:
 				throw new Exception('Je ne sais pas gérer les '.$this->t);
 		}
