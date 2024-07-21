@@ -97,7 +97,13 @@ corpus()
 		| sort | while read f
 		do
 			echo
-			sed -E -e 's#`[^`]*`#1#g' -e '/#include/d' -e 's/#while.*/#if 1/' -e '/#(copy|require|skip|create)/d' -e 's/getenv\([^)]*\)/1/g' < "$f"
+			sed -E \
+				-e 's#`[^`]*`#1#g' \
+				-e '/#include/d' \
+				-e 's/#while.*/#if 1/' \
+				-e '/#(copy|require|skip|create)/d' \
+				-e 's/getenv\([^)]*\)/1/g' \
+			< "$f"
 		done > /tmp/0.sql # Fichier par fichier, de manière à ce que ceux sans retour final en ait un qui évite que sa dernière ligne soit concaténée avec la première du suivant, potentiellement un #if qui perdrait alors son côté prépro en n'étant plus en début de ligne.
 	)
 	
