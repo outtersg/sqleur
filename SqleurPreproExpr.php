@@ -521,7 +521,7 @@ class SqleurPreproExpr
 		if(is_string($bout) && in_array($bout, self::$Ops))
 			return $bout;
 		if(is_object($bout) && $bout instanceof NœudPrepro)
-			if($bouts[$num]->t == 'op')
+			if($bout->t == 'op')
 				return $bout->op;
 			else if(in_array($bout->t, self::$Ops))
 				return $bout->t;
