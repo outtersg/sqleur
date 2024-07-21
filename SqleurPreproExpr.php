@@ -485,10 +485,11 @@ class SqleurPreproExpr
 	const PREC_BI         = 0x08;
 	const PREC_BIMULTI    = 0x02;
 	const PREC_SAUF_OP    = 0x04;
+	const PREC_SUIVANT    = 0x10;
 	
 	protected function _précédentNonVide($bouts, $num, $mode)
 	{
-		while(--$num >= 0)
+		while((($mode & static::PREC_SUIVANT) ? (count($bouts) - ++$num - 1) : --$num) >= 0)
 		{
 			$bout = $bouts[$num];
 			
