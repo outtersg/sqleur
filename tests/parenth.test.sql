@@ -16,7 +16,6 @@ Patinable ou aéronefable;
 select count(1)||' DESCR' from TABLE;
 #done
 
-#if 0
 #for TABLE, DESCR in ( ( "t_chose", "choses" ), ( "t_bidule", "tout le reste") )
 select count(1)||' DESCR' from TABLE;
 #done
@@ -25,6 +24,7 @@ select count(1)||' DESCR' from TABLE;
 select count(1)||' DESCR' from TABLE;
 #done
 
+#if 0
 #for TABLE in ( ( "t_chose" ), ( concat("tout", " ", "le", " ", "reste") ) )
 select count(1)||' DESCR' from TABLE;
 #done

@@ -452,7 +452,7 @@ class SqleurPreproExpr
 				++$numPréc;
 			$bout = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
 			}
-			else if($numPréc !== false)
+		else if($this->_précédentNonVide($bouts, $num, static::PREC_MOT_SIMPLE) !== false)
 			{
 				$bout = new NœudPrepro('f', array($bouts[$numPréc], $bout), $positions[$num]);
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == '(')
@@ -460,17 +460,15 @@ class SqleurPreproExpr
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == ',')
 					$bout->f[1] = $bout->f[1]->f;
 		}
-		else if
-		(
-			$this->_précédentNonVide($bouts, $num, static::PREC_MOT_SIMPLE) === false
-			&& is_object($bout->f) && $bout->f instanceof NœudPrepro && $bout->f->t == ','
-		)
+		else if(is_object($bout->f) && $bout->f instanceof NœudPrepro && $bout->f->t == ',')
 		{
 			/* À FAIRE: le if est sans doute à revoir. */
 			// Si pas passé dans le ParenthèseGroupement, c'est une liste.
-			$bout->t = ','; /* À FAIRE: '[' pour distinguer liste encore indécise de tableau? Et à terme avoir un vrai opérateur [ distinct de la ( un peu trop Lisp? */
+			$bout->t = '['; /* À FAIRE: Avoir un vrai opérateur [ distinct de la ( un peu trop Lisp. */
 			$bout->f = $bout->f->f;
 		}
+		else if(count($bouts) == 1)
+			$bout->t = '[';
 		else
 			throw new ErreurExpr("Erreur interne: parenthèse ouvrante qui n'est ni fonction, ni regroupement d'expressions", $positions, $num);
 		
@@ -508,7 +506,8 @@ class SqleurPreproExpr
 				if((is_string($bouts[$num]) && !$this->_estBimulti($bouts[$num]) && !in_array($bouts[$num], self::$Ops)) || (is_object($bouts[$num]) && $bouts[$num] instanceof NœudPrepro && $bouts[$num]->t != 'op'))
 					return $num;
 			if($mode & static::PREC_MOT_SIMPLE)
-				if(is_string($bout) || (is_object($bout) && $bout instanceof NœudPrepro && $bout->t == '"'))
+				if(is_string($mot = $bout) || (is_object($bout) && $bout instanceof NœudPrepro && $bout->t == '"' && ($mot = $bout->f)))
+					if(!$this->_estOp($mot) && $mot != ',' && !in_array($mot, self::$Fermantes) && !isset(self::$Fermantes[$mot]))
 					return $num;
 			if($mode & static::PREC_BIMULTI)
 				if($bout == ',,' || $this->_estBimulti($bout))
@@ -801,12 +800,13 @@ class NœudPrepro
 				return $this->_exécuterF($contexte);
 			case '/':
 				return $this;
+			case '[':
 			case ',':
 				if($exécMultiRés)
 				{
 					$r = [];
 					foreach($this->f as $f)
-						$r[] = $this->_contenu($f, $contexte);
+						$r[] = $this->_contenu($f, $contexte, $exécMultiRés);
 					return $r;
 				}
 			default:
