@@ -28,3 +28,5 @@ MACHIN
 #done
 #done
 ;
+
+-- Voir aussi quelques tests dans parenth.test.sql.

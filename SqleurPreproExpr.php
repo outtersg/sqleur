@@ -428,10 +428,9 @@ class SqleurPreproExpr
 		$bout = $bouts[$num];
 		if(!is_object($bout) || ! $bout instanceof NœudPrepro || $bout->t != '(')
 			throw new Exception("_usageParenthèse() appelée sur un nœud non parenthèse");
-		$groupante = false;
-		if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP | static::PREC_BI | static::PREC_BIMULTI)) !== false)
-		{
-			if($this->_estBimulti($bouts[$numPréc]))
+		foreach([ 0 => & $numPréc, static::PREC_SUIVANT => & $numSuiv ] as $options => & $ptrNum)
+			/*&*/$ptrNum = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP | static::PREC_BI | static::PREC_BIMULTI | $options);
+		if($numPréc !== false && $this->_estBimulti($bouts[$numPréc]))
 			{
 				// Les opérateurs bimulti (<machin> <bimulti> <liste>) fonctionnent selon deux modes:
 				// - <machin> <bimulti> <valeur> , <valeur> , <valeur>
@@ -446,39 +445,43 @@ class SqleurPreproExpr
 					throw new ErreurExpr("Erreur interne: opérateur à parenthèse de contenu incompilable", $positions, $num);
 				$bout->t = ',,';
 			}
-			else if($this->_estOp($bouts[$numPréc]))
+		else if($this->_parenthèseOp($bouts, $numPréc, $bout, $numSuiv))
 			{
-				// Parenthèse de regroupement: "2 * (3 + 4). On est
-				// À FAIRE
+			// Parenthèse de regroupement: "2 * (3 + 4)". Les seuls encadrants éventuels sont des opérateurs.
+			if($numPréc !== false)
 				++$numPréc;
-				$groupante = true;
+			$bout = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
 			}
-			else
+			else if($numPréc !== false)
 			{
 				$bout = new NœudPrepro('f', array($bouts[$numPréc], $bout), $positions[$num]);
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == '(')
 					$bout->f[1] = $bout->f[1]->f;
 				if(is_object($bout->f[1]) && $bout->f[1] instanceof NœudPrepro && $bout->f[1]->t == ',')
 					$bout->f[1] = $bout->f[1]->f;
-			}
 		}
-		else if(($numPréc = $this->_précédentNonVide($bouts, $num, static::PREC_MOT_SIMPLE)) === false)
-			// En début d'expression, une parenthèse ne devrait servir qu'à constituer un groupement: "(2 + 3) * 2".
-			$groupante = true;
-		else if(count($bout->f) == 1)
-			$this->_splice($bouts, $positions, $num, 1, array($bout->f));
+		else if
+		(
+			$this->_précédentNonVide($bouts, $num, static::PREC_MOT_SIMPLE) === false
+			&& is_object($bout->f) && $bout->f instanceof NœudPrepro && $bout->f->t == ','
+		)
+		{
+			/* À FAIRE: le if est sans doute à revoir. */
+			// Si pas passé dans le ParenthèseGroupement, c'est une liste.
+			$bout->t = ','; /* À FAIRE: '[' pour distinguer liste encore indécise de tableau? Et à terme avoir un vrai opérateur [ distinct de la ( un peu trop Lisp? */
+			$bout->f = $bout->f->f;
+		}
 		else
 			throw new ErreurExpr("Erreur interne: parenthèse ouvrante qui n'est ni fonction, ni regroupement d'expressions", $positions, $num);
 		
-		if($groupante)
-			$bouts[$num] = $bout = $this->_simplifierParenthèseGroupement($bout, $positions, $num);
-		
-		if(isset($numPréc) && $numPréc !== false)
+		if($numPréc !== false && $numPréc < $num)
 		{
 			// On _splice de toute manière, pour écrabouiller les éventuels espaces entre l'élément significatif et sa parenthèse.
+			// (voire combiner avec l'élément précédent si $bout y a été intégré).
 			$this->_splice($bouts, $positions, $numPréc, $num - $numPréc + 1, [ $bout ]);
-			$num = $numPréc;
 		}
+		else
+			$bouts[$num] = $bout;
 	}
 	
 	const PREC_MOT_SIMPLE = 0x01;
@@ -514,6 +517,31 @@ class SqleurPreproExpr
 			// Sinon c'est une chaîne non vide, mais qui ne répond à aucun des critères.
 			return false;
 		}
+		return false;
+	}
+	
+	/**
+	 * Détermine si un NœudPrepro parenthèse semble servir de regroupeur d'opérateurs
+	 * (ou si à l'inverse il introduit une liste: de paramètres ou autres).
+	 */
+	protected function _parenthèseOp($bouts, $numPréc, $bout, $numSuiv)
+	{
+		// Si elle est encadrée d'opérateurs, pas de doute.
+		if
+		(
+			($numPréc !== false || $numSuiv !== false)
+			&& ($numPréc === false || $this->_estOp($bouts[$numPréc]))
+			&& ($numSuiv === false || $this->_estOp($bouts[$numSuiv]))
+		)
+			return true;
+		// Si l'arbre dans la parenthèse est un opérateur de type binaire, pas de doute.
+		if($this->_estOp($bout->f))
+			return true;
+		/* À FAIRE: finalement toutes les parenthèses ne seraient-elles pas éligibles?
+		 * Là un #if ((A && B)) plantera, car si les parenthèses intérieures sont bien détectées, celles extérieures (certes superflues) vont faire péter.
+		 * Le "superflux" étant somme toute subjectif: écrit ainsi cela saute aux yeux, mais avec des #ifdef B #define COND A && B #else #define COND A #endif #if (COND) … on y arrive très vite.
+		 * Finalement la voix de la sagesse serait de requérir des [ ] pour instancier des listes (tout en conservant leur rôle "liste" aux () après un nom de fonction ou un opérateur bimulti (#for I in (…))).
+		 * Cf. '[' ailleurs dans le fichier. */
 		return false;
 	}
 	
