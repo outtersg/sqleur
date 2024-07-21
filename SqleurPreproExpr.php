@@ -878,11 +878,11 @@ class NœudPrepro
 		return $rés;
 	}
 	
-	protected function _contenu($chose, $contexte)
+	protected function _contenu($chose, $contexte, $exécMultiRés = null)
 	{
 		if(!($chose instanceof NœudPrepro))
 			throw new Exception($this->t.': requièrt un nœud fils');
-		return $chose->exécuter($contexte);
+		return $chose->exécuter($contexte, $exécMultiRés);
 	}
 	
 	protected function _contenus($tableau, $contexte, $n = false, $multi = false)
