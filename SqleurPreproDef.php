@@ -117,7 +117,7 @@ class SqleurPreproDef extends SqleurPrepro
 		
 		// Construction de la regex correspondante.
 		
-		$eParam = "(|(?:[^\\,()]|\\\\.|\([^)]*\))+)$b";
+		$eParam = "(|(?:[^\\,()]|\\\\.|\([^)]*\)|'[^']*')+)$b";
 		$eParams = "";
 		foreach($params as $num => $param)
 			$eParams .= ($num > 0 ? ",$b" : "").$eParam;
