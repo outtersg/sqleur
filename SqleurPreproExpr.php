@@ -95,6 +95,8 @@ class SqleurPreproExpr
 		(
 			'(' => '(',
 			')' => ')',
+			'[' => '[',
+			']' => ']',
 		),
 		array
 		(
@@ -267,6 +269,7 @@ class SqleurPreproExpr
 							$this->_splice($bouts, $positions, $num, 1);
 							$racine = new NœudPrepro($bout, $this->arborer($bouts, $positions), $positions[$num]);
 							return $racine;
+						case ']':
 						case ')':
 							// On vérifie qu'on est appelés au bon endroit.
 							if(!($ouvrante = array_pop($this->_parenthèses)))
@@ -276,6 +279,7 @@ class SqleurPreproExpr
 							// On ne s'embête pas: l'arboraison sera faite par la parenthèse ouvrante correspondante.
 							$racine = new NœudPrepro($bout, array(array_slice($bouts, 0, $num), array_slice($bouts, $num + 1)), $positions[$num]); // À FAIRE: $positions[$num], ou $positions[0]?
 							return $racine;
+						case '[':
 						case '(':
 							$this->_parenthèses[] = $bout;
 							$posDedansEtAprès = array_slice($positions, $num + 1);
@@ -425,8 +429,11 @@ class SqleurPreproExpr
 	 */
 	protected function _usageParenthèse(& $bouts, & $positions, & $num)
 	{
+		/* À FAIRE: toto[x] pour accéder à l'élément x du tableau (à l'heure actuelle: considéré comme une fonction toto(x); les tableaux n'ont d'utilité que si exploités par l'instruction prépro appelante, par exemple un #for, mais ne sont pas utilisables dans une expression prépro, par exemple #set PREMS split(VARIABLE, ",")[0]. */
+		/* À FAIRE: #for I, J in [ 1, 2 ], [ 3, 4 ] continue à être interprété #for I in [ 1, 2, 3, 4 ] (les listes de différents niveaux se fusionnent à tort). */
+		/* À FAIRE: [] ne doit jamais être considéré _parenthèseOp (3 * [ 2 + 1 ] doit renvoyer une erreur et non pas 9). */
 		$bout = $bouts[$num];
-		if(!is_object($bout) || ! $bout instanceof NœudPrepro || $bout->t != '(')
+		if(!is_object($bout) || ! $bout instanceof NœudPrepro || !in_array($bout->t, [ '(', '[' ]))
 			throw new Exception("_usageParenthèse() appelée sur un nœud non parenthèse");
 		foreach([ 0 => & $numPréc, static::PREC_SUIVANT => & $numSuiv ] as $options => & $ptrNum)
 			/*&*/$ptrNum = $this->_précédentNonVide($bouts, $num, static::PREC_SAUF_OP | static::PREC_BI | static::PREC_BIMULTI | $options);
@@ -464,7 +471,7 @@ class SqleurPreproExpr
 		{
 			/* À FAIRE: le if est sans doute à revoir. */
 			// Si pas passé dans le ParenthèseGroupement, c'est une liste.
-			$bout->t = '['; /* À FAIRE: Avoir un vrai opérateur [ distinct de la ( un peu trop Lisp. */
+			$bout->t = '[';
 			$bout->f = $bout->f->f;
 		}
 		else if(count($bouts) == 1)
