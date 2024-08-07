@@ -199,10 +199,17 @@ class SqleurPreproCreate extends SqleurPrepro
 					$descrType = 'integer';
 					break;
 				case PDO::PARAM_STR:
+					switch($descrCol['native_type'])
+					{
+						case 'timestamp': $descrType = 'timestamp'; break;
+						case 'date': $descrType = 'date'; break;
+						default:
 					$taille = -1;
 					if($taille <= 0 && isset($descrCol['maxLen'])) $taille = $descrCol['maxLen'];
 					if($taille <= 0 && isset($descrCol['len'])) $taille = $descrCol['len'];
 					$descrType = $taille > 0 ? 'varchar('.$taille.')' : 'text';
+							break;
+					}
 					break;
 				case PDO::PARAM_LOB:
 					$descrType = 'clob';
