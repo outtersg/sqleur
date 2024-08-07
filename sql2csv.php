@@ -299,6 +299,21 @@ class JoueurSql extends Sqleur
 	
 	protected function _exéc($sql)
 	{
+		/* NOTE: inutilité du fetch()
+		 * pdo_pgsql reçoit tout en mémoire avant de pondre (https://www.postgresql.org/message-id/005501c44755%245a851580%2497019696%40AERS04).
+		 * 
+		 * On trouve sur internet des préco d'utiliser des curseurs.
+		 * pgsql_stmt_execute mentionne la possibilité de passer en mode curseur pour aller chercher les résultats un à un, mais je n'arrive pas à le déclencher.
+		 * 
+		 * L'autre option serait par la sous-couche libpq, sauf qu'ext/pdo_pgsql utilise PQexec (surcouche), au lieu du PQsendQuery qui permettrait de passer en PQsetSingleRowMode.
+		 * Cf. https://www.postgresql.org/docs/current/libpq-single-row-mode.html pour ce dernier.
+		 * 
+		 * Tentatives:
+		 *   //$this->bdd->getAttribute(PDO::ATTR_PREFETCH) dit bien que PostgreSQL ne supporte pas.
+		 *   $this->bdd->setAttribute(PDO::ATTR_CURSOR, PDO::CURSOR_FWDONLY);
+		 *   $r = $this->bdd->prepare($sql, [ PDO::ATTR_CURSOR_NAME => 'toto', PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY ]);
+		 *   $r->execute(strpos($sql, ':limite') ? ['limite' => 20000] : []);
+		 */
 		$r = $this->bdd->query($sql);
 		if(is_object($r) && !method_exists($r, 'setFetchMode'))
 		{
