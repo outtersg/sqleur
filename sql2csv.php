@@ -357,13 +357,30 @@ class JoueurSql extends Sqleur
 	
 	protected function exporterLigne($l)
 	{
+		/* Enrichissement des métadonnées */
+		
 		if(isset($this->_colsÀTailleVariable))
 			foreach($this->_colsÀTailleVariable as $numCol => $nomCol)
 				if(strlen($l[$nomCol]) > $this->typeCols[$numCol]['maxLen'])
 					$this->typeCols[$numCol]['maxLen'] = strlen($l[$nomCol]);
+		
+		/* Réécritures */
+		
 		if(isset($this->conversions))
 			foreach($l as & $ptrChamp)
 				$ptrChamp = strtr($ptrChamp, $this->conversions);
+		
+		// Les dates ne sont a priori pas souhaitées avec une précision supérieure à la seconde
+		// (notamment dans une utilisation pour reverser par exemple vers de l'Oracle).
+		/* À FAIRE: rendre optionnelle cette partie */
+		
+		$numCol = -1;
+		foreach($l as $nomCol => & $ptrChamp)
+			if($this->_sqleur->typeCols[++$numCol]['native_type'] == 'timestamp' && is_string($ptrChamp))
+				$ptrChamp = substr($ptrChamp, 0, 19);
+		
+		/* Écriture */
+		
 		switch($this->format)
 		{
 			case JoueurSql::CSV:
