@@ -1264,7 +1264,25 @@ class Sqleur
 			)
 			{
 				// Recherche de la dernière découpe significative avant notre entrée en chaîne.
-				for($j = $i; isset($découpes[--$j]) && !trim($découpes[$j][0]);) {}
+				for($j = $i; isset($découpes[--$j]) && (!trim($découpes[$j][0]) || $découpes[$j][0] == '#');) /* À FAIRE?: les commentaires aussi à ignorer? */
+				{
+					switch($découpes[$j][0])
+					{
+						case '#':
+							// Le prépro bouffe tout jusqu'à la fin de ligne, qu'on attend derrière lui.
+							/* À FAIRE: les prépro prolongés par \ */
+							if($découpes[$j + 1][0] != "\n") return;
+							break;
+						default: // Tout ce qui est espace
+							if
+							(
+								($posDD = $découpes[$j][1] + strlen($découpes[$j][0])) < $découpes[$j + 1][1] // Si la fin de l'élément ne touche pas le début du suivant…
+								&& ($posDD < 0 || trim(substr($fragment, $posDD, $découpes[$j + 1][1] - $posDD))) // … et que ce qui les sépare n'est pas du pur blanc…
+							)
+								return; // … alors c'est qu'on a des parasites, du style "create function as franchement begin".
+							break;
+					}
+				}
 				// Correspond-elle à notre introducteur de begin ("as" dans "create function … as begin")?
 				if
 				(
