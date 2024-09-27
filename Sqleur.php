@@ -1263,38 +1263,42 @@ class Sqleur
 				&& $ptrBéguin[0] == 'function as'
 			)
 			{
-				// Recherche de la dernière découpe significative avant notre entrée en chaîne.
-				for($j = $i; isset($découpes[--$j]) && (!trim($découpes[$j][0]) || $découpes[$j][0] == '#');) /* À FAIRE?: les commentaires aussi à ignorer? */
+				/* On s'assure qu'entre l'introducteur de béguin ("as" dans "create function … as begin") et le béguin lui-même,
+				 * ne figurent que des blancs.
+				 * Le plus simple serait de partir de l'arrière (le "$$") en remontant jusqu'au premier "as", sauf qu'entre les deux on accepte les #if qui eux peuvent comporter un as (à ignorer). Et le #if s'attaque par la gauche.
+				 * On doit donc partir du create function en avant jusqu'à tomber sur notre "$$", après avoir ignoré toutes les fioritures précédant le "as" (rien n'interdit par exemple que dans les paramètres de la fonction figure une variable nommée "as").
+				 */
+				$dernierTruc = -1; // < 0: le dernier élément rencontré était aberrant; positif: position du dernier "as" rencontré.
+				for($j = $ptrBéguin[3]; ++$j <= $i;)
 				{
-					switch($découpes[$j][0])
+					if
+					(
+						$dernierTruc >= 0 // Avant un "as", ça n'est pas dérangeant.
+						&& ($posDD = $découpes[$j - 1][1] + strlen($découpes[$j - 1][0])) < $découpes[$j][1] // Si la fin de l'élément ne touche pas le début du suivant…
+						&& trim(substr($fragment, $posDD, $découpes[$j][1] - $posDD)) // … et que ce qui les sépare n'est pas du pur blanc…
+					)
+						// … alors c'est qu'on a des parasites, du style "create function as franchement begin".
+						$dernierTruc = -1; // Mais ça n'est pas fatal (pas de return): peut-être le vrai "as" est-il encore derrière.
+					if($j == $i) break;
+					switch(trim($découpes[$j][0]))
 					{
+						/* À FAIRE?: les commentaires aussi à ignorer? */
 						case '#':
-							// Le prépro bouffe tout jusqu'à la fin de ligne, qu'on attend derrière lui.
+							// Le prépro bouffe tout (guillemets, etc.) jusqu'à la fin de ligne, qu'on atteint en avance rapide.
 							/* À FAIRE: les prépro prolongés par \ */
-							if($découpes[$j + 1][0] != "\n") return;
+							while(++$j < $i && $découpes[$j][0] != "\n") {}
 							break;
-						default: // Tout ce qui est espace
-							if
-							(
-								($posDD = $découpes[$j][1] + strlen($découpes[$j][0])) < $découpes[$j + 1][1] // Si la fin de l'élément ne touche pas le début du suivant…
-								&& ($posDD < 0 || trim(substr($fragment, $posDD, $découpes[$j + 1][1] - $posDD))) // … et que ce qui les sépare n'est pas du pur blanc…
-							)
-								return; // … alors c'est qu'on a des parasites, du style "create function as franchement begin".
+						case '': break;
+						default:
+				// Correspond-elle à notre introducteur de begin ("as" dans "create function … as begin")?
+							// Si oui on le retient en positif; sinon en négatif.
+							// On écrase la dernière valeur, ce qui fait que si on trouve un "as" après n'importe quoi d'autre,
+							// on oublie cette précédente pollution pour ne garder que le bon souvenir du "as".
+							$dernierTruc = substr($ptrBéguin[1], -strlen($découpes[$j][0])) == $découpes[$j][0] ? $j : -$j;
 							break;
 					}
 				}
-				// Correspond-elle à notre introducteur de begin ("as" dans "create function … as begin")?
-				if
-				(
-					isset($découpes[$j])
-					&& substr($ptrBéguin[1], -strlen($découpes[$j][0])) == $découpes[$j][0]
-					// Et précède-t-elle immédiatement notre chaîne?
-					&&
-					(
-						($posDD = $découpes[$j][1] + strlen($découpes[$j][0])) == $découpes[$i][1]
-						|| ($posDD >= 0 && !trim(substr($fragment, $posDD, $découpes[$i][1] - $posDD)))
-					)
-				)
+				if($dernierTruc < 0) return; // Si le dernier machin rencontré n'était pas notre "as", on sort.
 					// Alors nous sommes une chaîne juste derrière le "as",
 					// donc le begin (et son end) sera à l'_intérieur_ de la chaîne,
 					// et donc le "as" n'a plus à se préoccuper de trouver l'end correspondant;
@@ -1370,7 +1374,7 @@ class Sqleur
 				return;
 			}
 				// Un begin dans une fonction prend la suite de la fonction.
-				if($motClé == 'begin' && ($ptrBéguin = & $this->_ptrDernierBéguin()))
+				if(in_array($motClé, [ 'begin', 'declare' ]) && ($ptrBéguin = & $this->_ptrDernierBéguin()))
 					switch($ptrBéguin[0])
 					{
 						case 'function as': return;
