@@ -92,6 +92,7 @@ corpus()
 	v=1.12.240211
 	v=1.13.240513 # = 1.13.240523.1 sur mon corpus
 	v=1.13.240718 # = 1.13.240618, 1.13.240629 sur mon corpus (corrige un :SCRIPT_FILENAME relatif à tort).
+	v=1.13.240928 # tests minili et ifbegin
 	
 	find /tmp/ -maxdepth 1 -name 0.sql -mtime -3d | grep -q . ||
 	(
