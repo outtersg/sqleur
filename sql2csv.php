@@ -391,7 +391,7 @@ class JoueurSql extends Sqleur
 		
 		$numCol = -1;
 		foreach($l as $nomCol => & $ptrChamp)
-			if($this->_sqleur->typeCols[++$numCol]['native_type'] == 'timestamp' && is_string($ptrChamp))
+			if(isset($this->_sqleur->typeCols) && $this->_sqleur->typeCols[++$numCol]['native_type'] == 'timestamp' && is_string($ptrChamp))
 				$ptrChamp = substr($ptrChamp, 0, 19);
 		
 		/* Écriture */
