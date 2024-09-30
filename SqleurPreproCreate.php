@@ -47,7 +47,7 @@ class SqleurPreproCreate extends SqleurPrepro
 		$sqleur->_fonctionsInternes['oracle_in'] = true;
 		
 		/* À FAIRE: consommer aussi les commentaires en début de chaîne. */
-		$exprCreateFrom = 'create(?: (?<'.self::TEMP.'>temp|temporary))? table (?<'.self::TABLE.'>__) (?<'.self::SENS.'>from|into) (?<'.self::SOURCE.'>__) as(?: (?<n>[1-9][0-9]*))?(?: (?<'.self::REQ.'>[\s\S]*))?';
+		$exprCreateFrom = 'create(?: (?<'.self::TEMP.'>temp|temporary))?(?: (?<'.self::BINAIRE.'>bin|binary))? table (?<'.self::TABLE.'>__) (?<'.self::SENS.'>from|into) (?<'.self::SOURCE.'>__) as(?: (?<n>[1-9][0-9]*))?(?: (?<'.self::REQ.'>[\s\S]*))?';
 		$this->_exprCreateFrom = '/^'.strtr($exprCreateFrom, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+' ]).'$/i';
 		// N.B.: la définition suivante ne marche pas, car les expressions n'étant pas prévues pour être multilignes, notre expression est appelée au premier retour à la ligne: si le select est ligne suivante il ne nous est pas transmis.
 		// À FAIRE: dans le SQLeur, permettre à certaines expressions de se déclarer intéressées par une exécution tardive (sur ; plutôt que sur \n).
@@ -64,6 +64,7 @@ class SqleurPreproCreate extends SqleurPrepro
 		$nReqs = empty($args['n']) ? 1 : $args['n'];
 		
 		$this->_params = $args;
+		$this->_finDeLigne = (!empty($args[self::BINAIRE])) ? "\036" : null;
 		
 		if(0 >= ($nReqs -= count($this->_reqs)))
 			$this->_lance();
@@ -151,6 +152,7 @@ class SqleurPreproCreate extends SqleurPrepro
 			'-b',
 			$this->_params[self::SOURCE],
 			'-s', "\003",
+			isset($this->_finDeLigne) ? '-l' : null, $this->_finDeLigne,
 			empty($this->_params[self::TEMP]) ? '-c' : '-t', // -c en création, -t en create temporary
 			$this->_params[self::TABLE].(isset($this->_sqleur->_defs['moteur'][':pilote']) ? ':'.$this->_sqleur->_defs['moteur'][':pilote'] : ''),
 			'-',
@@ -176,7 +178,7 @@ class SqleurPreproCreate extends SqleurPrepro
 		if(!class_exists('JoueurSql') || !$this->_sqleur instanceof JoueurSql) throw new Exception("Le create into n'est accessible que depuis un JoueurSql de sql2csv.php");
 		
 		$sortie = $this->_sqleur->sortie;
-		$this->_sqleur->commencerIncise($this->_cheminTemp, $this->_temp, JoueurSql::CSVBRUT, "\003", null, false);
+		$this->_sqleur->commencerIncise($this->_cheminTemp, $this->_temp, JoueurSql::CSVBRUT, "\003", $this->_finDeLigne, false);
 		$this->_sqleur->typeCols = [];
 		foreach($this->_reqs as $req)
 			$this->_sqleur->exécuter($req, false, false);
@@ -231,6 +233,7 @@ class SqleurPreproCreate extends SqleurPrepro
 			'-b',
 			$this->_params[self::SOURCE],
 			'-s', "\003",
+			isset($this->_finDeLigne) ? '-l' : null, $this->_finDeLigne,
 			'--drop',
 			$this->_params[self::TABLE],
 			$this->_cheminTemp.'.descr',
@@ -258,7 +261,7 @@ class SqleurPreproCreate extends SqleurPrepro
 		switch($fd)
 		{
 			case 2: fprintf(STDERR, "%s\n", $ligne); break;
-			case 1: fwrite($this->_temp, $ligne."\n"); break;
+			case 1: fwrite($this->_temp, $ligne.(isset($this->_finDeLigne) ? $this->_finDeLigne : "\n")); break;
 			default: throw new Exception("Le processus m'a causé sur le descripteur de fichier $fd");
 		}
 	}
@@ -269,8 +272,10 @@ class SqleurPreproCreate extends SqleurPrepro
 	protected $_reqs;
 	protected $_cheminTemp;
 	protected $_temp;
+	protected $_finDeLigne;
 	
 	const TEMP = 'temp';
+	const BINAIRE = 'bin';
 	const TABLE = 'table';
 	const SOURCE = 'source';
 	const REQ = 'req';
