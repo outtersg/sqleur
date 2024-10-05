@@ -399,7 +399,7 @@ class JoueurSql extends Sqleur
 		switch($this->format)
 		{
 			case JoueurSql::CSV:
-				fputcsv($this->sortie->f, $l, $this->sépChamps);
+				fputcsv($this->sortie->f, $l, $this->sépChamps, '"', '');
 				break;
 			case JoueurSql::CSVBRUT:
 				fwrite($this->sortie->f, implode($this->sépChamps, $l).$this->sépLignes);
