@@ -23,7 +23,7 @@
 sqlm()
 {
 	local bdd="$bdd" bddtunnel="$bddtunnel" bddtunnelbiblios="$bddtunnelbiblios"
-	case "$bdd:$BDD_CHAINE" in :?*) bdd="$BDD_CHAINE" ;; esac
+	case "$BDD_CHAINE" in ?*) bdd="$BDD_CHAINE" ;; esac # Prend le pas sur $bdd même si celle-ci est définie.
 	case "$bddtunnel:$BDD_SSH" in :?*) bddtunnel="$BDD_SSH" ;; esac
 	case "$bddtunnelbiblios:$BDD_SSH_LIB" in :?*) bddtunnelbiblios="$BDD_SSH_LIB" ;; esac
 	
