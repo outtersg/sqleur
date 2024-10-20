@@ -47,7 +47,7 @@ class SqleurPreproCreate extends SqleurPrepro
 		$sqleur->_fonctionsInternes['oracle_in'] = true;
 		
 		/* À FAIRE: consommer aussi les commentaires en début de chaîne. */
-		$exprCreateFrom = 'create(?: (?<'.self::TEMP.'>temp|temporary))?(?: (?<'.self::BINAIRE.'>bin|binary))? table (?<'.self::TABLE.'>__) (?<'.self::SENS.'>from|into) (?<'.self::SOURCE.'>__) as(?: (?<n>[1-9][0-9]*))?(?: (?<'.self::REQ.'>[\s\S]*))?';
+		$exprCreateFrom = 'create(?: (?<'.self::TEMP.'>temp|temporary))?(?: (?<'.self::BINAIRE.'>bin|binary))? table (?<'.self::TABLE.'>__) (?<'.self::SENS.'>from|into) (?<'.self::SOURCE.'>__) as(?: (?<n>[1-9][0-9]*|<<__))?(?: (?<'.self::REQ.'>[\s\S]*))?';
 		$this->_exprCreateFrom = '/^'.strtr($exprCreateFrom, [ ' ' => '[\s\r\n]+', '__' => '[^\s]+' ]).'$/i';
 		// N.B.: la définition suivante ne marche pas, car les expressions n'étant pas prévues pour être multilignes, notre expression est appelée au premier retour à la ligne: si le select est ligne suivante il ne nous est pas transmis.
 		// À FAIRE: dans le SQLeur, permettre à certaines expressions de se déclarer intéressées par une exécution tardive (sur ; plutôt que sur \n).
@@ -61,12 +61,12 @@ class SqleurPreproCreate extends SqleurPrepro
 		$this->_reqs = [];
 		if(!empty($args[self::REQ]))
 			$this->_reqs[] = $args[self::REQ];
-		$nReqs = empty($args['n']) ? 1 : $args['n'];
+		$nReqs = empty($args['n']) ? 1 : (is_int($args['n']) ? (int)$args['n'] : preg_replace('/^<< */', '', $args['n']));
 		
 		$this->_params = $args;
 		$this->_finDeLigne = (!empty($args[self::BINAIRE])) ? "\036" : null;
 		
-		if(0 >= ($nReqs -= count($this->_reqs)))
+		if(is_numeric($nReqs) && 0 >= ($nReqs -= count($this->_reqs)))
 			$this->_lance();
 		else
 			$this->_préempterSql($nReqs);
@@ -120,9 +120,12 @@ class SqleurPreproCreate extends SqleurPrepro
 	{
 		/* À FAIRE: accepter le mode chaîne dollar? Notamment les ; y sont passés tels quels. */
 		
+		if($req)
+		{
 		if(isset($this->_sqleur->terminaison))
 			$req .= $this->_sqleur->terminaison;
 		$this->_reqs[] = $req;
+		}
 		
 		if(!$this->_nReqsÀChoper)
 			$this->_lance();
