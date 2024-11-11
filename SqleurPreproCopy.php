@@ -294,7 +294,20 @@ class SqleurPreproCopyPousseur
 				*/
 				if($this->_nGuili) $l = '"'.$l;
 				$champs = str_getcsv($l, $this->_sép);
-				$this->_nGuili = ($champs == str_getcsv($l.'"', $this->_sép)); // Si le découpage est identique en ajoutant un ", c'est que la chaîne a ouvert un guillemet sans le refermer.
+				if(PHP_VERSION_ID < 830000 && in_array(substr($l, -2), [ $this->_sép.'"', '"' ]))
+				{
+					/* Cas particulier: en PHP < 8.3, si un champ n'est constitué que d'un guillemet (non fermé), str_getcsv renvoyait un caractère nul plutôt qu'une chaîne vide (#11982).
+					 *                  or on va se retrouver dans ce cas si un de nos champs commence par un retour à la ligne ("champ1";"\nchamp2")
+					 *                  notre fonction étant appelée ligne à ligne, la chaîne passée à str_getcsv sera "champ1";" avec ce guillemet isolé comme dernier champ.
+					 */
+					if(end($champs) === "\0")
+					{
+						array_pop($champs);
+						$champs[] = '';
+					}
+				}
+				// On détecte les guillemets ouvert sans refermeture au rendu d'un séparateur ajouté: est-il pris littéralement (intégré au dernier champ) ou comme séparateur (nouveau champ vide)?
+				$this->_nGuili = count(str_getcsv($l.$this->_sép, $this->_sép)) == count($champs);
 				$l = implode($this->_sépi, $champs);
 			}
 			else
