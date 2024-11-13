@@ -42,7 +42,10 @@ class SqleurPreproDef extends SqleurPrepro
 		
 		$b = "[ \t]*";
 		
-		if(preg_match("@^#[a-z]+[ \t]+/((?:[^/]+|\\\\/)+(?:[^\\\\]|\\\\\\\\))/([a-z]*)[ \t]+@", $directiveComplète, $rer))
+		$niAntisNiCrochets = "[^/\\\\[]+";
+		$antiPoint = "\\\\.";
+		$crochet = "\[[^\\]]+\]";
+		if(preg_match("@^#[a-z]+[ \t]+/((?:$niAntisNiCrochets|$antiPoint|$crochet)+)/([a-z]*)[ \t]+@", $directiveComplète, $rer))
 		{
 			$rer[1] = strtr($rer[1], array('\/' => '/', '\\\\' => '\\'));
 			foreach(array('/', '#', '@', "\002", "\003", "\004") as $sépExpr)
