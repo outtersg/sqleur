@@ -45,7 +45,7 @@ class SqleurPreproDef extends SqleurPrepro
 		$niAntisNiCrochets = "[^/\\\\[]+";
 		$antiPoint = "\\\\.";
 		$crochet = "\[[^\\]]+\]";
-		if(preg_match("@^#[a-z]+[ \t]+/((?:$niAntisNiCrochets|$antiPoint|$crochet)+)/([a-z]*)[ \t]+@", $directiveComplète, $rer))
+		if(preg_match("@^#[a-z]+[ \t]+/((?:$niAntisNiCrochets|$antiPoint|$crochet)+)/([a-z]*)(?:[ \t]+|$)@", $directiveComplète, $rer))
 		{
 			$rer[1] = strtr($rer[1], array('\/' => '/', '\\\\' => '\\'));
 			foreach(array('/', '#', '@', "\002", "\003", "\004") as $sépExpr)
@@ -74,7 +74,21 @@ class SqleurPreproDef extends SqleurPrepro
 	public function _définir($motClé, $var, $val, $mode, $paramsDéf)
 	{
 		if(in_array($motClé, array('#undef')))
+		{
 			$val = null;
+			// #undef sur une expression régulière: on #undef tout ce qui y ressemble.
+			if($mode == 2)
+			{
+				$àDéDéf = [];
+				foreach($this->_sqleur->_defs as $ensembleDéfs)
+					foreach(array_keys($ensembleDéfs) as $clé)
+						if(preg_match($var, $clé))
+							$àDéDéf[$clé] = null;
+				if(count($àDéDéf))
+					$this->_sqleur->ajouterDéfs($àDéDéf);
+				return;
+			}
+		}
 		else if(!in_array($motClé, array('#define')))
 		{
 			$multi = in_array($motClé, [ '#setn' ]);
