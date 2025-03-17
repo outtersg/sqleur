@@ -96,6 +96,11 @@ class SqleurPreproPif extends SqleurPrepro
 		// On vire le mot-clé lui-même.
 		$directiveComplète = preg_replace("/^[^ ]*[ \t]+/", '', $directiveComplète);
 		
+		// Cas particulier: le "#pif [" ouvre une section qui se refermera sur "#pif ]".
+		// On le traite immédiatement, car ce [ isolé plante le compilateur d'expression (qui y voit un début de tableau non fermé).
+		if(preg_match('/\s*([\[{}\]])(?:\s*(?:--|#))?/', $directiveComplète, $r))
+			return [ $r[1] ];
+		
 		if(isset($this->_expr))
 		{
 			try
