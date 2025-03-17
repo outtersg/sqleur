@@ -46,4 +46,4 @@ TOTO(a,bbbbbbbbbbbbbbbbbbbbbb,);
 ROTOTO(a, b);
 -- Sans non plus nous interdire d'enchaîner les expressions.
 #testdecoupe a + b + xyc + d + xy
-TOTO(a,b)TOTO(c,d)
+TOTO(a,b)TOTO(c,d);
