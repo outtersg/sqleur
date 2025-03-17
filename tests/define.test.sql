@@ -47,3 +47,7 @@ ROTOTO(a, b);
 -- Sans non plus nous interdire d'enchaîner les expressions.
 #testdecoupe a + b + xyc + d + xy
 TOTO(a,b)TOTO(c,d);
+
+-- Utilisation imbriquée des définitions.
+#testdecoupe a + b + xy + c + xy
+TOTO(TOTO(a, b), c);

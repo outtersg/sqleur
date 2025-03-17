@@ -180,7 +180,17 @@ class SqleurPreproDef extends SqleurPrepro
 		$texte = false; // Texte brut pour le premier bloc, donc variable pour le -1ème bloc.
 		$r = '';
 		foreach($déroulé as $bout)
-			$r .= (($texte = !$texte)) ? $bout : strtr($rés[$bout], array('\,' => ','));
+		{
+			// Si le précédent était texte fixe, donc celui-ci est un paramètre de la macro:
+			if(!($texte = !$texte))
+			{
+				// Les \, (pour passer une "," littérale plutôt que séparatrice de paramètres) ne sont plus nécessaires, maintenant qu'on a bien découpé en tableau.
+				$bout = strtr($rés[$bout], array('\,' => ','));
+				// On s'assure que la valeur du paramètre ne comportait pas d'autres remplacements; en effet notre dégustation de gauche à droite fait que dans une expression DEF(DEF(a, b), c), le premier DEF se voit passer _tel quel_ le contenu, dont le DEF imbriqué.
+				$bout = $this->_sqleur->appliquerDéfs($bout);
+			}
+			$r .= $bout;
+		}
 		return $r;
 	}
 	
