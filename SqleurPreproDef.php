@@ -140,6 +140,7 @@ class SqleurPreproDef extends SqleurPrepro
 		
 		$prp = SqleurPreproDef::PREMIER_PARAM; // Position Récursion Parenthèses: numéro de la parenthèse capturante qui chope les parenthèses imbriquées.
 		$eParam = "((?:[^\\,()]|\\\\.|\((?:(?$prp)|,)+\)|'[^']*')+|)$b";
+		# À FAIRE: dans "fonction( x , y )", la regex ci-dessus intègre les espaces avant la , et la ) au paramètre (→ "x " et "y "), au titre de [^\\,()]. Il faudrait distinguer les espaces des autres caractères, en les collant dans une expression ungreedy (donc n'englobant les espaces que s'ils sont vraiment nécessaires pour atteindre la virgule suivante, par ex. entre deux parties du même paramètre: dans ", x and y ,", les espaces autour des virgules sauteraient, mais ceux autour du "and" sont indispensables donc seraient pris).
 		$eParams = "";
 		foreach($params as $num => $param)
 			$eParams .= $num > 0 ? ",$b((?$prp))$b" : $eParam;
