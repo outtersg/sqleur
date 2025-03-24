@@ -32,6 +32,10 @@ class SqleurPreproDef extends SqleurPrepro
 	const MODE_PLAT = 0;   // #define TOTO
 	const MODE_FONC = 1;   // #define TOTO(x)
 	const MODE_REGEX = 2;  // #define /TOTO +x/
+
+	// Numéro du premier paramètre chopé par notre expression capturante.
+	// 2 car dans la regex capturante les paramètres arriveront en 2, 3, etc. (après l'expression complète en 0, et le nom de #define en 1).
+	const PREMIER_PARAM = 2;
 	
 	protected $_défsParams;
 	
@@ -158,7 +162,7 @@ class SqleurPreproDef extends SqleurPrepro
 			if(!preg_match('/[_a-zA-Z0-9]/', substr($val, $fin = $rer[0][1] + strlen($rer[0][0]), 1))) // La fameuse vérification du séparateur d'après. !preg_match et non preg_match([^, car la fin de chaîne est acceptée.
 			{
 				$déroulé[] = substr($val, $lu, $rer[0][1] - $lu).$rer[1][0];
-				$déroulé[] = $params[$rer[2][0]] + 2; // + 2 car dans la regex capturante les paramètres arriveront en 2, 3, etc. (après l'expression complète en 0 et le nom de #define en 1).
+				$déroulé[] = $params[$rer[2][0]] + SqleurPreproDef::PREMIER_PARAM;
 				$lu = $fin;
 			}
 		$déroulé[] = substr($val, $lu);
@@ -176,7 +180,7 @@ class SqleurPreproDef extends SqleurPrepro
 	
 	public function _remplacerDéfParams($rés)
 	{
-		$déroulé = $this->_défsParams[$rés[1]][count($rés) - 2];
+		$déroulé = $this->_défsParams[$rés[1]][count($rés) - SqleurPreproDef::PREMIER_PARAM];
 		$texte = false; // Texte brut pour le premier bloc, donc variable pour le -1ème bloc.
 		$r = '';
 		foreach($déroulé as $bout)
@@ -198,7 +202,7 @@ class SqleurPreproDef extends SqleurPrepro
 	public function _remplacerSetParams($rés, $multi = false)
 	{
 		// Les paramètres de l'invocation sont attendus en mode #define: titi est la chaîne "titi", à moins qu'une variable titi existe auquel cas on remplace.
-		for($un = count($rés); --$un >= 2;)
+		for($un = count($rés); --$un >= SqleurPreproDef::PREMIER_PARAM;)
 		{
 			$val = $this->_sqleur->appliquerDéfs($rés[$un]);
 			$val = '"'.strtr($val, [ '"' => '\"' ]).'"';
