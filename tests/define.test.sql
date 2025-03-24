@@ -51,3 +51,15 @@ TOTO(a,b)TOTO(c,d);
 -- Utilisation imbriquée des définitions.
 #testdecoupe a + b + xy + c + xy
 TOTO(TOTO(a, b), c);
+
+#define a3(a, u, v) rempl(fonc(a.u.v), ' ', '')
+#define a2(a, b) (a + b)
+-- Fut un temps où il renvoyait,
+-- uniquement sous condition d'avoir deux fonctions imbriquées dans a3, et des apostrophes en paramètres de celle externe:
+--           (rempl(fonc(x.y.z) + ' ', ''), t)
+#testdecoupe (rempl(fonc(x.y.z), ' ', '') + t)
+a2(a3(x, y, z), t);
+
+#define vide() rien
+#testdecoupe (rempl(fonc(x .y .rien), ' ', '') + t ) + rien + rien
+a2 (  a3 ( x , y , vide()), t ) + vide() + vide(   );

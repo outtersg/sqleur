@@ -138,10 +138,11 @@ class SqleurPreproDef extends SqleurPrepro
 		
 		// Construction de la regex correspondante.
 		
-		$eParam = "(|(?:[^\\,()]|\\\\.|\([^)]*\)|'[^']*')+)$b";
+		$prp = SqleurPreproDef::PREMIER_PARAM; // Position Récursion Parenthèses: numéro de la parenthèse capturante qui chope les parenthèses imbriquées.
+		$eParam = "((?:[^\\,()]|\\\\.|\((?:(?$prp)|,)+\)|'[^']*')+|)$b";
 		$eParams = "";
 		foreach($params as $num => $param)
-			$eParams .= ($num > 0 ? ",$b" : "").$eParam;
+			$eParams .= $num > 0 ? ",$b((?$prp))$b" : $eParam;
 		$eDéf = "/(?:^|\\b)($déf)$b\($b$eParams\)/";
 		
 		// Recherche des paramètres dans le corps, hachage de celui-ci.
